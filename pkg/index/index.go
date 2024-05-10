@@ -40,15 +40,14 @@ func NewIndex() *Index {
 
 // AddDocument adds a document to both forward and inverted indexes
 func (idx *Index) AddDocument(doc Document) {
-
-	tokens := token.Tokenize(doc.Content)
+	tokensWithPositions := token.Tokenize(doc.Content)
 
 	// Update forward index
 	idx.Forward[doc.ID] = doc
 
 	// Update inverted index
-	for _, token := range tokens {
-		posting := Posting{DocumentID: doc.ID, Frequency: 1} // Simplified, typically you'd update frequency
+	for token, positions := range tokensWithPositions {
+		posting := Posting{DocumentID: doc.ID, Frequency: len(positions), Positions: positions}
 		idx.Inverted[token] = append(idx.Inverted[token], posting)
 	}
 }

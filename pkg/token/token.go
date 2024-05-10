@@ -9,7 +9,7 @@ import (
 )
 
 // tokenize takes HTML content, extracts text, and splits it into tokens.
-func Tokenize(htmlContent string) []string {
+func Tokenize(htmlContent string) map[string][]int {
 	doc, err := goquery.NewDocumentFromReader(strings.NewReader(htmlContent))
 	if err != nil {
 		panic(err) // Proper error handling should replace panic in production
@@ -41,7 +41,14 @@ func Tokenize(htmlContent string) []string {
 	spaceCleanedText := strings.Join(strings.Fields(finalText), " ")
 
 	// Split text into words based on whitespace
-	tokens := strings.Fields(spaceCleanedText)
+	words := strings.Fields(spaceCleanedText)
+
+	tokens := make(map[string][]int)
+	position := 0
+	for _, word := range words {
+		tokens[word] = append(tokens[word], position)
+		position++
+	}
 
 	return tokens
 }
