@@ -3,13 +3,37 @@ package service
 import (
 	"crawlquery/pkg/domain"
 	"crawlquery/pkg/factory"
+	"crawlquery/pkg/index"
+	"encoding/gob"
+	"os"
 	"strings"
 )
 
-type IndexService struct{}
+type IndexService struct {
+	index index.Index
+}
 
 func NewIndexService() *IndexService {
 	return &IndexService{}
+}
+
+func (is *IndexService) SaveIndex(filepath string) error {
+	// Create a file for writing.
+	file, err := os.Create(filepath)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	// Create a new gob encoder writing to the file.
+	encoder := gob.NewEncoder(file)
+
+	// Encode (serialize) the index.
+	if err := encoder.Encode(is.index); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (s *IndexService) basicWildcardIndex(term string, results []domain.Result) []domain.Result {
