@@ -44,8 +44,13 @@ const search = () => {
                 </div>
             </div>
 
-            <div class="mt-4">
-                Loaded {{ resultStore.results.length }} results in {{ latency }}
+            <div class="mt-4 px-4">
+                Loaded {{ resultStore.results.length }} results in <span class="font-semibold">{{ latency }}</span>
             </div>
         </div>
+        <div v-else-if="term != ''" class="mt-4 p-4">
+            No results found.
+        </div>
+
+    </div>
 </template>
