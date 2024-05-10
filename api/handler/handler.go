@@ -1,13 +1,15 @@
 package handler
 
 import (
-	"crawlquery/pkg/factory"
+	"crawlquery/api/service"
 
 	"github.com/gin-gonic/gin"
 )
 
 func SearchHandler(c *gin.Context) {
+
+	ss := service.NewSearchService()
 	c.JSON(200, gin.H{
-		"results": factory.ExampleResults(),
+		"results": ss.Search(c.Query("q")),
 	})
 }
