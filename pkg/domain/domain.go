@@ -1,5 +1,9 @@
 package domain
 
+import (
+	"time"
+)
+
 type Result struct {
 	PageID string  `json:"id"`
 	Score  float64 `json:"score"`
@@ -43,3 +47,52 @@ type IndexRepository interface {
 type IndexService interface {
 	Search(query string) ([]Result, error)
 }
+
+type CrawlQueueRepository interface {
+	Push(j *CrawlJob) error
+	Pop() (*CrawlJob, error)
+	Save() error
+	Load() error
+}
+
+type Domain struct {
+	Name string
+	Lock time.Time
+}
+
+type DomainRespository interface {
+	Get(name string) (Domain, error)
+	Save(d Domain) error
+}
+
+type CrawlJob struct {
+	URL         string
+	RequestedAt time.Time
+	LastTriedAt time.Time
+	SuccessAt   time.Time
+}
+
+type NodeRepository interface {
+	Get(id string) (*Node, error)
+	GetAll() ([]*Node, error)
+	CreateOrUpdate(n *Node) error
+	Delete(id string) error
+}
+
+type NodeService interface {
+	Get(id string) (*Node, error)
+	GetRandom() (*Node, error)
+	RandomizeAll() ([]*Node, error)
+	CreateOrUpdate(n *Node) error
+	AllByShard() (map[ShardID][]*Node, error)
+}
+
+type Node struct {
+	ID       string
+	Name     string
+	ShardID  ShardID
+	Hostname string
+	Port     int
+}
+
+type ShardID int

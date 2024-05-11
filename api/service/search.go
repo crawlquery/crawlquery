@@ -2,45 +2,67 @@ package service
 
 import (
 	"crawlquery/pkg/domain"
+	"crawlquery/pkg/dto"
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"sync"
 )
 
-type SearchService struct{}
-
-func NewSearchService() *SearchService {
-	return &SearchService{}
+type SearchService struct {
+	nodeService domain.NodeService
 }
 
-func (s *SearchService) Search(term string) []domain.Result {
-	nodes := []string{
-		"http://localhost:9090",
+func NewSearchService(nodeService domain.NodeService) *SearchService {
+	return &SearchService{
+		nodeService: nodeService,
+	}
+}
+
+func (s *SearchService) Search(term string) ([]domain.Result, error) {
+	shardNodes, err := s.nodeService.AllByShard()
+
+	if err != nil {
+		return nil, err
 	}
 
 	results := []domain.Result{}
+	resultsLock := sync.Mutex{}
 
-	for _, node := range nodes {
-		res, err := http.Get(node + "/search?q=" + term)
-		if err != nil {
-			fmt.Println(err)
-			continue
-		}
+	var wg sync.WaitGroup
 
-		defer res.Body.Close()
+	wg.Add(len(shardNodes))
 
-		var response struct {
-			Results []domain.Result `json:"results"`
-		}
+	for _, nodes := range shardNodes {
+		go func(nodes []*domain.Node) {
+			defer wg.Done()
+			for _, node := range nodes {
+				endpoint := fmt.Sprintf("http://%s:%d/search?q=%s", node.Hostname, node.Port, term)
+				res, err := http.Get(endpoint)
+				if err != nil {
+					fmt.Println(err)
+					continue
+				}
+				fmt.Println("made id?")
+				defer res.Body.Close()
 
-		err = json.NewDecoder(res.Body).Decode(&response)
+				var response dto.NodeSearchResponse
 
-		if err != nil {
-			fmt.Println(err)
-			continue
-		}
-		results = append(results, response.Results...)
+				err = json.NewDecoder(res.Body).Decode(&response)
+
+				if err != nil {
+					continue
+				}
+				resultsLock.Lock()
+				results = append(results, response.Results...)
+				resultsLock.Unlock()
+
+				break
+			}
+		}(nodes)
 	}
 
-	return results
+	wg.Wait()
+
+	return results, nil
 }

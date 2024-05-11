@@ -6,13 +6,18 @@ const router = createRouter({
   routes: [
     {
       path: '/',
-      name: 'home',
+      name: 'search',
       component: HomeView
     },
     {
       path: '/crawl',
       name: 'crawl',
       component: () => import('../views/CrawlView.vue')
+    },
+    {
+      path: '/query',
+      name: 'query',
+      component: () => import('../views/QueryView.vue')
     },
   ]
 })
