@@ -3,6 +3,7 @@ package index
 import (
 	"crawlquery/pkg/domain"
 	"crawlquery/pkg/token"
+	"fmt"
 	"sort"
 )
 
@@ -28,7 +29,7 @@ func (idx *Index) SetForward(forward domain.ForwardIndex) {
 	idx.Forward = forward
 }
 
-func (idx *Index) Search(query string) []domain.Result {
+func (idx *Index) Search(query string) ([]domain.Result, error) {
 	// Tokenize the query the same way as the index was tokenized
 	queryTerms := token.TokenizeTerm(query)
 	results := make(map[string]float64) // map[PageID]relevanceScore
@@ -51,11 +52,17 @@ func (idx *Index) Search(query string) []domain.Result {
 		return sortedResults[i].Score > sortedResults[j].Score
 	})
 
-	return sortedResults
+	// Add the page metadata to the results
+	for i, result := range sortedResults {
+		page := idx.Forward[result.PageID]
+		sortedResults[i].Page = page
+	}
+
+	return sortedResults, nil
 }
 
-// AddDocument adds a document to both forward and inverted indexes
-func (idx *Index) AddDocument(doc domain.Document) {
+// AddPage adds a page to both forward and inverted indexes
+func (idx *Index) AddPage(doc domain.Page) {
 	tokensWithPositions := token.Tokenize(doc.Content)
 
 	// Update forward index
@@ -65,7 +72,10 @@ func (idx *Index) AddDocument(doc domain.Document) {
 	for token, positions := range tokensWithPositions {
 		posting := domain.Posting{PageID: doc.ID, Frequency: len(positions), Positions: positions}
 		idx.Inverted[token] = append(idx.Inverted[token], posting)
+		fmt.Println("adding invertted")
 	}
+
+	fmt.Printf("Added %d inverted entries for doc %s\n", len(tokensWithPositions), doc.ID)
 }
 
 // Forward returns the forward index

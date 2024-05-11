@@ -46,4 +46,15 @@ func TestTokenize(t *testing.T) {
 	if !reflect.DeepEqual(tokensWithPositions, expectedTokens) {
 		t.Errorf("Tokenize() = %v, want %v", tokensWithPositions, expectedTokens)
 	}
+
+	// Test with text in body only
+	htmlContent = `<body>Hello World! This is a simple test. Numbers: 1234.</body>`
+
+	// Tokenize the input HTML content
+	tokensWithPositions = token.Tokenize(htmlContent)
+
+	// Check if the output matches the expected tokens and positions
+	if !reflect.DeepEqual(tokensWithPositions, expectedTokens) {
+		t.Errorf("Tokenize() = %v, want %v", tokensWithPositions, expectedTokens)
+	}
 }

@@ -5,8 +5,7 @@ import (
 )
 
 type IndexService struct {
-	repo  domain.IndexRepository
-	index domain.Index
+	repo domain.IndexRepository
 }
 
 func NewIndexService(repo domain.IndexRepository) *IndexService {
@@ -15,15 +14,11 @@ func NewIndexService(repo domain.IndexRepository) *IndexService {
 	}
 }
 
-func (service *IndexService) LoadIndex() error {
+func (service *IndexService) Search(query string) ([]domain.Result, error) {
 	idx, err := service.repo.Load()
 	if err != nil {
-		return err
+		return nil, err
 	}
-	service.index = idx
-	return nil
-}
 
-func (service *IndexService) Search(query string) []domain.Result {
-	return service.index.Search(query)
+	return idx.Search(query)
 }

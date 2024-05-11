@@ -1,18 +1,32 @@
 package handler
 
 import (
-	"crawlquery/node/service"
-	"crawlquery/pkg/repository/index/mem"
+	"crawlquery/pkg/domain"
 
 	"github.com/gin-gonic/gin"
 )
 
-func SearchHandler(c *gin.Context) {
+type SearchHandler struct {
+	is domain.IndexService
+}
 
-	is := service.NewIndexService(
-		mem.NewMemoryRepository(),
-	)
+func NewSearchHandler(is domain.IndexService) *SearchHandler {
+	return &SearchHandler{
+		is: is,
+	}
+}
+
+func (sh *SearchHandler) Search(c *gin.Context) {
+	results, err := sh.is.Search(c.Query("q"))
+
+	if err != nil {
+		c.JSON(500, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
 	c.JSON(200, gin.H{
-		"results": is.Search(c.Query("q")),
+		"results": results,
 	})
 }

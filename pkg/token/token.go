@@ -34,7 +34,9 @@ func Tokenize(htmlContent string) map[string][]int {
 	}
 
 	var textBuilder strings.Builder
-
+	if bodyText := doc.Find("body").Contents().Not("body > *").Text(); bodyText != "" {
+		textBuilder.WriteString(strings.TrimSpace(bodyText) + " ")
+	}
 	// Iterate over each node within the body, ensuring proper spacing
 	doc.Find("body *").Each(func(i int, selection *goquery.Selection) {
 		nodeText := selection.Text()
