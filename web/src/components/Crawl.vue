@@ -7,7 +7,7 @@ const url = ref('')
 const success = ref(false)
 const crawl = () => {
     const start = Date.now()
-    axios.get(`http://localhost:8080/crawl?url=${url.value}`)
+    axios.post(`http://localhost:8080/crawl?url=${url.value}`)
         .then((response: any) => {
             success.value = true
             latency.value = `${Date.now() - start}ms`

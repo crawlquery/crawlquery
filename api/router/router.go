@@ -35,5 +35,6 @@ func NewRouter() *gin.Engine {
 		MaxAge:           12 * time.Hour,
 	}))
 	router.GET("/search", handler.SearchHandler)
+	router.POST("/crawl", handler.CrawlHandler)
 	return router
 }
