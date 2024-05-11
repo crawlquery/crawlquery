@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import Search from '../components/Search.vue'
+import Crawl from '../components/Crawl.vue'
 </script>
 
 <template>
   <main>
     <div class="max-w-xl mx-auto mt-24">
-      <Search />
+      <Crawl />
     </div>
   </main>
 </template>

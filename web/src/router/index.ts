@@ -9,6 +9,11 @@ const router = createRouter({
       name: 'home',
       component: HomeView
     },
+    {
+      path: '/crawl',
+      name: 'crawl',
+      component: () => import('../views/CrawlView.vue')
+    },
   ]
 })
 
