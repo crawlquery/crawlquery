@@ -7,7 +7,7 @@ import (
 type Result struct {
 	PageID string  `json:"id"`
 	Score  float64 `json:"score"`
-	Page   Page    `json:"page"`
+	Page   *Page   `json:"page"`
 }
 
 // Page represents a web page with metadata.
@@ -27,13 +27,13 @@ type Posting struct {
 }
 
 // InvertedIndex maps keywords to page lists
-type InvertedIndex map[string][]Posting
+type InvertedIndex map[string][]*Posting
 
 // ForwardIndex maps page IDs to page metadata and keyword lists
-type ForwardIndex map[string]Page
+type ForwardIndex map[string]*Page
 
 type Index interface {
-	AddPage(doc Page)
+	AddPage(doc *Page)
 	GetForward() ForwardIndex
 	GetInverted() InvertedIndex
 	Search(query string) ([]Result, error)
@@ -46,6 +46,7 @@ type IndexRepository interface {
 
 type IndexService interface {
 	Search(query string) ([]Result, error)
+	AddPage(doc *Page) error
 }
 
 type CrawlQueueRepository interface {
@@ -92,7 +93,7 @@ type Node struct {
 	Name     string
 	ShardID  ShardID
 	Hostname string
-	Port     int
+	Port     string
 }
 
 type ShardID int

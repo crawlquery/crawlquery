@@ -22,3 +22,14 @@ func (service *IndexService) Search(query string) ([]domain.Result, error) {
 
 	return idx.Search(query)
 }
+
+func (service *IndexService) AddPage(p *domain.Page) error {
+	idx, err := service.repo.Load()
+	if err != nil {
+		return err
+	}
+
+	idx.AddPage(p)
+
+	return service.repo.Save(idx)
+}

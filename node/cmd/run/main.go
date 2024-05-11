@@ -14,16 +14,22 @@ func main() {
 	idx := index.NewIndex()
 
 	for _, page := range factory.TenPages() {
-		idx.AddPage(page)
+		idx.AddPage(&page)
 	}
 
 	memRepo := mem.NewMemoryRepository()
 	memRepo.Save(idx)
 
 	svc := service.NewIndexService(memRepo)
-	handler := handler.NewSearchHandler(svc)
+	searchHandler := handler.NewSearchHandler(svc)
+	crawlSvc := service.NewCrawlService(
+		svc,
+	)
+	crawlHandler := handler.NewCrawlHandler(
+		crawlSvc,
+	)
 
-	r := router.NewRouter(handler)
+	r := router.NewRouter(searchHandler, crawlHandler)
 
 	r.Run(":9090")
 }

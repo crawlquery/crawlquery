@@ -2,7 +2,7 @@ package disk_test
 
 import (
 	"crawlquery/pkg/domain"
-	"crawlquery/pkg/repository/crawl/job/disk"
+	"crawlquery/pkg/repository/job/disk"
 	"os"
 	"testing"
 )

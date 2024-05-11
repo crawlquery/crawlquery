@@ -1,7 +1,7 @@
 package handler
 
 import (
-	"crawlquery/api/service"
+	"crawlquery/node/service"
 	"net/url"
 
 	"github.com/gin-gonic/gin"
@@ -18,7 +18,18 @@ func NewCrawlHandler(cs *service.CrawlService) *CrawlHandler {
 }
 
 func (ch *CrawlHandler) Crawl(c *gin.Context) {
-	if c.Query("url") == "" {
+	var req struct {
+		URL string `json:"url"`
+	}
+
+	if err := c.BindJSON(&req); err != nil {
+		c.JSON(400, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	if req.URL == "" {
 		c.JSON(400, gin.H{
 			"error": "url is required",
 		})
@@ -26,7 +37,7 @@ func (ch *CrawlHandler) Crawl(c *gin.Context) {
 	}
 
 	// check url is valid
-	url, err := url.ParseRequestURI(c.Query("url"))
+	_, err := url.ParseRequestURI(req.URL)
 
 	if err != nil {
 		c.JSON(400, gin.H{
@@ -35,7 +46,7 @@ func (ch *CrawlHandler) Crawl(c *gin.Context) {
 		return
 	}
 
-	err = ch.crawlService.Queue(url.String())
+	err = ch.crawlService.Crawl(req.URL)
 
 	if err != nil {
 		c.JSON(500, gin.H{
@@ -47,4 +58,5 @@ func (ch *CrawlHandler) Crawl(c *gin.Context) {
 	c.JSON(200, gin.H{
 		"message": "success",
 	})
+
 }

@@ -76,7 +76,7 @@ func (idx *Index) Search(query string) ([]domain.Result, error) {
 }
 
 // AddPage adds a page to both forward and inverted indexes
-func (idx *Index) AddPage(doc domain.Page) {
+func (idx *Index) AddPage(doc *domain.Page) {
 	tokensWithPositions := token.Tokenize(doc.Content)
 
 	// Update forward index
@@ -85,7 +85,7 @@ func (idx *Index) AddPage(doc domain.Page) {
 	// Update inverted index
 	for token, positions := range tokensWithPositions {
 		posting := domain.Posting{PageID: doc.ID, Frequency: len(positions), Positions: positions}
-		idx.Inverted[token] = append(idx.Inverted[token], posting)
+		idx.Inverted[token] = append(idx.Inverted[token], &posting)
 		fmt.Println("adding invertted")
 	}
 

@@ -51,7 +51,7 @@ func hasInverted(idxA, idxB *index.Index) bool {
 func TestSaveAndLoadIndex(t *testing.T) {
 	// Setup a test index and save to a temporary file
 	testIndex := index.NewIndex()
-	testIndex.AddPage(domain.Page{
+	testIndex.AddPage(&domain.Page{
 		ID:      "doc1",
 		URL:     "http://google.com",
 		Title:   "Google",

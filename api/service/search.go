@@ -37,7 +37,7 @@ func (s *SearchService) Search(term string) ([]domain.Result, error) {
 		go func(nodes []*domain.Node) {
 			defer wg.Done()
 			for _, node := range nodes {
-				endpoint := fmt.Sprintf("http://%s:%d/search?q=%s", node.Hostname, node.Port, term)
+				endpoint := fmt.Sprintf("http://%s:%s/search?q=%s", node.Hostname, node.Port, term)
 				res, err := http.Get(endpoint)
 				if err != nil {
 					fmt.Println(err)

@@ -17,14 +17,14 @@ func TestSearch(t *testing.T) {
 		ID:       "node1",
 		ShardID:  0,
 		Hostname: "node1.cluster.com",
-		Port:     8080,
+		Port:     "8080",
 	})
 
 	nodeRepo.CreateOrUpdate(&domain.Node{
 		ID:       "node2",
 		ShardID:  1,
 		Hostname: "node2.cluster.com",
-		Port:     8080,
+		Port:     "8080",
 	})
 
 	nodeService := service.NewNodeService(nodeRepo)
@@ -40,7 +40,7 @@ func TestSearch(t *testing.T) {
 				{
 					PageID: "page1",
 					Score:  0.5,
-					Page: domain.Page{
+					Page: &domain.Page{
 						ID:    "page1",
 						URL:   "http://google.com",
 						Title: "Google",
@@ -58,7 +58,7 @@ func TestSearch(t *testing.T) {
 				{
 					PageID: "page2",
 					Score:  0.6,
-					Page: domain.Page{
+					Page: &domain.Page{
 						ID:    "page2",
 						URL:   "http://facebook.com",
 						Title: "Facebook",

@@ -5,6 +5,7 @@ import (
 	"crawlquery/pkg/domain"
 	"fmt"
 	"net/http"
+	"time"
 )
 
 type CrawlService struct {
@@ -22,6 +23,15 @@ func NewCrawlService(
 	}
 }
 
+func (service *CrawlService) Queue(url string) error {
+	return service.queueRepository.Push(
+		&domain.CrawlJob{
+			URL:         url,
+			RequestedAt: time.Now(),
+		},
+	)
+}
+
 func (service *CrawlService) Crawl() error {
 	err := service.queueRepository.Load()
 	if err != nil {
@@ -34,13 +44,14 @@ func (service *CrawlService) Crawl() error {
 		return err
 	}
 	nodes, err := service.nodeService.RandomizeAll()
-
+	fmt.Printf("nodes: %v\n", nodes)
+	var finished bool
 	for _, node := range nodes {
 		if err != nil {
 			return err
 		}
 
-		crawlEndpoint := fmt.Sprintf("http://%s:%d/crawl", node.Hostname, node.Port)
+		crawlEndpoint := fmt.Sprintf("http://%s:%s/crawl", node.Hostname, node.Port)
 
 		res, err := http.Post(crawlEndpoint, "application/json", bytes.NewBuffer([]byte(fmt.Sprintf(
 			`{"url": "%s"}`, job.URL,
@@ -53,8 +64,21 @@ func (service *CrawlService) Crawl() error {
 		defer res.Body.Close()
 
 		if res.StatusCode == http.StatusOK {
+			finished = true
 			break
 		}
+	}
+
+	if !finished {
+		job.LastTriedAt = time.Now()
+
+		err = service.queueRepository.Push(job)
+
+		if err != nil {
+			return err
+		}
+
+		return fmt.Errorf("could not crawl %s", job.URL)
 	}
 
 	return nil

@@ -12,7 +12,7 @@ import (
 func TestAddPage(t *testing.T) {
 	// Initialize index and page as before
 	idx := index.NewIndex() // Assuming you have a constructor for Index
-	doc := domain.Page{
+	doc := &domain.Page{
 		ID:              "doc1",
 		URL:             "http://example.com",
 		Title:           "Test Page",
@@ -59,7 +59,7 @@ func TestAddPage(t *testing.T) {
 func TestSearch(t *testing.T) {
 	// Create a test index with some pages
 	index := index.NewIndex()
-	index.SetInverted(map[string][]domain.Posting{
+	index.SetInverted(map[string][]*domain.Posting{
 		"test": {
 			{PageID: "doc1", Frequency: 2},
 			{PageID: "doc2", Frequency: 1},
@@ -69,7 +69,7 @@ func TestSearch(t *testing.T) {
 		},
 	})
 
-	index.SetForward(map[string]domain.Page{
+	index.SetForward(map[string]*domain.Page{
 		"doc1": {
 			ID:              "doc1",
 			URL:             "http://example.com/doc1",

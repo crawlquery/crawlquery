@@ -15,7 +15,7 @@ func TestDisk(t *testing.T) {
 	err := repo.CreateOrUpdate(&domain.Node{
 		ID:       "1",
 		Hostname: "node1.cluster.com",
-		Port:     9090,
+		Port:     "9090",
 	})
 
 	if err != nil {
@@ -25,7 +25,7 @@ func TestDisk(t *testing.T) {
 	err = repo.CreateOrUpdate(&domain.Node{
 		ID:       "2",
 		Hostname: "node2.cluster.com",
-		Port:     9090,
+		Port:     "9090",
 	})
 
 	if err != nil {

@@ -3,7 +3,7 @@ package service_test
 import (
 	"crawlquery/api/service"
 	"crawlquery/pkg/domain"
-	crawlJobMemRepo "crawlquery/pkg/repository/crawl/job/mem"
+	crawlJobMemRepo "crawlquery/pkg/repository/job/mem"
 	nodeMemRepo "crawlquery/pkg/repository/node/mem"
 	"testing"
 
@@ -18,7 +18,7 @@ func TestCrawl(t *testing.T) {
 	nodeRepo.CreateOrUpdate(&domain.Node{
 		ID:       "node1",
 		Hostname: "node1.cluster.com",
-		Port:     8080,
+		Port:     "8080",
 	})
 
 	crawlJobRepo.Push(&domain.CrawlJob{

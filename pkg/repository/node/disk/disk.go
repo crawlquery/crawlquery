@@ -15,9 +15,15 @@ type DiskRepository struct {
 }
 
 func NewDiskRepository(filepath string) *DiskRepository {
-	return &DiskRepository{
+	dr := &DiskRepository{
 		filepath: filepath,
 	}
+
+	if err := dr.Load(); err != nil {
+		dr.nodes = []*domain.Node{}
+	}
+
+	return dr
 }
 
 func (dr *DiskRepository) Load() error {

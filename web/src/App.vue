@@ -20,6 +20,8 @@ const route = useRoute()
         :class="route.name == 'crawl' ? 'text-indigo-300' : 'text-indigo-500 '">Crawl</RouterLink>
       <RouterLink to="/query" class="ml-4 font-semibold"
         :class="route.name == 'query' ? 'text-indigo-300' : 'text-indigo-500 '">Query</RouterLink>
+      <RouterLink to="/nodes/add" class="ml-4 font-semibold"
+        :class="route.name == 'nodes.add' ? 'text-indigo-300' : 'text-indigo-500 '">Add Node</RouterLink>
     </div>
   </div>
   <RouterView />

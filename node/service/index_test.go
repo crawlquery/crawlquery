@@ -14,7 +14,7 @@ func TestSearch(t *testing.T) {
 	memRepo.Save(idx)
 
 	for _, page := range factory.TenPages() {
-		idx.AddPage(page)
+		idx.AddPage(&page)
 	}
 
 	svc := service.NewIndexService(memRepo)

@@ -15,14 +15,14 @@ func TestNode(t *testing.T) {
 	nodeRepo.CreateOrUpdate(&domain.Node{
 		ID:       "node1",
 		Hostname: "node1.cluster.com",
-		Port:     8080,
+		Port:     "8080",
 	})
 
 	for i := 0; i < 10; i++ {
 		nodeRepo.CreateOrUpdate(&domain.Node{
 			ID:       fmt.Sprintf("node%d", i),
 			Hostname: fmt.Sprintf("node%d.cluster.com", i),
-			Port:     8080,
+			Port:     "8080",
 		})
 	}
 
@@ -35,7 +35,7 @@ func TestNode(t *testing.T) {
 		t.Errorf("Expected hostname to be node1.cluster.com, got %v", node.Hostname)
 	}
 
-	if node.Port != 8080 {
+	if node.Port != "8080" {
 		t.Errorf("Expected port to be 8080, got %v", node.Port)
 	}
 
@@ -75,7 +75,7 @@ func TestNodeAllByShard(t *testing.T) {
 			ID:       fmt.Sprintf("node%d", i),
 			ShardID:  1,
 			Hostname: fmt.Sprintf("node%d.cluster.com", i),
-			Port:     8080,
+			Port:     "8080",
 		})
 	}
 
@@ -84,7 +84,7 @@ func TestNodeAllByShard(t *testing.T) {
 			ID:       fmt.Sprintf("node%d", i+10),
 			ShardID:  2,
 			Hostname: fmt.Sprintf("node%d.cluster.com", i+10),
-			Port:     8080,
+			Port:     "8080",
 		})
 	}
 

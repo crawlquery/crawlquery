@@ -20,7 +20,7 @@ func TestSearchHandler(t *testing.T) {
 
 	idx := index.NewIndex()
 	for _, page := range factory.TenPages() {
-		idx.AddPage(page)
+		idx.AddPage(&page)
 	}
 
 	memRepo := mem.NewMemoryRepository()
@@ -30,9 +30,15 @@ func TestSearchHandler(t *testing.T) {
 		memRepo,
 	)
 
-	handler := handler.NewSearchHandler(is)
+	searchHandler := handler.NewSearchHandler(is)
 
-	r := router.NewRouter(handler)
+	crawlHandler := handler.NewCrawlHandler(
+		service.NewCrawlService(
+			nil,
+		),
+	)
+
+	r := router.NewRouter(searchHandler, crawlHandler)
 
 	req, _ := http.NewRequest("GET", "/search?q=homepage", nil)
 
@@ -44,7 +50,7 @@ func TestSearchHandler(t *testing.T) {
 			{
 				PageID: "1",
 				Score:  1.0,
-				Page:   factory.HomePage,
+				Page:   &factory.HomePage,
 			},
 		},
 	})

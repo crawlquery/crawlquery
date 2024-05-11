@@ -2,8 +2,10 @@ package service
 
 import (
 	"crawlquery/pkg/domain"
+	"crawlquery/pkg/util"
 	"errors"
 	"math/rand"
+	"net/url"
 )
 
 type NodeService struct {
@@ -17,7 +19,36 @@ func NewNodeService(nr domain.NodeRepository) *NodeService {
 }
 
 func (service *NodeService) CreateOrUpdate(node *domain.Node) error {
+	node.ID = util.UUID()
 	return service.nr.CreateOrUpdate(node)
+}
+
+func (service *NodeService) Add(uri string) error {
+
+	url, err := url.ParseRequestURI(uri)
+
+	if err != nil {
+		return err
+	}
+
+	hostname := url.Hostname()
+
+	if hostname == "" {
+		return errors.New("invalid url")
+	}
+
+	port := url.Port()
+
+	if port == "" {
+		port = "80"
+	}
+
+	return service.nr.CreateOrUpdate(&domain.Node{
+		ID:       util.UUID(),
+		Hostname: hostname,
+		Port:     port,
+		ShardID:  1,
+	})
 }
 
 func (service *NodeService) Get(id string) (*domain.Node, error) {

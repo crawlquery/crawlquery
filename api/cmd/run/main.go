@@ -6,6 +6,8 @@ import (
 	"crawlquery/api/service"
 	crawlJobDiskRepo "crawlquery/pkg/repository/job/disk"
 	nodeDiskRepo "crawlquery/pkg/repository/node/disk"
+	"fmt"
+	"time"
 )
 
 func main() {
@@ -23,15 +25,34 @@ func main() {
 		ns,
 	)
 	searchHandler := handler.NewSearchHandler(searchService)
-
+	crawlSvc := service.NewCrawlService(
+		cqr,
+		ns,
+	)
 	crawlHandler := handler.NewCrawlHandler(
-		service.NewCrawlService(
-			cqr,
-			ns,
-		),
+		crawlSvc,
 	)
 
-	r := router.NewRouter(searchHandler, crawlHandler)
+	nodeHandler := handler.NewNodeHandler(ns)
+
+	r := router.NewRouter(
+		searchHandler,
+		crawlHandler,
+		nodeHandler,
+	)
+
+	go func() {
+		for {
+			fmt.Println("Crawling...")
+			err := crawlSvc.Crawl()
+
+			if err != nil {
+				fmt.Println("Error crawling: ", err)
+			}
+
+			time.Sleep(time.Second)
+		}
+	}()
 
 	r.Run(":8080")
 }
