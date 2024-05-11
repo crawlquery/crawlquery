@@ -1,20 +1,20 @@
-package disk_test
+package mem_test
 
 import (
+	"crawlquery/pkg/domain"
 	"crawlquery/pkg/index"
-	"crawlquery/pkg/index/repository/disk"
-	"os"
+	"crawlquery/pkg/repository/index/mem"
 	"reflect"
 	"testing"
 )
 
 // hasForward checks if two indices have the same forward index.
-func hasForward(idxA, idxB *index.Index) bool {
-	if len(idxA.Forward) != len(idxB.Forward) {
+func hasForward(idxA, idxB domain.Index) bool {
+	if len(idxA.GetForward()) != len(idxB.GetForward()) {
 		return false
 	}
-	for key, docA := range idxA.Forward {
-		docB, ok := idxB.Forward[key]
+	for key, docA := range idxA.GetForward() {
+		docB, ok := idxB.GetForward()[key]
 		if !ok {
 			return false
 		}
@@ -27,12 +27,12 @@ func hasForward(idxA, idxB *index.Index) bool {
 }
 
 // hasInverted checks if two indices have the same inverted index.
-func hasInverted(idxA, idxB *index.Index) bool {
-	if len(idxA.Inverted) != len(idxB.Inverted) {
+func hasInverted(idxA, idxB domain.Index) bool {
+	if len(idxA.GetInverted()) != len(idxB.GetInverted()) {
 		return false
 	}
-	for token, postingsA := range idxA.Inverted {
-		postingsB, ok := idxB.Inverted[token]
+	for token, postingsA := range idxA.GetInverted() {
+		postingsB, ok := idxB.GetInverted()[token]
 		if !ok || len(postingsA) != len(postingsB) {
 			return false
 		}
@@ -50,18 +50,18 @@ func hasInverted(idxA, idxB *index.Index) bool {
 func TestSaveAndLoadIndex(t *testing.T) {
 	// Setup a test index and save to a temporary file
 	testIndex := index.NewIndex()
-	testIndex.AddDocument(index.Document{
+	testIndex.AddDocument(domain.Document{
 		ID:      "doc1",
 		URL:     "http://google.com",
 		Title:   "Google",
 		Content: "<html><body><h1>Google Search</h1></body></html>",
 	})
-	filepath := "/tmp/test_index.gob"
-	repo := disk.NewDiskRepository(filepath)
+	repo := mem.NewMemoryRepository()
 	if err := repo.Save(testIndex); err != nil {
 		t.Fatalf("Failed to save index: %v", err)
 	}
 
+	// Attempt to load the index
 	loaded, err := repo.Load()
 	if err != nil {
 		t.Fatalf("Failed to load index: %v", err)
@@ -75,6 +75,4 @@ func TestSaveAndLoadIndex(t *testing.T) {
 		t.Fatalf("Inverted index does not match expected")
 	}
 
-	// Cleanup
-	os.ReadFile(filepath)
 }

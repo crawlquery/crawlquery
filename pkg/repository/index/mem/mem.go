@@ -1,20 +1,22 @@
 package mem
 
-import "crawlquery/pkg/index"
+import (
+	"crawlquery/pkg/domain"
+)
 
 type MemoryRepository struct {
-	index *index.Index
+	index domain.Index
 }
 
 func NewMemoryRepository() *MemoryRepository {
 	return &MemoryRepository{}
 }
 
-func (mr *MemoryRepository) Save(idx *index.Index) error {
+func (mr *MemoryRepository) Save(idx domain.Index) error {
 	mr.index = idx
 	return nil
 }
 
-func (mr *MemoryRepository) Load() (*index.Index, error) {
+func (mr *MemoryRepository) Load() (domain.Index, error) {
 	return mr.index, nil
 }
