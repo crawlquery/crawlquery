@@ -8,6 +8,24 @@ import (
 	"github.com/PuerkitoBio/goquery"
 )
 
+func TokenizeTerm(term string) []string {
+	// Normalize text: convert to lower case
+	normalizedText := strings.ToLower(term)
+
+	// Remove punctuation using a regular expression
+	// Ensuring spaces are not removed by the regex
+	reg := regexp.MustCompile(`[^a-zA-Z0-9\s]+`)
+	finalText := reg.ReplaceAllString(normalizedText, "")
+
+	// Remove multiple spaces resulting from removals and edge cases
+	spaceCleanedText := strings.Join(strings.Fields(finalText), " ")
+
+	// Split text into words based on whitespace
+	words := strings.Fields(spaceCleanedText)
+
+	return words
+}
+
 // tokenize takes HTML content, extracts text, and splits it into tokens.
 func Tokenize(htmlContent string) map[string][]int {
 	doc, err := goquery.NewDocumentFromReader(strings.NewReader(htmlContent))

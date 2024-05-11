@@ -13,9 +13,9 @@ type Document struct {
 
 // Posting lists entry
 type Posting struct {
-	DocumentID string
-	Frequency  int
-	Positions  []int // Optional, depending on whether you need positional index
+	PageID    string
+	Frequency int
+	Positions []int // Optional, depending on whether you need positional index
 }
 
 // InvertedIndex maps keywords to document lists
@@ -47,7 +47,7 @@ func (idx *Index) AddDocument(doc Document) {
 
 	// Update inverted index
 	for token, positions := range tokensWithPositions {
-		posting := Posting{DocumentID: doc.ID, Frequency: len(positions), Positions: positions}
+		posting := Posting{PageID: doc.ID, Frequency: len(positions), Positions: positions}
 		idx.Inverted[token] = append(idx.Inverted[token], posting)
 	}
 }

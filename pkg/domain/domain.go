@@ -3,7 +3,7 @@ package domain
 import "crawlquery/pkg/index"
 
 type Result struct {
-	ID          string  `json:"id"`
+	PageID      string  `json:"id"`
 	Url         string  `json:"url"`
 	Title       string  `json:"title"`
 	Description string  `json:"description"`

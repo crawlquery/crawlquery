@@ -37,7 +37,7 @@ func hasInverted(idxA, idxB *index.Index) bool {
 		}
 		for i, postingA := range postingsA {
 			postingB := postingsB[i]
-			if postingA.DocumentID != postingB.DocumentID || postingA.Frequency != postingB.Frequency ||
+			if postingA.PageID != postingB.PageID || postingA.Frequency != postingB.Frequency ||
 				!reflect.DeepEqual(postingA.Positions, postingB.Positions) {
 				return false
 			}
