@@ -1,11 +1,8 @@
-package service_test
+package mem_test
 
 import (
-	"bytes"
-	"crawlquery/node/service"
 	"crawlquery/pkg/index"
-	"encoding/gob"
-	"os"
+	"crawlquery/pkg/index/repository/mem"
 	"reflect"
 	"testing"
 )
@@ -58,35 +55,23 @@ func TestSaveAndLoadIndex(t *testing.T) {
 		Title:   "Google",
 		Content: "<html><body><h1>Google Search</h1></body></html>",
 	})
-	filepath := "/tmp/test_index.gob"
-	indexService := service.NewIndexService()
-	indexService.SetIndex(testIndex)
-	if err := indexService.SaveIndex(filepath); err != nil {
+	repo := mem.NewMemoryRepository()
+	if err := repo.Save(testIndex); err != nil {
 		t.Fatalf("Failed to save index: %v", err)
 	}
 
-	indexBService := service.NewIndexService()
 	// Attempt to load the index
-	err := indexBService.LoadIndex(filepath)
+	loaded, err := repo.Load()
 	if err != nil {
 		t.Fatalf("Failed to load index: %v", err)
 	}
 
-	if !hasForward(testIndex, indexBService.GetIndex()) {
+	if !hasForward(testIndex, loaded) {
 		t.Fatalf("Forward index does not match expected")
 	}
 
-	if !hasInverted(testIndex, indexBService.GetIndex()) {
+	if !hasInverted(testIndex, loaded) {
 		t.Fatalf("Inverted index does not match expected")
 	}
 
-	// Cleanup
-	os.ReadFile(filepath)
-}
-
-// Helper function to deserialize index from bytes
-func deserializeIndex(data []byte, idx *index.Index) error {
-	reader := bytes.NewReader(data)
-	decoder := gob.NewDecoder(reader)
-	return decoder.Decode(idx)
 }
