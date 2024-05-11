@@ -30,14 +30,16 @@ const search = () => {
         </label>
 
         <div v-if="resultStore.results && resultStore.results.length > 0" class="mt-4 space-y-4">
-            <div v-for="result in resultStore.results" :key="result.id">
+            <div v-for="result in resultStore.results" :key="result.page.id">
                 <div class="p-4 border rounded-xl">
                     <div class="p-2">
-                        <h2 class="font-semibold"><a :href="result.url" class="text-indigo-500">{{ result.title }}</a>
+                        <h2 class="font-semibold"><a :href="result.page.url" class="text-indigo-500">{{
+                result.page.title
+            }}</a>
                         </h2>
 
                         <div class="mt-4 flex content-center">
-                            <div class="w-full">{{ result.description }}</div>
+                            <div class="w-full">{{ result.page.description }}</div>
                             <div class="text-gray-300 w-16">✨ {{ result.score }}</div>
                         </div>
                     </div>

@@ -25,7 +25,6 @@ func TestAddPage(t *testing.T) {
 	tokens := token.Tokenize(doc.Content) // Make sure to implement this or adjust to your actual tokenize function
 	// Add page to the index
 	idx.AddPage(doc)
-	t.FailNow()
 	// Retrieve the page from the forward index and verify it
 	indexedDoc, exists := idx.Forward[doc.ID]
 	if !exists {

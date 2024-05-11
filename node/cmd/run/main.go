@@ -4,6 +4,7 @@ import (
 	"crawlquery/node/handler"
 	"crawlquery/node/router"
 	"crawlquery/node/service"
+	"crawlquery/pkg/factory"
 	"crawlquery/pkg/index"
 	"crawlquery/pkg/repository/index/mem"
 )
@@ -11,6 +12,10 @@ import (
 func main() {
 
 	idx := index.NewIndex()
+
+	for _, page := range factory.TenPages() {
+		idx.AddPage(page)
+	}
 
 	memRepo := mem.NewMemoryRepository()
 	memRepo.Save(idx)

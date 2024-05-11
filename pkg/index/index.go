@@ -5,6 +5,7 @@ import (
 	"crawlquery/pkg/token"
 	"fmt"
 	"sort"
+	"strings"
 )
 
 // Index represents the search index on a node
@@ -29,17 +30,30 @@ func (idx *Index) SetForward(forward domain.ForwardIndex) {
 	idx.Forward = forward
 }
 
+func (idx *Index) fuzzySearch(term string) map[string]float64 {
+	results := make(map[string]float64)
+	for key, postings := range idx.Inverted {
+		// Check if the term is a substring of the key
+		if strings.Contains(key, term) {
+			for _, posting := range postings {
+				// Add or increase the score based on frequency
+				results[posting.PageID] += float64(posting.Frequency)
+			}
+		}
+	}
+	return results
+}
+
 func (idx *Index) Search(query string) ([]domain.Result, error) {
 	// Tokenize the query the same way as the index was tokenized
 	queryTerms := token.TokenizeTerm(query)
 	results := make(map[string]float64) // map[PageID]relevanceScore
 
 	for _, term := range queryTerms {
-		if postings, found := idx.Inverted[term]; found {
-			for _, posting := range postings {
-				// Simple scoring: count the frequency of each term
-				results[posting.PageID] += float64(posting.Frequency)
-			}
+		// Use fuzzy search to find matching terms
+		partialResults := idx.fuzzySearch(term)
+		for docID, score := range partialResults {
+			results[docID] += score
 		}
 	}
 
