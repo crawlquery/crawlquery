@@ -26,6 +26,7 @@ func CORSMiddleware() gin.HandlerFunc {
 
 func NewRouter(
 	searchHandler *handler.SearchHandler,
+	crawlHandler *handler.CrawlHandler,
 ) *gin.Engine {
 	router := gin.Default()
 	router.Use(cors.New(cors.Config{
@@ -37,6 +38,6 @@ func NewRouter(
 		MaxAge:           12 * time.Hour,
 	}))
 	router.GET("/search", searchHandler.Search)
-	router.POST("/crawl", handler.CrawlHandler)
+	router.POST("/crawl", crawlHandler.Crawl)
 	return router
 }

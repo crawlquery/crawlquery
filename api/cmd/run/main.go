@@ -4,20 +4,34 @@ import (
 	"crawlquery/api/handler"
 	"crawlquery/api/router"
 	"crawlquery/api/service"
-	"crawlquery/pkg/repository/node/disk"
+	crawlJobDiskRepo "crawlquery/pkg/repository/job/disk"
+	nodeDiskRepo "crawlquery/pkg/repository/node/disk"
 )
 
 func main() {
 
-	searchService := service.NewSearchService(
-		service.NewNodeService(
-			disk.NewDiskRepository(
-				"/tmp/nodes.gob",
-			),
+	cqr := crawlJobDiskRepo.NewDiskRepository(
+		"/tmp/crawl_job.gob",
+	)
+
+	ns := service.NewNodeService(
+		nodeDiskRepo.NewDiskRepository(
+			"/tmp/nodes.gob",
 		),
 	)
+	searchService := service.NewSearchService(
+		ns,
+	)
 	searchHandler := handler.NewSearchHandler(searchService)
-	r := router.NewRouter(searchHandler)
+
+	crawlHandler := handler.NewCrawlHandler(
+		service.NewCrawlService(
+			cqr,
+			ns,
+		),
+	)
+
+	r := router.NewRouter(searchHandler, crawlHandler)
 
 	r.Run(":8080")
 }
