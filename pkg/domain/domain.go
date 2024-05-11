@@ -96,3 +96,7 @@ type Node struct {
 }
 
 type ShardID int
+
+type SearchService interface {
+	Search(term string) ([]Result, error)
+}

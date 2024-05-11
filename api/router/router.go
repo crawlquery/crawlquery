@@ -24,7 +24,9 @@ func CORSMiddleware() gin.HandlerFunc {
 	}
 }
 
-func NewRouter() *gin.Engine {
+func NewRouter(
+	searchHandler *handler.SearchHandler,
+) *gin.Engine {
 	router := gin.Default()
 	router.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"*"},
@@ -34,7 +36,7 @@ func NewRouter() *gin.Engine {
 		AllowCredentials: true,
 		MaxAge:           12 * time.Hour,
 	}))
-	router.GET("/search", handler.SearchHandler)
+	router.GET("/search", searchHandler.Search)
 	router.POST("/crawl", handler.CrawlHandler)
 	return router
 }
