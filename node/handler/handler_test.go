@@ -40,13 +40,11 @@ func TestSearchHandler(t *testing.T) {
 	r.ServeHTTP(w, req)
 
 	expected, err := json.Marshal(gin.H{
-		"results": domain.Result{
-			PageID: "doc1",
-			Score:  1.0,
-			Page: domain.Page{
-				ID:    "doc1",
-				URL:   "http://google.com",
-				Title: "Google",
+		"results": []domain.Result{
+			{
+				PageID: "1",
+				Score:  1.0,
+				Page:   factory.HomePage,
 			},
 		},
 	})
