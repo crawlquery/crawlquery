@@ -43,7 +43,6 @@ func main() {
 
 	go func() {
 		for {
-			fmt.Println("Crawling...")
 			err := crawlSvc.Crawl()
 
 			if err != nil {

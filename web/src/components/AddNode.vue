@@ -13,7 +13,7 @@ const addNode = () => {
     axios.post(`http://localhost:8080/nodes`, {
         hostname: hostname.value,
         port: String(port.value),
-        shardID: Number(shardID.value)
+        shard_id: Number(shardID.value)
     })
         .then((response: any) => {
             success.value = true
