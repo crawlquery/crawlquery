@@ -3,7 +3,8 @@ package mem
 import "crawlquery/api/domain"
 
 type Repository struct {
-	jobs map[string]*domain.CrawlJob
+	jobs       map[string]*domain.CrawlJob
+	forceError error
 }
 
 func NewRepository() *Repository {
@@ -12,7 +13,14 @@ func NewRepository() *Repository {
 	}
 }
 
+func (r *Repository) ForceError(err error) {
+	r.forceError = err
+}
+
 func (r *Repository) Create(j *domain.CrawlJob) error {
+	if r.forceError != nil {
+		return r.forceError
+	}
 	r.jobs[j.ID] = j
 	return nil
 }

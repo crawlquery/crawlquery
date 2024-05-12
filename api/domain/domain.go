@@ -1,9 +1,7 @@
 package domain
 
-import "time"
+import "github.com/go-playground/validator/v10"
 
-type CrawlJob struct {
-	ID        string
-	URL       string
-	CreatedAt time.Time
-}
+var validate = validator.New(
+	validator.WithRequiredStructEnabled(),
+)

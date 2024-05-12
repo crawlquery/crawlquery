@@ -1,44 +1,71 @@
 package service_test
 
 import (
-	"crawlquery/api/service"
-	"crawlquery/pkg/domain"
-	crawlJobMemRepo "crawlquery/pkg/repository/job/mem"
-	nodeMemRepo "crawlquery/pkg/repository/node/mem"
+	"crawlquery/api/crawl/job/repository/mem"
+	"crawlquery/api/crawl/service"
+	"errors"
 	"testing"
 
-	"github.com/h2non/gock"
+	"github.com/google/uuid"
 )
 
-func TestCrawl(t *testing.T) {
-	nodeRepo := nodeMemRepo.NewMemoryRepository()
-	nodeService := service.NewNodeService(nodeRepo)
-	crawlJobRepo := crawlJobMemRepo.NewMemoryRepository()
+func TestAddJob(t *testing.T) {
+	t.Run("can add a job", func(t *testing.T) {
+		// Arrange
+		repo := mem.NewRepository()
+		svc := service.NewService(repo)
+		url := "http://example.com"
 
-	nodeRepo.CreateOrUpdate(&domain.Node{
-		ID:       "node1",
-		Hostname: "node1.cluster.com",
-		Port:     "8080",
+		// Act
+		err := svc.AddJob(url)
+
+		// Assert
+		if err != nil {
+			t.Errorf("Error adding job: %v", err)
+		}
+
+		first, err := repo.First()
+		if err != nil {
+			t.Errorf("Error getting first job: %v", err)
+		}
+
+		if first.URL != url {
+			t.Errorf("Expected URL to be %s, got %s", url, first.URL)
+		}
+
+		if _, err := uuid.Parse(first.ID); err != nil {
+			t.Errorf("Expected ID to be a valid UUID, got %s", first.ID)
+		}
 	})
 
-	crawlJobRepo.Push(&domain.CrawlJob{
-		URL: "http://google.com",
+	t.Run("validates url", func(t *testing.T) {
+		// Arrange
+		repo := mem.NewRepository()
+		svc := service.NewService(repo)
+		url := "x123!"
+
+		// Act
+		err := svc.AddJob(url)
+
+		// Assert
+		if err == nil {
+			t.Errorf("Expected error, got nil")
+		}
 	})
 
-	svc := service.NewCrawlService(crawlJobRepo, nodeService)
+	t.Run("handles repository error", func(t *testing.T) {
+		// Arrange
+		repo := mem.NewRepository()
+		svc := service.NewService(repo)
+		expectErr := errors.New("db locked")
+		repo.ForceError(expectErr)
 
-	defer gock.Off()
+		// Act
+		err := svc.AddJob("http://example.com")
 
-	gock.New("http://node1.cluster.com:8080").
-		MatchHeader("Content-Type", "application/json").
-		Post("/crawl").
-		JSON(map[string]string{"url": "http://google.com"}).
-		Reply(200).
-		JSON(map[string]bool{"success": true})
-
-	err := svc.Crawl()
-
-	if err != nil {
-		t.Fatalf("Error crawling: %v", err)
-	}
+		// Assert
+		if err != expectErr {
+			t.Errorf("Expected error, got nil")
+		}
+	})
 }

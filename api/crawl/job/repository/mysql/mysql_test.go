@@ -65,6 +65,32 @@ func TestCreate(t *testing.T) {
 		// Clean up
 		db.Exec("DELETE FROM crawl_jobs WHERE id = ?", job.ID)
 	})
+
+	t.Run("cant create a job with the same ID", func(t *testing.T) {
+		// Arrange
+		db := testutil.CreateTestMysqlDB()
+		defer db.Close()
+		migration.Up(db)
+
+		repo := mysql.NewRepository(db)
+
+		job := &domain.CrawlJob{
+			ID:        util.UUID(),
+			URL:       "http://example.com",
+			CreatedAt: time.Now().UTC(),
+		}
+		db.Exec("INSERT INTO crawl_jobs (id, url, created_at) VALUES (?, ?, ?)", job.ID, job.URL, job.CreatedAt)
+
+		defer db.Exec("DELETE FROM crawl_jobs WHERE id = ?", job.ID)
+
+		// Act
+		err := repo.Create(job)
+
+		// Assert
+		if err == nil {
+			t.Errorf("Expected error, got nil")
+		}
+	})
 }
 
 func TestGet(t *testing.T) {
@@ -82,6 +108,8 @@ func TestGet(t *testing.T) {
 			CreatedAt: time.Now().UTC(),
 		}
 		db.Exec("INSERT INTO crawl_jobs (id, url, created_at) VALUES (?, ?, ?)", job.ID, job.URL, job.CreatedAt)
+
+		defer db.Exec("DELETE FROM crawl_jobs WHERE id = ?", job.ID)
 
 		// Act
 		res, err := repo.Get(job.ID)
@@ -102,9 +130,6 @@ func TestGet(t *testing.T) {
 		if res.CreatedAt.Sub(job.CreatedAt) > time.Second || job.CreatedAt.Sub(res.CreatedAt) > time.Second {
 			t.Errorf("Expected CreatedAt to be within one second of %v, got %v", job.CreatedAt, res.CreatedAt)
 		}
-
-		// Clean up
-		db.Exec("DELETE FROM crawl_jobs WHERE id = ?", job.ID)
 	})
 
 	t.Run("returns error if job does not exist", func(t *testing.T) {
@@ -152,6 +177,9 @@ func TestFirst(t *testing.T) {
 		}
 		db.Exec("INSERT INTO crawl_jobs (id, url, created_at) VALUES (?, ?, ?)", job2.ID, job2.URL, job2.CreatedAt)
 
+		defer db.Exec("DELETE FROM crawl_jobs WHERE id = ?", job.ID)
+		defer db.Exec("DELETE FROM crawl_jobs WHERE id = ?", job2.ID)
+
 		// Act
 		res, err := repo.First()
 
@@ -172,9 +200,6 @@ func TestFirst(t *testing.T) {
 			t.Errorf("Expected CreatedAt to be within one second of %v, got %v", job.CreatedAt, res.CreatedAt)
 		}
 
-		// Clean up
-		db.Exec("DELETE FROM crawl_jobs WHERE id = ?", job.ID)
-		db.Exec("DELETE FROM crawl_jobs WHERE id = ?", job2.ID)
 	})
 
 	t.Run("returns error if no jobs exist", func(t *testing.T) {
@@ -214,6 +239,7 @@ func TestDelete(t *testing.T) {
 			CreatedAt: time.Now().UTC(),
 		}
 		db.Exec("INSERT INTO crawl_jobs (id, url, created_at) VALUES (?, ?, ?)", job.ID, job.URL, job.CreatedAt)
+		defer db.Exec("DELETE FROM crawl_jobs WHERE id = ?", job.ID)
 
 		// Act
 		err := repo.Delete(job.ID)

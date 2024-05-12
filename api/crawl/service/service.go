@@ -1,89 +1,35 @@
 package service
 
 import (
-	"bytes"
-	"crawlquery/pkg/domain"
-	"fmt"
-	"net/http"
+	"crawlquery/api/domain"
+	"crawlquery/pkg/util"
 	"time"
 )
 
-type CrawlService struct {
-	queueRepository domain.CrawlQueueRepository
-	nodeService     domain.NodeService
+type Service struct {
+	repo domain.CrawlJobRepository
 }
 
-func NewCrawlService(
-	queueRepository domain.CrawlQueueRepository,
-	nodeService domain.NodeService,
-) *CrawlService {
-	return &CrawlService{
-		queueRepository: queueRepository,
-		nodeService:     nodeService,
+func NewService(repo domain.CrawlJobRepository) *Service {
+	return &Service{
+		repo: repo,
 	}
 }
 
-func (service *CrawlService) Queue(url string) error {
-	return service.queueRepository.Push(
-		&domain.CrawlJob{
-			URL:         url,
-			RequestedAt: time.Now(),
-		},
-	)
-}
+func (cs *Service) AddJob(url string) error {
+	job := &domain.CrawlJob{
+		ID:        util.UUID(),
+		URL:       url,
+		CreatedAt: time.Now(),
+	}
 
-func (service *CrawlService) Crawl() error {
-	err := service.queueRepository.Load()
-	if err != nil {
+	if err := job.Validate(); err != nil {
 		return err
 	}
 
-	job, err := service.queueRepository.Pop()
-
-	if err != nil {
+	// Save the job in the repository
+	if err := cs.repo.Create(job); err != nil {
 		return err
 	}
-
-	if job == nil {
-		return nil
-	}
-	nodes, err := service.nodeService.RandomizeAll()
-	fmt.Printf("nodes: %v\n", nodes)
-	var finished bool
-	for _, node := range nodes {
-		if err != nil {
-			return err
-		}
-
-		crawlEndpoint := fmt.Sprintf("http://%s:%s/crawl", node.Hostname, node.Port)
-
-		res, err := http.Post(crawlEndpoint, "application/json", bytes.NewBuffer([]byte(fmt.Sprintf(
-			`{"url": "%s"}`, job.URL,
-		))))
-
-		if err != nil {
-			return err
-		}
-
-		defer res.Body.Close()
-
-		if res.StatusCode == http.StatusOK {
-			finished = true
-			break
-		}
-	}
-
-	if !finished {
-		job.LastTriedAt = time.Now()
-
-		err = service.queueRepository.Push(job)
-
-		if err != nil {
-			return err
-		}
-
-		return fmt.Errorf("could not crawl %s", job.URL)
-	}
-
 	return nil
 }
