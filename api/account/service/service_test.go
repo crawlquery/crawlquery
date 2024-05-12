@@ -4,6 +4,7 @@ import (
 	"crawlquery/api/account/repository/mem"
 	"crawlquery/api/account/service"
 	"crawlquery/api/domain"
+	"crawlquery/pkg/testutil"
 	"errors"
 	"testing"
 )
@@ -11,7 +12,7 @@ import (
 func TestCreate(t *testing.T) {
 	t.Run("can create an account", func(t *testing.T) {
 		repo := mem.NewRepository()
-		svc := service.NewService(repo)
+		svc := service.NewService(repo, testutil.NewTestLogger())
 
 		account := &domain.Account{
 			Email:    "test@example.com",
@@ -45,7 +46,7 @@ func TestCreate(t *testing.T) {
 
 	t.Run("can't create an account with the same email", func(t *testing.T) {
 		repo := mem.NewRepository()
-		svc := service.NewService(repo)
+		svc := service.NewService(repo, testutil.NewTestLogger())
 
 		email := "test@example.com"
 		password := "password"
@@ -74,7 +75,7 @@ func TestCreate(t *testing.T) {
 
 	t.Run("validates account", func(t *testing.T) {
 		repo := mem.NewRepository()
-		svc := service.NewService(repo)
+		svc := service.NewService(repo, testutil.NewTestLogger())
 
 		t.Run("invalid email", func(t *testing.T) {
 			_, err := svc.Create("invalid", "password")
@@ -95,7 +96,7 @@ func TestCreate(t *testing.T) {
 
 	t.Run("handles create repository error", func(t *testing.T) {
 		repo := mem.NewRepository()
-		svc := service.NewService(repo)
+		svc := service.NewService(repo, testutil.NewTestLogger())
 
 		expectErr := errors.New("db locked")
 		repo.ForceCreateError(expectErr)
@@ -108,18 +109,16 @@ func TestCreate(t *testing.T) {
 	})
 
 	t.Run("handles email unique check error", func(t *testing.T) {
-		repo := mem.NewRepository()
-		svc := service.NewService(repo)
-
 		email := "test@example.com"
-
-		expectErr := errors.New("db locked")
-
-		repo.ForceGetByEmailError(expectErr)
+		repo := mem.NewRepository()
+		repo.Create(&domain.Account{
+			Email: email,
+		})
+		svc := service.NewService(repo, testutil.NewTestLogger())
 
 		_, err := svc.Create(email, "password")
 
-		if err != domain.InternalError {
+		if err != domain.ErrAccountExists {
 			t.Errorf("Expected error creating account, got %v", err)
 		}
 	})

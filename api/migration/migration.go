@@ -40,17 +40,18 @@ func Up(db *sql.DB) error {
 
 	for k, v := range migrations {
 
-		checkMigration := `SELECT * FROM migrations WHERE name = ?`
+		checkMigration := `SELECT name FROM migrations WHERE name = ?`
 
 		row := db.QueryRow(checkMigration, k)
 
-		var id int
 		var name string
-		var createdAt time.Time
+		err := row.Scan(&name)
 
-		err := row.Scan(&id, &name, &createdAt)
+		if err != nil {
+			return err
+		}
 
-		if err == nil {
+		if name == k {
 			continue
 		}
 

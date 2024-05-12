@@ -12,11 +12,16 @@ import (
 	accountService "crawlquery/api/account/service"
 
 	_ "github.com/go-sql-driver/mysql"
+	"go.uber.org/zap"
 )
 
 func main() {
 
-	db, err := sql.Open("mysql", "root:cqdb@tcp(localhsot:3306)/cqdb")
+	logger, _ := zap.NewProduction()
+	defer logger.Sync()
+	sugar := logger.Sugar()
+
+	db, err := sql.Open("mysql", "root:cqdb@tcp(localhost:3306)/cqdb")
 	if err != nil {
 		fmt.Println("Error connecting to database: ", err)
 		return
@@ -33,7 +38,7 @@ func main() {
 	}
 
 	accountRepo := accountMysqlRepo.NewRepository(db)
-	accountService := accountService.NewService(accountRepo)
+	accountService := accountService.NewService(accountRepo, sugar)
 	accountHandler := accountHandler.NewHandler(accountService)
 
 	r := router.NewRouter(accountHandler)

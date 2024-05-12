@@ -6,17 +6,23 @@ import (
 	"time"
 
 	"github.com/go-playground/validator/v10"
+	"go.uber.org/zap"
 )
 
 type Service struct {
 	repo      domain.AccountRepository
+	logger    *zap.SugaredLogger
 	validator *validator.Validate
 }
 
-func NewService(repo domain.AccountRepository) *Service {
+func NewService(
+	repo domain.AccountRepository,
+	logger *zap.SugaredLogger,
+) *Service {
 	return &Service{
 		repo:      repo,
 		validator: validator.New(),
+		logger:    logger,
 	}
 }
 
@@ -34,18 +40,14 @@ func (s *Service) Create(email, password string) (*domain.Account, error) {
 	}
 
 	check, err := s.repo.GetByEmail(email)
-
-	if err != nil {
-		return nil, domain.InternalError
-	}
-
-	if check != nil {
+	if err == nil || check != nil {
 		return nil, domain.ErrAccountExists
 	}
 
 	err = s.repo.Create(a)
 
 	if err != nil {
+		s.logger.Errorw("account.service.create: error creating account", "error", err)
 		return nil, domain.InternalError
 	}
 
