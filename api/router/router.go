@@ -1,33 +1,15 @@
 package router
 
 import (
-	"crawlquery/api/handler"
+	"crawlquery/api/domain"
 	"time"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
-func CORSMiddleware() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
-		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
-		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With")
-		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT")
-
-		if c.Request.Method == "OPTIONS" {
-			c.AbortWithStatus(204)
-			return
-		}
-
-		c.Next()
-	}
-}
-
 func NewRouter(
-	searchHandler *handler.SearchHandler,
-	crawlHandler *handler.CrawlHandler,
-	nodeHandler *handler.NodeHandler,
+	accountHandler domain.AccountHandler,
 ) *gin.Engine {
 	router := gin.Default()
 	router.Use(cors.New(cors.Config{
@@ -38,8 +20,6 @@ func NewRouter(
 		AllowCredentials: true,
 		MaxAge:           12 * time.Hour,
 	}))
-	router.GET("/search", searchHandler.Search)
-	router.POST("/crawl", crawlHandler.Crawl)
-	router.POST("/nodes", nodeHandler.Add)
+	router.POST("/account", accountHandler.Create)
 	return router
 }

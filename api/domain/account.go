@@ -3,6 +3,8 @@ package domain
 import (
 	"errors"
 	"time"
+
+	"github.com/gin-gonic/gin"
 )
 
 var ErrAccountExists = errors.New("account already exists")
@@ -25,5 +27,9 @@ type AccountRepository interface {
 }
 
 type AccountService interface {
-	Create(email, password string) error
+	Create(email, password string) (*Account, error)
+}
+
+type AccountHandler interface {
+	Create(c *gin.Context)
 }
