@@ -10,4 +10,4 @@ var validate = validator.New(
 	validator.WithRequiredStructEnabled(),
 )
 
-var InternalError = errors.New("internal error")
+var ErrInternalError = errors.New("internal error")

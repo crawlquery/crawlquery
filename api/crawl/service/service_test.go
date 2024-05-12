@@ -3,6 +3,7 @@ package service_test
 import (
 	"crawlquery/api/crawl/job/repository/mem"
 	"crawlquery/api/crawl/service"
+	"crawlquery/pkg/testutil"
 	"errors"
 	"testing"
 
@@ -13,7 +14,7 @@ func TestAddJob(t *testing.T) {
 	t.Run("can add a job", func(t *testing.T) {
 		// Arrange
 		repo := mem.NewRepository()
-		svc := service.NewService(repo)
+		svc := service.NewService(repo, testutil.NewTestLogger())
 		url := "http://example.com"
 
 		// Act
@@ -41,7 +42,7 @@ func TestAddJob(t *testing.T) {
 	t.Run("validates url", func(t *testing.T) {
 		// Arrange
 		repo := mem.NewRepository()
-		svc := service.NewService(repo)
+		svc := service.NewService(repo, testutil.NewTestLogger())
 		url := "x123!"
 
 		// Act
@@ -56,7 +57,7 @@ func TestAddJob(t *testing.T) {
 	t.Run("handles repository error", func(t *testing.T) {
 		// Arrange
 		repo := mem.NewRepository()
-		svc := service.NewService(repo)
+		svc := service.NewService(repo, testutil.NewTestLogger())
 		expectErr := errors.New("db locked")
 		repo.ForceError(expectErr)
 

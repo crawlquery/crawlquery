@@ -6,6 +6,7 @@ import (
 	"crawlquery/api/account/repository/mem"
 	"crawlquery/api/account/service"
 	"crawlquery/api/dto"
+	"crawlquery/pkg/testutil"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -18,8 +19,8 @@ func TestCreate(t *testing.T) {
 	t.Run("should create an account", func(t *testing.T) {
 
 		repo := mem.NewRepository()
-		svc := service.NewService(repo)
-		handler := handler.NewAccountHandler(svc)
+		svc := service.NewService(repo, testutil.NewTestLogger())
+		handler := handler.NewHandler(svc)
 
 		// given
 		a := &dto.CreateAccountRequest{
@@ -64,8 +65,8 @@ func TestCreate(t *testing.T) {
 	t.Run("should return 400 if malformed JSON", func(t *testing.T) {
 
 		repo := mem.NewRepository()
-		svc := service.NewService(repo)
-		handler := handler.NewAccountHandler(svc)
+		svc := service.NewService(repo, testutil.NewTestLogger())
+		handler := handler.NewHandler(svc)
 
 		// given
 		req := []byte(`{"email":`)
@@ -98,8 +99,8 @@ func TestCreate(t *testing.T) {
 	t.Run("should return 400 if request data is invalid", func(t *testing.T) {
 
 		repo := mem.NewRepository()
-		svc := service.NewService(repo)
-		handler := handler.NewAccountHandler(svc)
+		svc := service.NewService(repo, testutil.NewTestLogger())
+		handler := handler.NewHandler(svc)
 
 		// given
 		a := &dto.CreateAccountRequest{

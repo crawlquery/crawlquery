@@ -50,26 +50,15 @@ func TestCreate(t *testing.T) {
 
 		email := "test@example.com"
 		password := "password"
-		account, err := svc.Create(email, password)
+		repo.Create(&domain.Account{
+			Email:    email,
+			Password: password,
+		})
 
-		if err != nil {
-			t.Fatalf("Error creating account: %v", err)
-		}
+		_, err := svc.Create(email, password)
 
-		_, err = svc.Create(email, password+"1")
-
-		if err == nil {
+		if err != domain.ErrAccountExists {
 			t.Errorf("Expected error creating account with the same email")
-		}
-
-		_, err = repo.Get(account.ID)
-
-		if err != nil {
-			t.Fatalf("Error getting account: %v", err)
-		}
-
-		if account.Password != password {
-			t.Errorf("Expected Password to be %s, got %s", password, account.Password)
 		}
 	})
 
@@ -103,7 +92,7 @@ func TestCreate(t *testing.T) {
 
 		_, err := svc.Create("test@example.com", "password")
 
-		if err != domain.InternalError {
+		if err != domain.ErrInternalError {
 			t.Errorf("Expected error creating account, got %v", err)
 		}
 	})

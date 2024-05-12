@@ -7,7 +7,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-var ErrAccountExists = errors.New("account already exists")
+var ErrAccountExists = errors.New("cannot create account")
+var ErrNoAccountFound = errors.New("no account found")
 
 type Account struct {
 	ID        string    `validate:"required,uuid"`

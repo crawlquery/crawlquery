@@ -27,11 +27,12 @@ func (r *Repository) Get(id string) (*domain.Account, error) {
 
 	var account domain.Account
 	err := row.Scan(&account.ID, &account.Email, &account.Password, &account.CreatedAt)
-	if err != nil {
-		return nil, err
+
+	if err == sql.ErrNoRows {
+		return nil, domain.ErrNoAccountFound
 	}
 
-	return &account, nil
+	return &account, err
 }
 
 func (r *Repository) GetByEmail(email string) (*domain.Account, error) {
@@ -39,9 +40,10 @@ func (r *Repository) GetByEmail(email string) (*domain.Account, error) {
 
 	var account domain.Account
 	err := row.Scan(&account.ID, &account.Email, &account.Password, &account.CreatedAt)
-	if err != nil {
-		return nil, err
+
+	if err == sql.ErrNoRows {
+		return nil, domain.ErrNoAccountFound
 	}
 
-	return &account, nil
+	return &account, err
 }

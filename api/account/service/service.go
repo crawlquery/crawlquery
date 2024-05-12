@@ -47,8 +47,8 @@ func (s *Service) Create(email, password string) (*domain.Account, error) {
 	err = s.repo.Create(a)
 
 	if err != nil {
-		s.logger.Errorw("account.service.create: error creating account", "error", err)
-		return nil, domain.InternalError
+		s.logger.Errorw("Account.Service.Create: error creating account", "error", err)
+		return nil, domain.ErrInternalError
 	}
 
 	return a, nil
