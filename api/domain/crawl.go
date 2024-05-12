@@ -1,6 +1,13 @@
 package domain
 
-import "time"
+import (
+	"errors"
+	"time"
+
+	"github.com/gin-gonic/gin"
+)
+
+var ErrCrawlJobNotFound = errors.New("crawl job not found")
 
 type CrawlJob struct {
 	ID        string    `validate:"required,uuid"`
@@ -19,6 +26,10 @@ type CrawlJobRepository interface {
 	Delete(string) error
 }
 
-type CrawlService interface {
-	AddJob(string) error
+type CrawlJobService interface {
+	Create(string) (*CrawlJob, error)
+}
+
+type CrawlJobHandler interface {
+	Create(c *gin.Context)
 }

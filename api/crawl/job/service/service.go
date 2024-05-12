@@ -23,7 +23,7 @@ func NewService(
 	}
 }
 
-func (cs *Service) AddJob(url string) error {
+func (cs *Service) Create(url string) (*domain.CrawlJob, error) {
 	job := &domain.CrawlJob{
 		ID:        util.UUID(),
 		URL:       url,
@@ -31,13 +31,13 @@ func (cs *Service) AddJob(url string) error {
 	}
 
 	if err := job.Validate(); err != nil {
-		return err
+		return nil, err
 	}
 
 	// Save the job in the repository
 	if err := cs.repo.Create(job); err != nil {
 		cs.logger.Errorw("Crawl.Service.AddJob: error creating job", "error", err)
-		return err
+		return nil, domain.ErrInternalError
 	}
-	return nil
+	return job, nil
 }

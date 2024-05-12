@@ -2,40 +2,38 @@ package service_test
 
 import (
 	"crawlquery/api/crawl/job/repository/mem"
-	"crawlquery/api/crawl/service"
+	"crawlquery/api/crawl/job/service"
+	"crawlquery/api/domain"
 	"crawlquery/pkg/testutil"
 	"errors"
 	"testing"
-
-	"github.com/google/uuid"
 )
 
-func TestAddJob(t *testing.T) {
-	t.Run("can add a job", func(t *testing.T) {
+func TestCreate(t *testing.T) {
+	t.Run("can create a job", func(t *testing.T) {
 		// Arrange
 		repo := mem.NewRepository()
 		svc := service.NewService(repo, testutil.NewTestLogger())
 		url := "http://example.com"
 
 		// Act
-		err := svc.AddJob(url)
+		job, err := svc.Create(url)
 
 		// Assert
 		if err != nil {
 			t.Errorf("Error adding job: %v", err)
 		}
 
-		first, err := repo.First()
-		if err != nil {
-			t.Errorf("Error getting first job: %v", err)
+		if job.ID == "" {
+			t.Errorf("Expected ID to be set")
 		}
 
-		if first.URL != url {
-			t.Errorf("Expected URL to be %s, got %s", url, first.URL)
+		if job.URL != url {
+			t.Errorf("Expected URL to be %s, got %s", url, job.URL)
 		}
 
-		if _, err := uuid.Parse(first.ID); err != nil {
-			t.Errorf("Expected ID to be a valid UUID, got %s", first.ID)
+		if job.CreatedAt.IsZero() {
+			t.Errorf("Expected CreatedAt to be set")
 		}
 	})
 
@@ -46,11 +44,15 @@ func TestAddJob(t *testing.T) {
 		url := "x123!"
 
 		// Act
-		err := svc.AddJob(url)
+		job, err := svc.Create(url)
 
 		// Assert
 		if err == nil {
 			t.Errorf("Expected error, got nil")
+		}
+
+		if job != nil {
+			t.Errorf("Expected job to be nil")
 		}
 	})
 
@@ -62,11 +64,15 @@ func TestAddJob(t *testing.T) {
 		repo.ForceError(expectErr)
 
 		// Act
-		err := svc.AddJob("http://example.com")
+		job, err := svc.Create("http://example.com")
 
 		// Assert
-		if err != expectErr {
+		if err != domain.ErrInternalError {
 			t.Errorf("Expected error, got nil")
+		}
+
+		if job != nil {
+			t.Errorf("Expected job to be nil")
 		}
 	})
 }

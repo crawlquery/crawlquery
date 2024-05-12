@@ -3,6 +3,7 @@ package handler
 import (
 	"crawlquery/api/domain"
 	"crawlquery/api/dto"
+	"crawlquery/api/errorutil"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -29,10 +30,7 @@ func (ah *AccountHandler) Create(c *gin.Context) {
 	account, err := ah.accountService.Create(req.Email, req.Password)
 
 	if err != nil {
-		c.JSON(
-			http.StatusBadRequest,
-			dto.NewErrorResponse(err),
-		)
+		errorutil.HandleGinError(c, err, http.StatusBadRequest)
 		return
 	}
 

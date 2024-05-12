@@ -43,7 +43,7 @@ func TestCreateAccountRequestToJson(t *testing.T) {
 		}
 
 		// when
-		b, err := r.ToJson()
+		b, err := r.ToJSON()
 
 		// then
 		if err != nil {

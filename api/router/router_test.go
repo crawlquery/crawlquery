@@ -31,7 +31,7 @@ func TestAccountCreationEndpoint(t *testing.T) {
 	mockAccountHandler.On("Create", mock.Anything).Return()
 
 	// Setup the router with the mock handler
-	testRouter := router.NewRouter(mockAccountHandler)
+	testRouter := router.NewRouter(mockAccountHandler, nil)
 
 	// Create a response recorder
 	w := httptest.NewRecorder()

@@ -28,11 +28,12 @@ func (r *Repository) Get(id string) (*domain.CrawlJob, error) {
 
 	var job domain.CrawlJob
 	err := row.Scan(&job.ID, &job.URL, &job.CreatedAt)
-	if err != nil {
-		return nil, err
+
+	if err == sql.ErrNoRows {
+		return nil, domain.ErrCrawlJobNotFound
 	}
 
-	return &job, nil
+	return &job, err
 }
 
 func (r *Repository) First() (*domain.CrawlJob, error) {
@@ -40,11 +41,11 @@ func (r *Repository) First() (*domain.CrawlJob, error) {
 
 	var job domain.CrawlJob
 	err := row.Scan(&job.ID, &job.URL, &job.CreatedAt)
-	if err != nil {
-		return nil, err
+	if err == sql.ErrNoRows {
+		return nil, domain.ErrCrawlJobNotFound
 	}
 
-	return &job, nil
+	return &job, err
 }
 
 func (r *Repository) Delete(id string) error {

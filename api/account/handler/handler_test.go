@@ -28,7 +28,7 @@ func TestCreate(t *testing.T) {
 			Password: "password",
 		}
 
-		req, err := a.ToJson()
+		req, err := a.ToJSON()
 
 		if err != nil {
 			t.Fatalf("Error converting to JSON: %v", err)
@@ -108,7 +108,7 @@ func TestCreate(t *testing.T) {
 			Password: "password",
 		}
 
-		req, err := a.ToJson()
+		req, err := a.ToJSON()
 
 		if err != nil {
 			t.Fatalf("Error converting to JSON: %v", err)

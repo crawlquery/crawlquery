@@ -11,7 +11,7 @@ type CreateAccountRequest struct {
 	Password string `json:"password"`
 }
 
-func (r *CreateAccountRequest) ToJson() ([]byte, error) {
+func (r *CreateAccountRequest) ToJSON() ([]byte, error) {
 	return json.Marshal(r)
 }
 

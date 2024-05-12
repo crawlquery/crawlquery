@@ -144,8 +144,8 @@ func TestGet(t *testing.T) {
 		res, err := repo.Get("nonexistent")
 
 		// Assert
-		if err == nil {
-			t.Errorf("Expected error, got nil")
+		if err != domain.ErrCrawlJobNotFound {
+			t.Errorf("Expected error, got %v", err)
 		}
 
 		if res != nil {
@@ -214,8 +214,8 @@ func TestFirst(t *testing.T) {
 		res, err := repo.First()
 
 		// Assert
-		if err == nil {
-			t.Errorf("Expected error, got nil")
+		if err != domain.ErrCrawlJobNotFound {
+			t.Errorf("Expected error, got %v", err)
 		}
 
 		if res != nil {

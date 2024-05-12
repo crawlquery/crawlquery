@@ -11,6 +11,10 @@ import (
 	accountMysqlRepo "crawlquery/api/account/repository/mysql"
 	accountService "crawlquery/api/account/service"
 
+	crawlHandler "crawlquery/api/crawl/job/handler"
+	crawlJobMysqlRepo "crawlquery/api/crawl/job/repository/mysql"
+	crawlJobService "crawlquery/api/crawl/job/service"
+
 	_ "github.com/go-sql-driver/mysql"
 	"go.uber.org/zap"
 )
@@ -41,7 +45,11 @@ func main() {
 	accountService := accountService.NewService(accountRepo, sugar)
 	accountHandler := accountHandler.NewHandler(accountService)
 
-	r := router.NewRouter(accountHandler)
+	crawlJobRepo := crawlJobMysqlRepo.NewRepository(db)
+	crawlJobService := crawlJobService.NewService(crawlJobRepo, sugar)
+	crawlJobHandler := crawlHandler.NewHandler(crawlJobService)
+
+	r := router.NewRouter(accountHandler, crawlJobHandler)
 
 	r.Run(":8080")
 }
