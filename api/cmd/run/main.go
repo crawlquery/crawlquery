@@ -1,57 +1,20 @@
 package main
 
 import (
-	"crawlquery/api/handler"
-	"crawlquery/api/router"
-	"crawlquery/api/service"
-	crawlJobDiskRepo "crawlquery/pkg/repository/job/disk"
-	nodeDiskRepo "crawlquery/pkg/repository/node/disk"
+	"database/sql"
 	"fmt"
-	"time"
 )
 
 func main() {
 
-	cqr := crawlJobDiskRepo.NewDiskRepository(
-		"/tmp/crawl_job.gob",
-	)
+	db, err := sql.Open("mysql", "root:cqdb@tcp(localhsot:3306)/cqdb")
+	defer db.Close()
 
-	ns := service.NewNodeService(
-		nodeDiskRepo.NewDiskRepository(
-			"/tmp/nodes.gob",
-		),
-	)
-	searchService := service.NewSearchService(
-		ns,
-	)
-	searchHandler := handler.NewSearchHandler(searchService)
-	crawlSvc := service.NewCrawlService(
-		cqr,
-		ns,
-	)
-	crawlHandler := handler.NewCrawlHandler(
-		crawlSvc,
-	)
+	if err != nil {
+		fmt.Println("Error connecting to database: ", err)
+		return
+	}
 
-	nodeHandler := handler.NewNodeHandler(ns)
+	cqr := jobRepo.NewMysqlRepository(db)
 
-	r := router.NewRouter(
-		searchHandler,
-		crawlHandler,
-		nodeHandler,
-	)
-
-	go func() {
-		for {
-			err := crawlSvc.Crawl()
-
-			if err != nil {
-				fmt.Println("Error crawling: ", err)
-			}
-
-			time.Sleep(time.Second)
-		}
-	}()
-
-	r.Run(":8080")
 }
