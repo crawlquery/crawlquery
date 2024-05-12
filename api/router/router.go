@@ -22,6 +22,6 @@ func NewRouter(
 		MaxAge:           12 * time.Hour,
 	}))
 	router.POST("/accounts", accountHandler.Create)
-	router.POST("/crawljobs", crawlJobHandler.Create)
+	router.POST("/crawl-jobs", crawlJobHandler.Create)
 	return router
 }

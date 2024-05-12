@@ -19,7 +19,7 @@ type CreateCrawlJobResponse struct {
 		ID        string    `json:"id"`
 		URL       string    `json:"url"`
 		CreatedAt time.Time `json:"created_at"`
-	} `json:"job"`
+	} `json:"crawl_job"`
 }
 
 func NewCreateCrawlJobResponse(j *domain.CrawlJob) *CreateCrawlJobResponse {
