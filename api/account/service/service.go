@@ -33,14 +33,20 @@ func (s *Service) Create(email, password string) (*domain.Account, error) {
 		return nil, err
 	}
 
-	if check, err := s.repo.GetByEmail(email); err != nil || check != nil {
+	check, err := s.repo.GetByEmail(email)
+
+	if err != nil {
+		return nil, domain.InternalError
+	}
+
+	if check != nil {
 		return nil, domain.ErrAccountExists
 	}
 
-	err := s.repo.Create(a)
+	err = s.repo.Create(a)
 
 	if err != nil {
-		return nil, err
+		return nil, domain.InternalError
 	}
 
 	return a, nil

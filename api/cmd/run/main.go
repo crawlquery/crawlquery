@@ -24,7 +24,12 @@ func main() {
 	defer db.Close()
 
 	if os.Getenv("ENV") == "development" {
-		migration.Up(db)
+		err := migration.Up(db)
+
+		if err != nil {
+			fmt.Println("Error migrating database: ", err)
+			return
+		}
 	}
 
 	accountRepo := accountMysqlRepo.NewRepository(db)

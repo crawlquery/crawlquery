@@ -93,17 +93,35 @@ func TestCreate(t *testing.T) {
 		})
 	})
 
-	t.Run("handles repository error", func(t *testing.T) {
+	t.Run("handles create repository error", func(t *testing.T) {
 		repo := mem.NewRepository()
 		svc := service.NewService(repo)
 
 		expectErr := errors.New("db locked")
-		repo.ForceError(expectErr)
+		repo.ForceCreateError(expectErr)
 
 		_, err := svc.Create("test@example.com", "password")
 
-		if err != expectErr {
-			t.Errorf("Expected error creating account, got nil")
+		if err != domain.InternalError {
+			t.Errorf("Expected error creating account, got %v", err)
 		}
 	})
+
+	t.Run("handles email unique check error", func(t *testing.T) {
+		repo := mem.NewRepository()
+		svc := service.NewService(repo)
+
+		email := "test@example.com"
+
+		expectErr := errors.New("db locked")
+
+		repo.ForceGetByEmailError(expectErr)
+
+		_, err := svc.Create(email, "password")
+
+		if err != domain.InternalError {
+			t.Errorf("Expected error creating account, got %v", err)
+		}
+	})
+
 }

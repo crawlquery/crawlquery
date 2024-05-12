@@ -6,8 +6,9 @@ import (
 )
 
 type Repository struct {
-	accounts   map[string]*domain.Account
-	forceError error
+	accounts             map[string]*domain.Account
+	forceCreateError     error
+	forceGetByEmailError error
 }
 
 func NewRepository() *Repository {
@@ -16,14 +17,18 @@ func NewRepository() *Repository {
 	}
 }
 
-func (r *Repository) ForceError(err error) {
-	r.forceError = err
+func (r *Repository) ForceCreateError(err error) {
+	r.forceCreateError = err
+}
+
+func (r *Repository) ForceGetByEmailError(err error) {
+	r.forceGetByEmailError = err
 }
 
 func (r *Repository) Create(a *domain.Account) error {
 
-	if r.forceError != nil {
-		return r.forceError
+	if r.forceCreateError != nil {
+		return r.forceCreateError
 	}
 
 	if _, ok := r.accounts[a.ID]; ok {
@@ -44,6 +49,9 @@ func (r *Repository) Get(id string) (*domain.Account, error) {
 }
 
 func (r *Repository) GetByEmail(email string) (*domain.Account, error) {
+	if r.forceGetByEmailError != nil {
+		return nil, r.forceGetByEmailError
+	}
 	for _, account := range r.accounts {
 		if account.Email == email {
 			return account, nil
