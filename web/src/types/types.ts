@@ -12,3 +12,11 @@ export interface Result {
     score: number;
     page: Page;
 }
+
+export interface Node {
+    id: string;
+    hostname: string;
+    port: number;
+    shard_id: number;
+    created_at: string;
+}

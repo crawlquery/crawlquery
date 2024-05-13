@@ -42,3 +42,14 @@ func (r *Repository) List() ([]*domain.Node, error) {
 
 	return nodes, nil
 }
+
+func (r *Repository) ListByAccountID(accountID string) ([]*domain.Node, error) {
+	nodes := make([]*domain.Node, 0)
+	for _, n := range r.nodes {
+		if n.AccountID == accountID {
+			nodes = append(nodes, n)
+		}
+	}
+
+	return nodes, nil
+}

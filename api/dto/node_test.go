@@ -61,3 +61,52 @@ func TestNewCreateNodeResponse(t *testing.T) {
 
 	})
 }
+
+func TestNewListNodesResponse(t *testing.T) {
+	t.Run("should return correct ListNodesResponse from Nodes", func(t *testing.T) {
+		nodes := []*domain.Node{
+			{
+				ID:        util.UUID(),
+				AccountID: util.UUID(),
+				Hostname:  "localhost",
+				Port:      8080,
+				ShardID:   1,
+			},
+			{
+				ID:        util.UUID(),
+				AccountID: util.UUID(),
+				Hostname:  "localhost",
+				Port:      8080,
+				ShardID:   1,
+			},
+		}
+
+		resp := dto.NewListNodesResponse(nodes)
+
+		if len(resp.Nodes) != len(nodes) {
+			t.Errorf("expected: %d, got: %d", len(nodes), len(resp.Nodes))
+		}
+
+		for i, n := range nodes {
+			if resp.Nodes[i].ID != n.ID {
+				t.Errorf("expected: %s, got: %s", n.ID, resp.Nodes[i].ID)
+			}
+
+			if resp.Nodes[i].AccountID != n.AccountID {
+				t.Errorf("expected: %s, got: %s", n.AccountID, resp.Nodes[i].AccountID)
+			}
+
+			if resp.Nodes[i].Hostname != n.Hostname {
+				t.Errorf("expected: %s, got: %s", n.Hostname, resp.Nodes[i].Hostname)
+			}
+
+			if resp.Nodes[i].Port != n.Port {
+				t.Errorf("expected: %d, got: %d", n.Port, resp.Nodes[i].Port)
+			}
+
+			if resp.Nodes[i].ShardID != n.ShardID {
+				t.Errorf("expected: %d, got: %d", n.ShardID, resp.Nodes[i].ShardID)
+			}
+		}
+	})
+}

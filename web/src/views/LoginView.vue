@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import AddNode from '../components/AddNode.vue'
+import Login from '../components/Login.vue'
 </script>
 
 <template>
   <main>
     <div class="max-w-xl mx-auto mt-24">
-      <AddNode />
+      <Login />
     </div>
   </main>
 </template>

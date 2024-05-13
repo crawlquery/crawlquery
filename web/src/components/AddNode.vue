@@ -1,23 +1,30 @@
 <script lang="ts" setup>
 import { ref } from 'vue'
 import axios from 'axios'
+import { useAuthStore } from '../stores/auth'
+
+const emit = defineEmits(['nodeCreated'])
+const authStore = useAuthStore()
 
 const latency = ref('0ms')
 const hostname = ref('')
 const port = ref('')
-const shardID = ref(null)
 const success = ref(false)
 const err = ref('')
 const addNode = () => {
     const start = Date.now()
     axios.post(`http://localhost:8080/nodes`, {
         hostname: hostname.value,
-        port: String(port.value),
-        shard_id: Number(shardID.value)
+        port: port.value,
+    }, {
+        headers: {
+            Authorization: `Bearer ${authStore.token}`
+        }
     })
         .then((response: any) => {
             success.value = true
             latency.value = `${Date.now() - start}ms`
+            emit('nodeCreated', response.data.node)
         })
         .catch((error: any) => {
             err.value = error.response.data.error
@@ -48,7 +55,6 @@ const addNode = () => {
             </svg>
         </label>
         <input type="number" class="input input-bordered w-1/4" placeholder="Port" v-model="port" />
-        <input type="number" class="input input-bordered w-1/4" placeholder="Shard" v-model="shardID" />
     </div>
     <button class="mt-8 btn btn-primary w-full" @click="addNode">Add</button>
 </template>

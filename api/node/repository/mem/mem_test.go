@@ -102,3 +102,46 @@ func TestList(t *testing.T) {
 		}
 	})
 }
+
+func TestListByAccountID(t *testing.T) {
+	t.Run("can list nodes by account ID", func(t *testing.T) {
+		repo := NewRepository()
+
+		accountID := util.UUID()
+
+		node1 := &domain.Node{
+			ID:        util.UUID(),
+			AccountID: accountID,
+			Hostname:  "testnode1",
+			Port:      8080,
+			ShardID:   1,
+			CreatedAt: time.Now(),
+		}
+
+		node2 := &domain.Node{
+			ID:        util.UUID(),
+			AccountID: util.UUID(),
+			Hostname:  "testnode2",
+			Port:      8080,
+			ShardID:   1,
+			CreatedAt: time.Now(),
+		}
+
+		repo.nodes[node1.ID] = node1
+		repo.nodes[node2.ID] = node2
+
+		nodes, err := repo.ListByAccountID(accountID)
+
+		if err != nil {
+			t.Fatalf("Error listing nodes: %v", err)
+		}
+
+		if len(nodes) != 1 {
+			t.Errorf("Expected 1 node, got %d", len(nodes))
+		}
+
+		if nodes[0].ID != node1.ID {
+			t.Errorf("Expected first node to have ID %s, got %s", node1.ID, nodes[0].ID)
+		}
+	})
+}

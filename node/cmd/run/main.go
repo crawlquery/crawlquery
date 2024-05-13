@@ -13,7 +13,7 @@ func main() {
 
 	idx := index.NewIndex()
 	for _, page := range factory.TenPages() {
-		idx.AddPage(&page)
+		idx.AddPage(page)
 	}
 
 	indexHandler := indexHandler.NewHandler(idx)

@@ -26,6 +26,7 @@ func (n *Node) Validate() error {
 type NodeRepository interface {
 	Create(*Node) error
 	List() ([]*Node, error)
+	ListByAccountID(accountID string) ([]*Node, error)
 }
 
 type NodeService interface {
@@ -33,10 +34,12 @@ type NodeService interface {
 	List() ([]*Node, error)
 	RandomizedList() ([]*Node, error)
 	ListGroupByShard() (map[uint][]*Node, error)
+	ListByAccountID(accountID string) ([]*Node, error)
 }
 
 type NodeHandler interface {
 	Create(c *gin.Context)
+	ListByAccountID(c *gin.Context)
 }
 
 type AllocationService interface {

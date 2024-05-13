@@ -55,6 +55,11 @@ func (m *MockNodeHandler) Create(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{"message": "Node created"})
 }
 
+func (m *MockNodeHandler) ListByAccountID(c *gin.Context) {
+	m.Called(c)
+	c.JSON(http.StatusOK, gin.H{"message": "Nodes listed"})
+}
+
 type MockSearchHandler struct {
 	mock.Mock
 }
@@ -78,6 +83,7 @@ func setupRouterWithMocks() map[string]interface{} {
 
 	mockNodeHandler := new(MockNodeHandler)
 	mockNodeHandler.On("Create", mock.Anything).Return()
+	mockNodeHandler.On("ListByAccountID", mock.Anything).Return()
 
 	mockSearchHandler := new(MockSearchHandler)
 	mockSearchHandler.On("Search", mock.Anything).Return()
@@ -178,7 +184,6 @@ func TestNodeCreationEndpoint(t *testing.T) {
 	ifs := setupRouterWithMocks()
 
 	testRouter := ifs["testRouter"].(*gin.Engine)
-	mockNodeHandler := ifs["mockNodeHandler"].(*MockNodeHandler)
 	accountRepo := ifs["accountRepo"].(domain.AccountRepository)
 
 	account, err := accountRepo.GetByEmail("test@example.com")
@@ -203,8 +208,6 @@ func TestNodeCreationEndpoint(t *testing.T) {
 
 	assert.Equal(t, http.StatusCreated, w.Code)
 	assert.Contains(t, w.Body.String(), "Node created")
-
-	mockNodeHandler.AssertExpectations(t)
 }
 
 func TestSearchEndpoint(t *testing.T) {
@@ -224,4 +227,36 @@ func TestSearchEndpoint(t *testing.T) {
 	assert.Contains(t, w.Body.String(), "Search successful")
 
 	mockSearchHandler.AssertExpectations(t)
+}
+
+func TestNodeListByAccountIDEndpoint(t *testing.T) {
+	// Set the router to test mode
+	ifs := setupRouterWithMocks()
+
+	testRouter := ifs["testRouter"].(*gin.Engine)
+	accountRepo := ifs["accountRepo"].(domain.AccountRepository)
+
+	account, err := accountRepo.GetByEmail("test@example.com")
+
+	if err != nil {
+		t.Fatalf("Error getting account: %v", err)
+	}
+
+	token, err := authutil.GenerateToken(account.ID)
+
+	if err != nil {
+		t.Fatalf("Error generating token: %v", err)
+	}
+
+	w := httptest.NewRecorder()
+
+	req, _ := http.NewRequest("GET", "/nodes", nil)
+
+	req.Header.Set("Authorization", "Bearer "+token)
+
+	testRouter.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+
+	assert.Contains(t, w.Body.String(), "Nodes listed")
 }

@@ -38,3 +38,38 @@ func NewCreateNodeResponse(n *domain.Node) *CreateNodeResponse {
 
 	return res
 }
+
+type ListNodesResponse struct {
+	Nodes []*struct {
+		ID        string    `json:"id"`
+		AccountID string    `json:"account_id"`
+		Hostname  string    `json:"hostname"`
+		Port      uint      `json:"port"`
+		ShardID   uint      `json:"shard_id"`
+		CreatedAt time.Time `json:"created_at"`
+	} `json:"nodes"`
+}
+
+func NewListNodesResponse(nodes []*domain.Node) *ListNodesResponse {
+	res := &ListNodesResponse{}
+
+	for _, n := range nodes {
+		res.Nodes = append(res.Nodes, &struct {
+			ID        string    `json:"id"`
+			AccountID string    `json:"account_id"`
+			Hostname  string    `json:"hostname"`
+			Port      uint      `json:"port"`
+			ShardID   uint      `json:"shard_id"`
+			CreatedAt time.Time `json:"created_at"`
+		}{
+			ID:        n.ID,
+			AccountID: n.AccountID,
+			Hostname:  n.Hostname,
+			Port:      n.Port,
+			ShardID:   n.ShardID,
+			CreatedAt: n.CreatedAt,
+		})
+	}
+
+	return res
+}

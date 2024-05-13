@@ -37,3 +37,15 @@ func (h *NodeHandler) Create(c *gin.Context) {
 
 	c.JSON(201, dto.NewCreateNodeResponse(node))
 }
+
+func (h *NodeHandler) ListByAccountID(c *gin.Context) {
+	account := c.MustGet("account").(*domain.Account)
+	nodes, err := h.nodeService.ListByAccountID(account.ID)
+
+	if err != nil {
+		errorutil.HandleGinError(c, err, http.StatusBadRequest)
+		return
+	}
+
+	c.JSON(200, dto.NewListNodesResponse(nodes))
+}

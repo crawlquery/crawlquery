@@ -7,8 +7,12 @@ import (
 	"crawlquery/pkg/util"
 	"errors"
 	"testing"
+	"time"
 
 	nodeRepo "crawlquery/api/node/repository/mem"
+
+	shardRepo "crawlquery/api/shard/repository/mem"
+	shardService "crawlquery/api/shard/service"
 
 	"crawlquery/api/node/service"
 )
@@ -305,7 +309,25 @@ func TestRandomizedList(t *testing.T) {
 func TestGetShardWithLeastNodes(t *testing.T) {
 	t.Run("can get shard with least nodes", func(t *testing.T) {
 		nodeRepo := nodeRepo.NewRepository()
-		nodeService := service.NewService(nodeRepo, nil, nil, testutil.NewTestLogger())
+		shardRepo := shardRepo.NewRepository()
+		shardService := shardService.NewService(shardRepo, testutil.NewTestLogger())
+		nodeService := service.NewService(nodeRepo, nil, shardService, testutil.NewTestLogger())
+
+		shard := &domain.Shard{
+			ID: 1,
+		}
+
+		shard2 := &domain.Shard{
+			ID: 2,
+		}
+
+		shard3 := &domain.Shard{
+			ID: 3,
+		}
+
+		shardRepo.Create(shard)
+		shardRepo.Create(shard2)
+		shardRepo.Create(shard3)
 
 		nodes := []*domain.Node{
 			{ID: "1", ShardID: 1},
@@ -319,20 +341,38 @@ func TestGetShardWithLeastNodes(t *testing.T) {
 			nodeRepo.Create(n)
 		}
 
-		shard, err := nodeService.GetShardWithLeastNodes()
+		found, err := nodeService.GetShardWithLeastNodes()
 
 		if err != nil {
 			t.Fatalf("Error getting shard with least nodes: %v", err)
 		}
 
-		if shard.ID != 3 {
+		if found.ID != 3 {
 			t.Errorf("Expected shard ID to be 3, got %d", shard.ID)
 		}
 	})
 
 	t.Run("can get shard with least nodes when all shards have the same number of nodes", func(t *testing.T) {
 		nodeRepo := nodeRepo.NewRepository()
-		nodeService := service.NewService(nodeRepo, nil, nil, testutil.NewTestLogger())
+		shardRepo := shardRepo.NewRepository()
+		shardService := shardService.NewService(shardRepo, testutil.NewTestLogger())
+		nodeService := service.NewService(nodeRepo, nil, shardService, testutil.NewTestLogger())
+
+		shard := &domain.Shard{
+			ID: 1,
+		}
+
+		shard2 := &domain.Shard{
+			ID: 2,
+		}
+
+		shard3 := &domain.Shard{
+			ID: 3,
+		}
+
+		shardRepo.Create(shard)
+		shardRepo.Create(shard2)
+		shardRepo.Create(shard3)
 
 		nodes := []*domain.Node{
 			{ID: "1", ShardID: 1},
@@ -360,16 +400,124 @@ func TestGetShardWithLeastNodes(t *testing.T) {
 
 	t.Run("can get shard with least nodes when no nodes exist", func(t *testing.T) {
 		nodeRepo := nodeRepo.NewRepository()
-		nodeService := service.NewService(nodeRepo, nil, nil, testutil.NewTestLogger())
+		shardRepo := shardRepo.NewRepository()
+		shardService := shardService.NewService(shardRepo, testutil.NewTestLogger())
+		nodeService := service.NewService(nodeRepo, nil, shardService, testutil.NewTestLogger())
+
+		shard := &domain.Shard{
+			ID: 1,
+		}
+
+		shard2 := &domain.Shard{
+			ID: 2,
+		}
+
+		shard3 := &domain.Shard{
+			ID: 3,
+		}
+
+		shardRepo.Create(shard)
+		shardRepo.Create(shard2)
+		shardRepo.Create(shard3)
 
 		shard, err := nodeService.GetShardWithLeastNodes()
 
-		if err == nil {
-			t.Fatalf("Expected error getting shard with least nodes")
+		if err != nil {
+			t.Fatalf("Expected no error, got %v", err)
 		}
 
-		if shard != nil {
-			t.Errorf("Expected shard to be nil, got %v", shard)
+		if shard == nil {
+			t.Errorf("Expected shard to not be nil")
+		}
+	})
+}
+
+func TestAllocateNode(t *testing.T) {
+	t.Run("can allocate a node", func(t *testing.T) {
+		nodeRepo := nodeRepo.NewRepository()
+		shardRepo := shardRepo.NewRepository()
+		shardService := shardService.NewService(shardRepo, testutil.NewTestLogger())
+		nodeService := service.NewService(nodeRepo, nil, shardService, testutil.NewTestLogger())
+
+		shard := &domain.Shard{
+			ID: 1,
+		}
+
+		shardRepo.Create(shard)
+
+		shard2 := &domain.Shard{
+			ID: 2,
+		}
+
+		shardRepo.Create(shard2)
+
+		nodeRepo.Create(&domain.Node{
+			ID:        "1",
+			ShardID:   1,
+			Hostname:  "testnode",
+			Port:      8080,
+			CreatedAt: time.Now(),
+		})
+
+		nodeRepo.Create(&domain.Node{
+			ID:        "2",
+			ShardID:   1,
+			Hostname:  "testnode2",
+			Port:      8080,
+			CreatedAt: time.Now(),
+		})
+
+		node := &domain.Node{
+			ID:        "3",
+			Hostname:  "testnode3",
+			Port:      8080,
+			CreatedAt: time.Now(),
+		}
+
+		err := nodeService.AllocateNode(node)
+
+		if err != nil {
+			t.Fatalf("Error allocating node: %v", err)
+		}
+
+		if node.ShardID != shard2.ID {
+			t.Errorf("Expected ShardID to be %d, got %d", shard2.ID, node.ShardID)
+		}
+	})
+
+	t.Run("can allocate a node when no nodes exist", func(t *testing.T) {
+		nodeRepo := nodeRepo.NewRepository()
+		shardRepo := shardRepo.NewRepository()
+		shardService := shardService.NewService(shardRepo, testutil.NewTestLogger())
+		nodeService := service.NewService(nodeRepo, nil, shardService, testutil.NewTestLogger())
+
+		shard := &domain.Shard{
+			ID: 1,
+		}
+
+		shardRepo.Create(shard)
+
+		shard2 := &domain.Shard{
+			ID: 2,
+		}
+
+		shardRepo.Create(shard2)
+
+		node := &domain.Node{
+			ID:        "1",
+			Hostname:  "testnode",
+			Port:      8080,
+			CreatedAt: time.Now(),
+		}
+
+		err := nodeService.AllocateNode(node)
+
+		if err != nil {
+			t.Fatalf("Error allocating node: %v", err)
+		}
+
+		if node.ShardID != 1 {
+			t.Errorf("Expected ShardID to be 1, got %d", node.ShardID)
 		}
 	})
 }
@@ -426,6 +574,75 @@ func TestListGroupByShard(t *testing.T) {
 
 		if len(grouped) != 0 {
 			t.Fatalf("Expected 0 groups, got %d", len(grouped))
+		}
+	})
+}
+
+func TestListByAccountID(t *testing.T) {
+	t.Run("can list nodes by account ID", func(t *testing.T) {
+
+		accountID := util.UUID()
+		accSvc, _ := factory.AccountServiceWithAccount(&domain.Account{
+			ID: accountID,
+		})
+
+		svc, nodeRepo := factory.NodeService(accSvc)
+
+		node := &domain.Node{
+			ID:        util.UUID(),
+			AccountID: accountID,
+			Hostname:  "testnode",
+			Port:      8080,
+		}
+
+		node2 := &domain.Node{
+			ID:        util.UUID(),
+			AccountID: accountID,
+			Hostname:  "testnode2",
+			Port:      8081,
+		}
+
+		nodeRepo.Create(node)
+		nodeRepo.Create(node2)
+
+		list, err := svc.ListByAccountID(accountID)
+
+		if err != nil {
+			t.Fatalf("Error listing nodes: %v", err)
+		}
+
+		if len(list) != 2 {
+			t.Fatalf("Expected 2 nodes, got %d", len(list))
+		}
+
+		for _, n := range list {
+			if n.Hostname != node.Hostname && n.Hostname != node2.Hostname {
+				t.Errorf("Expected node to be one of %s or %s, got %s", node.Hostname, node2.Hostname, n.Hostname)
+			}
+
+			if n.Port != node.Port && n.Port != node2.Port {
+				t.Errorf("Expected port to be one of %d or %d, got %d", node.Port, node2.Port, n.Port)
+			}
+		}
+	})
+
+	t.Run("can list nodes by account ID when no nodes exist", func(t *testing.T) {
+
+		accountID := util.UUID()
+		accSvc, _ := factory.AccountServiceWithAccount(&domain.Account{
+			ID: accountID,
+		})
+
+		svc, _ := factory.NodeService(accSvc)
+
+		list, err := svc.ListByAccountID(accountID)
+
+		if err != nil {
+			t.Fatalf("Error listing nodes: %v", err)
+		}
+
+		if len(list) != 0 {
+			t.Fatalf("Expected 0 nodes, got %d", len(list))
 		}
 	})
 }

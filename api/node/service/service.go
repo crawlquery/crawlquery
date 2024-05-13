@@ -120,6 +120,13 @@ func (ss *Service) AllocateNode(node *domain.Node) error {
 
 func (ss *Service) GetShardWithLeastNodes() (*domain.Shard, error) {
 
+	shards, err := ss.shardService.List()
+
+	if err != nil {
+		ss.logger.Errorf("Shard.Service.GetShardWithLeastNodes: error listing shards: %v", err)
+		return nil, err
+	}
+
 	nodes, err := ss.List()
 
 	if err != nil {
@@ -127,30 +134,31 @@ func (ss *Service) GetShardWithLeastNodes() (*domain.Shard, error) {
 		return nil, err
 	}
 
-	var shardDistribution = make(map[uint]int)
+	var shardDistribution = make(map[*domain.Shard]int)
 
-	for _, node := range nodes {
-		shardDistribution[node.ShardID]++
-	}
+	for _, shard := range shards {
+		shardDistribution[shard] = 0
 
-	var leastNodes *domain.Shard = nil
-	var leastNodesCount int = int(^uint(0) >> 1) // Set to maximum int value
-
-	for shardID, count := range shardDistribution {
-		if leastNodes == nil || count < leastNodesCount {
-			leastNodesCount = count
-			// Assuming leastNodes needs to be newly initialized each time
-			leastNodes = &domain.Shard{ID: shardID}
+		for _, node := range nodes {
+			if node.ShardID == shard.ID {
+				shardDistribution[shard]++
+			}
 		}
 	}
 
-	if leastNodes == nil {
-		ss.logger.Errorf("Shard.Service.GetShardWithLeastNodes: no shards")
+	var minShard *domain.Shard
 
-		return nil, domain.ErrNoShards
+	for shard, count := range shardDistribution {
+		if minShard == nil || count < shardDistribution[minShard] {
+			minShard = shard
+		}
 	}
 
-	return leastNodes, nil
+	if minShard == nil && len(shards) > 0 {
+		return shards[0], nil
+	}
+
+	return minShard, nil
 }
 
 func (s *Service) ListGroupByShard() (map[uint][]*domain.Node, error) {
@@ -166,4 +174,8 @@ func (s *Service) ListGroupByShard() (map[uint][]*domain.Node, error) {
 	}
 
 	return grouped, nil
+}
+
+func (s *Service) ListByAccountID(accountID string) ([]*domain.Node, error) {
+	return s.repo.ListByAccountID(accountID)
 }

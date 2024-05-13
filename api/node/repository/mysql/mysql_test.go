@@ -147,3 +147,61 @@ func TestList(t *testing.T) {
 		}
 	})
 }
+
+func TestListByAccounID(t *testing.T) {
+	t.Run("can list nodes by account id", func(t *testing.T) {
+		db := testutil.CreateTestMysqlDB()
+		defer db.Close()
+		migration.Up(db)
+
+		repo := mysql.NewRepository(db)
+		node := &domain.Node{
+			ID:        util.UUID(),
+			AccountID: "account1",
+			Hostname:  "testnode",
+			Port:      8080,
+			ShardID:   1,
+		}
+
+		node2 := &domain.Node{
+			ID:        util.UUID(),
+			AccountID: "account2",
+			Hostname:  "testnode2",
+			Port:      8081,
+			ShardID:   2,
+		}
+
+		defer db.Exec("DELETE FROM nodes WHERE id = ?", node.ID)
+		defer db.Exec("DELETE FROM nodes WHERE id = ?", node2.ID)
+
+		err := repo.Create(node)
+
+		if err != nil {
+			t.Fatalf("Error creating node: %v", err)
+		}
+
+		err = repo.Create(node2)
+
+		if err != nil {
+			t.Fatalf("Error creating node: %v", err)
+		}
+
+		nodes, err := repo.ListByAccountID("account1")
+
+		if err != nil {
+			t.Fatalf("Error listing nodes: %v", err)
+		}
+
+		if len(nodes) != 1 {
+			t.Fatalf("Expected 1 node, got %d", len(nodes))
+		}
+
+		if nodes[0].Hostname != node.Hostname {
+			t.Errorf("Expected node to be %s, got %s", node.Hostname, nodes[0].Hostname)
+		}
+
+		if nodes[0].Port != node.Port {
+			t.Errorf("Expected port to be %d, got %d", node.Port, nodes[0].Port)
+		}
+	})
+}
