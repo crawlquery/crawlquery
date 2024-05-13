@@ -9,6 +9,7 @@ import { useAuthStore } from '../stores/auth'
 const authStore = useAuthStore()
 const err = ref('')
 const nodes = ref<Array<Node>>([])
+const showAdd = ref(false)
 
 axios.get(`http://localhost:8080/nodes`, {
   headers: {
@@ -25,7 +26,7 @@ axios.get(`http://localhost:8080/nodes`, {
 
 <template>
   <main>
-    <div class="max-w-xl mx-auto mt-24">
+    <div class="max-w-5xl mx-auto mt-24">
       <div v-show="err" role="alert" class="mb-8 alert alert-warning">
         <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -33,10 +34,16 @@ axios.get(`http://localhost:8080/nodes`, {
         </svg>
         <span>{{ err }}!</span>
       </div>
-      <NodeList :nodes="nodes" />
+      <div class="w-full flex">
+        <div class="grow"></div>
+        <button class="btn btn-primary" @click="showAdd = !showAdd">Add Node</button>
+      </div>
+      <NodeList :nodes="nodes ?? []" />
       <div class="mt-24">
       </div>
-      <AddNode @nodeCreated="nodes.push($event)" />
+      <template v-if="showAdd">
+        <AddNode @nodeCreated="nodes.push($event)" />
+      </template>
     </div>
   </main>
 </template>

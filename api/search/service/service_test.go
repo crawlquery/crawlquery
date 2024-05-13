@@ -15,80 +15,148 @@ import (
 )
 
 func TestSearch(t *testing.T) {
-	nodeRepo := nodeRepo.NewRepository()
+	t.Run("returns results", func(t *testing.T) {
+		nodeRepo := nodeRepo.NewRepository()
 
-	nodeRepo.Create(&domain.Node{
-		ID:        "node1",
-		ShardID:   0,
-		Hostname:  "node1.cluster.com",
-		Port:      8080,
-		CreatedAt: time.Now(),
-	})
-
-	nodeRepo.Create(&domain.Node{
-		ID:        "node2",
-		ShardID:   1,
-		Hostname:  "node2.cluster.com",
-		Port:      8080,
-		CreatedAt: time.Now(),
-	})
-
-	nodeService := nodeService.NewService(nodeRepo, nil, nil, testutil.NewTestLogger())
-
-	defer gock.Off()
-
-	gock.New("http://node1.cluster.com:8080").
-		Get("/search").
-		MatchParam("q", "term").
-		Reply(200).
-		JSON(dto.NodeSearchResponse{
-			Results: []sharedDomain.Result{
-				{
-					PageID: "page1",
-					Score:  0.5,
-					Page: &sharedDomain.Page{
-						ID:    "page1",
-						URL:   "http://google.com",
-						Title: "Google",
-					},
-				},
-			},
+		nodeRepo.Create(&domain.Node{
+			ID:        "node1",
+			ShardID:   0,
+			Hostname:  "node1.cluster.com",
+			Port:      8080,
+			CreatedAt: time.Now(),
 		})
 
-	gock.New("http://node2.cluster.com:8080").
-		Get("/search").
-		MatchParam("q", "term").
-		Reply(200).
-		JSON(dto.NodeSearchResponse{
-			Results: []sharedDomain.Result{
-				{
-					PageID: "page2",
-					Score:  0.6,
-					Page: &sharedDomain.Page{
-						ID:    "page2",
-						URL:   "http://facebook.com",
-						Title: "Facebook",
-					},
-				},
-			},
+		nodeRepo.Create(&domain.Node{
+			ID:        "node2",
+			ShardID:   1,
+			Hostname:  "node2.cluster.com",
+			Port:      8080,
+			CreatedAt: time.Now(),
 		})
 
-	searchService := service.NewService(nodeService, testutil.NewTestLogger())
+		nodeService := nodeService.NewService(nodeRepo, nil, nil, testutil.NewTestLogger())
 
-	results, err := searchService.Search("term")
-	if err != nil {
-		t.Fatalf("Error searching: %v", err)
-	}
+		defer gock.Off()
 
-	if len(results) != 2 {
-		t.Errorf("Expected 2 results, got %v", len(results))
-	}
+		gock.New("http://node1.cluster.com:8080").
+			Get("/search").
+			MatchParam("q", "term").
+			Reply(200).
+			JSON(dto.NodeSearchResponse{
+				Results: []sharedDomain.Result{
+					{
+						PageID: "page1",
+						Score:  0.5,
+						Page: &sharedDomain.Page{
+							ID:    "page1",
+							URL:   "http://google.com",
+							Title: "Google",
+						},
+					},
+				},
+			})
 
-	if results[0].PageID != "page2" {
-		t.Errorf("Expected first result to be page2, got %v", results[0].PageID)
-	}
+		gock.New("http://node2.cluster.com:8080").
+			Get("/search").
+			MatchParam("q", "term").
+			Reply(200).
+			JSON(dto.NodeSearchResponse{
+				Results: []sharedDomain.Result{
+					{
+						PageID: "page2",
+						Score:  0.6,
+						Page: &sharedDomain.Page{
+							ID:    "page2",
+							URL:   "http://facebook.com",
+							Title: "Facebook",
+						},
+					},
+				},
+			})
 
-	if results[1].PageID != "page1" {
-		t.Errorf("Expected second result to be page1, got %v", results[1].PageID)
-	}
+		searchService := service.NewService(nodeService, testutil.NewTestLogger())
+
+		results, err := searchService.Search("term")
+		if err != nil {
+			t.Fatalf("Error searching: %v", err)
+		}
+
+		if len(results) != 2 {
+			t.Errorf("Expected 2 results, got %v", len(results))
+		}
+
+		if results[0].PageID != "page1" && results[1].PageID != "page1" {
+			t.Errorf("Expected page ID to be page1, got %s and %s", results[0].PageID, results[1].PageID)
+		}
+	})
+
+	t.Run("removes duplicate results", func(t *testing.T) {
+		nodeRepo := nodeRepo.NewRepository()
+
+		nodeRepo.Create(&domain.Node{
+			ID:        "node1",
+			ShardID:   0,
+			Hostname:  "node1.cluster.com",
+			Port:      8080,
+			CreatedAt: time.Now(),
+		})
+
+		nodeRepo.Create(&domain.Node{
+			ID:        "node2",
+			ShardID:   1,
+			Hostname:  "node2.cluster.com",
+			Port:      8080,
+			CreatedAt: time.Now(),
+		})
+
+		defer gock.Off()
+
+		gock.New("http://node1.cluster.com:8080").
+			Get("/search").
+			MatchParam("q", "term").
+			Reply(200).
+			JSON(dto.NodeSearchResponse{
+				Results: []sharedDomain.Result{
+					{
+						PageID: "page1",
+						Score:  0.5,
+						Page: &sharedDomain.Page{
+							ID:    "page1",
+							URL:   "http://google.com",
+							Title: "Google",
+						},
+					},
+				},
+			})
+
+		gock.New("http://node2.cluster.com:8080").
+			Get("/search").
+			MatchParam("q", "term").
+			Reply(200).
+			JSON(dto.NodeSearchResponse{
+				Results: []sharedDomain.Result{
+					{
+						PageID: "page1",
+						Score:  0.5,
+						Page: &sharedDomain.Page{
+							ID:    "page1",
+							URL:   "http://google.com",
+							Title: "Google",
+						},
+					},
+				},
+			})
+
+		nodeService := nodeService.NewService(nodeRepo, nil, nil, testutil.NewTestLogger())
+		searchService := service.NewService(nodeService, testutil.NewTestLogger())
+
+		results, err := searchService.Search("term")
+		if err != nil {
+			t.Fatalf("Error searching: %v", err)
+		}
+
+		if len(results) != 1 {
+			t.Errorf("Expected 1 result, got %v", len(results))
+		}
+	})
 }

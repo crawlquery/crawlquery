@@ -9,7 +9,7 @@ const authStore = useAuthStore()
 const latency = ref('0ms')
 const hostname = ref('')
 const port = ref('')
-const success = ref(false)
+const success = ref('')
 const err = ref('')
 const addNode = () => {
     const start = Date.now()
@@ -22,11 +22,14 @@ const addNode = () => {
         }
     })
         .then((response: any) => {
-            success.value = true
+            success.value = 'Node added successfully'
             latency.value = `${Date.now() - start}ms`
             emit('nodeCreated', response.data.node)
+            hostname.value = ''
+            port.value = ''
         })
         .catch((error: any) => {
+            success.value = ''
             err.value = error.response.data.error
         })
 }
@@ -43,7 +46,7 @@ const addNode = () => {
         <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
         </svg>
-        <span>Node added successfully!</span>
+        <span>{{ success }}</span>
     </div>
     <div class="flex gap-4">
         <label class="input input-bordered flex items-center gap-2 w-full">

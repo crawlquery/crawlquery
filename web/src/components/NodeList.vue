@@ -5,8 +5,6 @@ import { useAuthStore } from '../stores/auth'
 import { Node } from '../types'
 defineProps<{ nodes: Array<Node> }>()
 const err = ref('')
-
-
 </script>
 <template>
 
