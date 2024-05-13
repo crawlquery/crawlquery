@@ -8,6 +8,7 @@ import (
 )
 
 var ErrInvalidAccountID = errors.New("invalid account id")
+var ErrNodeAlreadyExists = errors.New("node already exists")
 
 type Node struct {
 	ID        string    `validate:"required,uuid"`

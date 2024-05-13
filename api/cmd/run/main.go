@@ -32,7 +32,7 @@ func main() {
 	defer logger.Sync()
 	sugar := logger.Sugar()
 
-	db, err := sql.Open("mysql", "root:cqdb@tcp(localhost:3306)/cqdb")
+	db, err := sql.Open("mysql", "root:cqdb@tcp(localhost:3306)/cqdb?parseTime=true")
 	if err != nil {
 		fmt.Println("Error connecting to database: ", err)
 		return
@@ -40,6 +40,7 @@ func main() {
 	defer db.Close()
 
 	if os.Getenv("ENV") == "development" {
+		fmt.Println("Running migrations...")
 		err := migration.Up(db)
 
 		if err != nil {

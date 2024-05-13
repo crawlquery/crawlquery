@@ -3,10 +3,8 @@ package service
 import (
 	"crawlquery/api/domain"
 	"crawlquery/pkg/authutil"
-	"errors"
 
 	"go.uber.org/zap"
-	"golang.org/x/crypto/bcrypt"
 )
 
 type Service struct {
@@ -28,15 +26,16 @@ func (s *Service) Login(email, password string) (string, error) {
 	acc, err := s.accountService.GetByEmail(email)
 
 	if err != nil {
+		if err != domain.ErrAccountNotFound {
+			s.logger.Errorw("Auth.Service.Login: error getting account", "error", err)
+		}
 		return "", domain.ErrInvalidCredentials
 	}
 
-	err = bcrypt.CompareHashAndPassword([]byte(acc.Password), []byte(password))
+	err = authutil.CompareHashAndPassword(acc.Password, password)
+
 	if err != nil {
-		if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
-			return "", domain.ErrInvalidCredentials
-		}
-		return "", err
+		return "", domain.ErrInvalidCredentials
 	}
 
 	token, err := authutil.GenerateToken(acc.ID)

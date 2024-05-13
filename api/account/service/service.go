@@ -2,6 +2,7 @@ package service
 
 import (
 	"crawlquery/api/domain"
+	"crawlquery/pkg/authutil"
 	"crawlquery/pkg/util"
 	"time"
 
@@ -28,10 +29,20 @@ func NewService(
 
 func (s *Service) Create(email, password string) (*domain.Account, error) {
 
+	if len(password) < 6 {
+		return nil, domain.ErrPasswordTooShort
+	}
+
+	hashedPassword, err := authutil.HashPassword(password)
+	if err != nil {
+		s.logger.Errorw("Account.Service.Create: error hashing password", "error", err)
+		return nil, domain.ErrInternalError
+	}
+
 	a := &domain.Account{
 		ID:        util.UUID(),
 		Email:     email,
-		Password:  password,
+		Password:  hashedPassword,
 		CreatedAt: time.Now(),
 	}
 

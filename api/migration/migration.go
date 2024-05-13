@@ -2,6 +2,7 @@ package migration
 
 import (
 	"database/sql"
+	"fmt"
 	"time"
 )
 
@@ -63,11 +64,12 @@ func Up(db *sql.DB) error {
 		var name string
 		err := row.Scan(&name)
 
-		if err != sql.ErrNoRows {
+		if err != nil && err != sql.ErrNoRows {
 			return err
 		}
 
 		if name == migration.Name {
+			fmt.Printf("Migration %s already applied, skipping\n", migration.Name)
 			continue
 		}
 
@@ -81,6 +83,8 @@ func Up(db *sql.DB) error {
 		if err != nil {
 			return err
 		}
+
+		fmt.Printf("Applied migration %s\n", migration.Name)
 	}
 
 	return nil

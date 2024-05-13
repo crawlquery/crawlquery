@@ -59,6 +59,35 @@ func TestCreate(t *testing.T) {
 		}
 	})
 
+	t.Run("can't create a node that already exists", func(t *testing.T) {
+		accountID := util.UUID()
+		accSvc, _ := factory.AccountServiceWithAccount(&domain.Account{
+			ID: accountID,
+		})
+
+		svc, _ := factory.NodeService(accSvc)
+
+		_, err := svc.Create(
+			accountID,
+			"hostname",
+			8080,
+		)
+
+		if err != nil {
+			t.Fatalf("Error creating account: %v", err)
+		}
+
+		_, err = svc.Create(
+			accountID,
+			"hostname",
+			8080,
+		)
+
+		if err != domain.ErrNodeAlreadyExists {
+			t.Errorf("Expected error creating node with same hostname")
+		}
+	})
+
 	t.Run("can't create a node with AccountID that doesn't exist", func(t *testing.T) {
 		accountID := util.UUID()
 		accSvc, _ := factory.AccountServiceWithAccount(nil)

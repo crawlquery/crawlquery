@@ -30,8 +30,22 @@ func NewService(
 
 func (cs *Service) Create(accountID, hostname string, port uint) (*domain.Node, error) {
 
+	// Check if the node already exists
+	all, err := cs.repo.List()
+
+	if err != nil {
+		cs.logger.Errorf("Node.Service.Create: error listing nodes: %v", err)
+		return nil, domain.ErrInternalError
+	}
+
+	for _, n := range all {
+		if n.Hostname == hostname && n.Port == port {
+			return nil, domain.ErrNodeAlreadyExists
+		}
+	}
+
 	// Check if the account exists
-	_, err := cs.accountService.Get(accountID)
+	_, err = cs.accountService.Get(accountID)
 
 	if err != nil {
 		cs.logger.Errorf("Node.Service.Create: error getting account: %v", err)

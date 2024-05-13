@@ -4,6 +4,7 @@ import (
 	"crawlquery/api/account/repository/mem"
 	"crawlquery/api/account/service"
 	"crawlquery/api/domain"
+	"crawlquery/pkg/authutil"
 	"crawlquery/pkg/testutil"
 	"errors"
 	"testing"
@@ -35,7 +36,7 @@ func TestCreate(t *testing.T) {
 			t.Errorf("Expected Email to be %s, got %s", account.Email, check.Email)
 		}
 
-		if check.Password != account.Password {
+		if err := authutil.CompareHashAndPassword(check.Password, "password"); err != nil {
 			t.Errorf("Expected Password to be %s, got %s", account.Password, check.Password)
 		}
 

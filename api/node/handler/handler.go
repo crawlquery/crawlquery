@@ -27,8 +27,8 @@ func (h *NodeHandler) Create(c *gin.Context) {
 		return
 	}
 
-	accountID := c.MustGet("account_id").(string)
-	node, err := h.nodeService.Create(accountID, req.Hostname, req.Port)
+	account := c.MustGet("account").(*domain.Account)
+	node, err := h.nodeService.Create(account.ID, req.Hostname, req.Port)
 
 	if err != nil {
 		errorutil.HandleGinError(c, err, http.StatusBadRequest)

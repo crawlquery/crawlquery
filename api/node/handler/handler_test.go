@@ -21,10 +21,10 @@ import (
 func TestCreate(t *testing.T) {
 	t.Run("should create a node", func(t *testing.T) {
 
-		accountID := util.UUID()
-		accSvc, _ := factory.AccountServiceWithAccount(&domain.Account{
-			ID: accountID,
-		})
+		account := &domain.Account{
+			ID: util.UUID(),
+		}
+		accSvc, _ := factory.AccountServiceWithAccount(account)
 
 		repo := mem.NewRepository()
 		svc := service.NewService(repo, accSvc, testutil.NewTestLogger())
@@ -44,7 +44,7 @@ func TestCreate(t *testing.T) {
 
 		responseWriter := httptest.NewRecorder()
 		ctx, _ := gin.CreateTestContext(responseWriter)
-		ctx.Set("account_id", accountID)
+		ctx.Set("account", account)
 		ctx.Request = httptest.NewRequest("POST", "/nodes", bytes.NewBuffer(req))
 
 		// when
@@ -73,10 +73,10 @@ func TestCreate(t *testing.T) {
 
 	t.Run("should return 400 if malformed JSON", func(t *testing.T) {
 
-		accountID := util.UUID()
-		accSvc, _ := factory.AccountServiceWithAccount(&domain.Account{
-			ID: accountID,
-		})
+		account := &domain.Account{
+			ID: util.UUID(),
+		}
+		accSvc, _ := factory.AccountServiceWithAccount(account)
 
 		repo := mem.NewRepository()
 		svc := service.NewService(repo, accSvc, testutil.NewTestLogger())
@@ -84,7 +84,7 @@ func TestCreate(t *testing.T) {
 
 		responseWriter := httptest.NewRecorder()
 		ctx, _ := gin.CreateTestContext(responseWriter)
-		ctx.Set("account_id", accountID)
+		ctx.Set("account", account)
 		ctx.Request = httptest.NewRequest("POST", "/nodes", bytes.NewBuffer([]byte("{")))
 
 		handler.Create(ctx)
@@ -96,10 +96,10 @@ func TestCreate(t *testing.T) {
 
 	t.Run("should return 400 if hostname is empty", func(t *testing.T) {
 
-		accountID := util.UUID()
-		accSvc, _ := factory.AccountServiceWithAccount(&domain.Account{
-			ID: accountID,
-		})
+		account := &domain.Account{
+			ID: util.UUID(),
+		}
+		accSvc, _ := factory.AccountServiceWithAccount(account)
 
 		repo := mem.NewRepository()
 		svc := service.NewService(repo, accSvc, testutil.NewTestLogger())
@@ -118,7 +118,7 @@ func TestCreate(t *testing.T) {
 
 		responseWriter := httptest.NewRecorder()
 		ctx, _ := gin.CreateTestContext(responseWriter)
-		ctx.Set("account_id", accountID)
+		ctx.Set("account", account)
 		ctx.Request = httptest.NewRequest("POST", "/nodes", bytes.NewBuffer(req))
 
 		handler.Create(ctx)

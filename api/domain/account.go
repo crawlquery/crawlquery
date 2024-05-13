@@ -9,11 +9,12 @@ import (
 
 var ErrAccountExists = errors.New("cannot create account")
 var ErrAccountNotFound = errors.New("account not found")
+var ErrPasswordTooShort = errors.New("password too short")
 
 type Account struct {
 	ID        string    `json:"id" validate:"required,uuid"`
 	Email     string    `json:"email" validate:"required,email"`
-	Password  string    `json:"-" validate:"required,min=6,max=100"`
+	Password  string    `json:"-" validate:"required,min=6"`
 	CreatedAt time.Time `json:"created_at" validate:"required"`
 }
 
