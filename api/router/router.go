@@ -23,5 +23,7 @@ func NewRouter(
 	}))
 	router.POST("/accounts", accountHandler.Create)
 	router.POST("/crawl-jobs", crawlJobHandler.Create)
+
+	router.POST("/nodes", middleware.AuthMiddleware(nodeHandler.Create))
 	return router
 }

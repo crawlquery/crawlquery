@@ -34,7 +34,8 @@ func (cs *Service) Create(accountID, hostname string, port uint) (*domain.Node, 
 	_, err := cs.accountService.Get(accountID)
 
 	if err != nil {
-		return nil, domain.ErrAccountNotFound
+		cs.logger.Errorf("Node.Service.Create: error getting account: %v", err)
+		return nil, domain.ErrInvalidAccountID
 	}
 
 	node := &domain.Node{

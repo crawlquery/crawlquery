@@ -11,10 +11,10 @@ var ErrAccountExists = errors.New("cannot create account")
 var ErrAccountNotFound = errors.New("account not found")
 
 type Account struct {
-	ID        string    `validate:"required,uuid"`
-	Email     string    `validate:"required,email"`
-	Password  string    `validate:"required,min=6,max=100"`
-	CreatedAt time.Time `validate:"required"`
+	ID        string    `json:"id" validate:"required,uuid"`
+	Email     string    `json:"email" validate:"required,email"`
+	Password  string    `json:"-" validate:"required,min=6,max=100"`
+	CreatedAt time.Time `json:"created_at" validate:"required"`
 }
 
 func (a *Account) Validate() error {
