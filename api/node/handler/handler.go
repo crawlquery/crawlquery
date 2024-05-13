@@ -27,16 +27,8 @@ func (h *NodeHandler) Create(c *gin.Context) {
 		return
 	}
 
-	user := c.MustGet("user").(*dto.UserClaims)
-
-	if user.AccountID == "" {
-		c.JSON(http.StatusForbidden, dto.NewErrorResponse(
-			domain.ErrForbidden,
-		))
-		return
-	}
-
-	node, err := h.nodeService.Create(req.AccountID, req.Hostname, req.Port)
+	accountID := c.MustGet("account_id").(string)
+	node, err := h.nodeService.Create(accountID, req.Hostname, req.Port)
 
 	if err != nil {
 		errorutil.HandleGinError(c, err, http.StatusBadRequest)
