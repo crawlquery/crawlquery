@@ -3,9 +3,14 @@ package service_test
 import (
 	"crawlquery/api/domain"
 	"crawlquery/api/factory"
+	"crawlquery/pkg/testutil"
 	"crawlquery/pkg/util"
 	"errors"
 	"testing"
+
+	nodeRepo "crawlquery/api/node/repository/mem"
+
+	"crawlquery/api/node/service"
 )
 
 func TestCreate(t *testing.T) {
@@ -16,7 +21,13 @@ func TestCreate(t *testing.T) {
 			ID: accountID,
 		})
 
-		svc, repo := factory.NodeService(accSvc)
+		shardSvc, _ := factory.ShardServiceWithShard(&domain.Shard{
+			ID: 1,
+		})
+
+		nodeRepo := nodeRepo.NewRepository()
+
+		svc := service.NewService(nodeRepo, accSvc, shardSvc, testutil.NewTestLogger())
 
 		node, err := svc.Create(
 			accountID,
@@ -40,7 +51,7 @@ func TestCreate(t *testing.T) {
 			t.Errorf("Expected Port to be 8080, got %d", node.Port)
 		}
 
-		list, err := repo.List()
+		list, err := nodeRepo.List()
 
 		if err != nil {
 			t.Fatalf("Error listing nodes: %v", err)
@@ -65,13 +76,18 @@ func TestCreate(t *testing.T) {
 			ID: accountID,
 		})
 
-		svc, _ := factory.NodeService(accSvc)
+		svc, nodeRepo := factory.NodeService(accSvc)
 
-		_, err := svc.Create(
-			accountID,
-			"hostname",
-			8080,
-		)
+		err := nodeRepo.Create(&domain.Node{
+			ID:        util.UUID(),
+			AccountID: accountID,
+			Hostname:  "hostname",
+			Port:      8080,
+		})
+
+		if err != nil {
+			t.Fatalf("Error creating account: %v", err)
+		}
 
 		if err != nil {
 			t.Fatalf("Error creating account: %v", err)
@@ -132,9 +148,14 @@ func TestCreate(t *testing.T) {
 			ID: accountID,
 		})
 
-		svc, repo := factory.NodeService(accSvc)
+		shardSvc, _ := factory.ShardServiceWithShard(&domain.Shard{
+			ID: 1,
+		})
 
-		repo.ForceCreateError(errors.New("db locked"))
+		nodeRepo := nodeRepo.NewRepository()
+		svc := service.NewService(nodeRepo, accSvc, shardSvc, testutil.NewTestLogger())
+
+		nodeRepo.ForceCreateError(errors.New("db locked"))
 
 		node := &domain.Node{
 			ID:        util.UUID(),
@@ -142,7 +163,7 @@ func TestCreate(t *testing.T) {
 			Hostname:  "testnode",
 		}
 
-		repo.Create(node)
+		nodeRepo.Create(node)
 
 		_, err := svc.Create(
 			accountID,
@@ -164,19 +185,24 @@ func TestList(t *testing.T) {
 			ID: accountID,
 		})
 
-		svc, _ := factory.NodeService(accSvc)
+		svc, nodeRepo := factory.NodeService(accSvc)
 
-		node, _ := svc.Create(
-			accountID,
-			"testnode",
-			8080,
-		)
+		node := &domain.Node{
+			ID:        util.UUID(),
+			AccountID: accountID,
+			Hostname:  "testnode",
+			Port:      8080,
+		}
 
-		node2, _ := svc.Create(
-			accountID,
-			"testnode2",
-			8081,
-		)
+		node2 := &domain.Node{
+			ID:        util.UUID(),
+			AccountID: accountID,
+			Hostname:  "testnode2",
+			Port:      8081,
+		}
+
+		nodeRepo.Create(node)
+		nodeRepo.Create(node2)
 
 		list, err := svc.List()
 
@@ -272,6 +298,78 @@ func TestRandomizedList(t *testing.T) {
 
 		if err == nil {
 			t.Errorf("Expected error listing nodes")
+		}
+	})
+}
+
+func TestGetShardWithLeastNodes(t *testing.T) {
+	t.Run("can get shard with least nodes", func(t *testing.T) {
+		nodeRepo := nodeRepo.NewRepository()
+		nodeService := service.NewService(nodeRepo, nil, nil, testutil.NewTestLogger())
+
+		nodes := []*domain.Node{
+			{ID: "1", ShardID: 1},
+			{ID: "2", ShardID: 1},
+			{ID: "3", ShardID: 2},
+			{ID: "4", ShardID: 2},
+			{ID: "5", ShardID: 3},
+		}
+
+		for _, n := range nodes {
+			nodeRepo.Create(n)
+		}
+
+		shard, err := nodeService.GetShardWithLeastNodes()
+
+		if err != nil {
+			t.Fatalf("Error getting shard with least nodes: %v", err)
+		}
+
+		if shard.ID != 3 {
+			t.Errorf("Expected shard ID to be 3, got %d", shard.ID)
+		}
+	})
+
+	t.Run("can get shard with least nodes when all shards have the same number of nodes", func(t *testing.T) {
+		nodeRepo := nodeRepo.NewRepository()
+		nodeService := service.NewService(nodeRepo, nil, nil, testutil.NewTestLogger())
+
+		nodes := []*domain.Node{
+			{ID: "1", ShardID: 1},
+			{ID: "2", ShardID: 1},
+			{ID: "3", ShardID: 2},
+			{ID: "4", ShardID: 2},
+			{ID: "5", ShardID: 3},
+			{ID: "6", ShardID: 3},
+		}
+
+		for _, n := range nodes {
+			nodeRepo.Create(n)
+		}
+
+		shard, err := nodeService.GetShardWithLeastNodes()
+
+		if err != nil {
+			t.Fatalf("Error getting shard with least nodes: %v", err)
+		}
+
+		if shard == nil {
+			t.Fatalf("Expected shard to not be nil")
+		}
+	})
+
+	t.Run("can get shard with least nodes when no nodes exist", func(t *testing.T) {
+		nodeRepo := nodeRepo.NewRepository()
+		nodeService := service.NewService(nodeRepo, nil, nil, testutil.NewTestLogger())
+
+		shard, err := nodeService.GetShardWithLeastNodes()
+
+		if err == nil {
+			t.Fatalf("Expected error getting shard with least nodes")
+		}
+
+		if shard != nil {
+			t.Errorf("Expected shard to be nil, got %v", shard)
 		}
 	})
 }

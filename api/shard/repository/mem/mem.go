@@ -17,6 +17,14 @@ func (r *Repository) Create(s *domain.Shard) error {
 	return nil
 }
 
+func (r *Repository) Get(id uint) (*domain.Shard, error) {
+	s, ok := r.shards[id]
+	if !ok {
+		return nil, domain.ErrShardNotFound
+	}
+	return s, nil
+}
+
 func (r *Repository) List() ([]*domain.Shard, error) {
 	shards := []*domain.Shard{}
 	for _, s := range r.shards {

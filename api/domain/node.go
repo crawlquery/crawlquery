@@ -37,3 +37,8 @@ type NodeService interface {
 type NodeHandler interface {
 	Create(c *gin.Context)
 }
+
+type AllocationService interface {
+	AllocateNode(*Node) error
+	GetShardWithLeastNodes() (*Shard, error)
+}

@@ -24,6 +24,20 @@ func (r *Repository) Create(shard *domain.Shard) error {
 	return nil
 }
 
+func (r *Repository) Get(id uint) (*domain.Shard, error) {
+	row := r.db.QueryRow("SELECT id, created_at FROM shards WHERE id = ?", id)
+
+	shard := &domain.Shard{}
+
+	err := row.Scan(&shard.ID, &shard.CreatedAt)
+
+	if err != nil {
+		return nil, fmt.Errorf("error getting shard: %w", err)
+	}
+
+	return shard, nil
+}
+
 func (r *Repository) List() ([]*domain.Shard, error) {
 	rows, err := r.db.Query("SELECT id, created_at FROM shards")
 	if err != nil {

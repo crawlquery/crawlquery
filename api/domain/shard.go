@@ -6,6 +6,7 @@ import (
 )
 
 var ErrNoShards = errors.New("no shards")
+var ErrShardNotFound = errors.New("shard not found")
 
 type Shard struct {
 	ID        uint
@@ -21,5 +22,6 @@ type ShardRepository interface {
 type ShardService interface {
 	Create(*Shard) error
 	List() ([]*Shard, error)
-	GetURLShardID(url string) int
+	GetURLShardID(url string) (int, error)
+	First() (*Shard, error)
 }

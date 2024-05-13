@@ -7,18 +7,16 @@ import (
 	"go.uber.org/zap"
 )
 
-type ShardService struct {
-	repo        domain.ShardRepository
-	nodeService domain.NodeService
-	logger      *zap.SugaredLogger
+type Service struct {
+	repo   domain.ShardRepository
+	logger *zap.SugaredLogger
 }
 
 func NewService(
 	repo domain.ShardRepository,
-	nodeService domain.NodeService,
 	logger *zap.SugaredLogger,
-) *ShardService {
-	return &ShardService{repo, nodeService, logger}
+) *Service {
+	return &Service{repo, logger}
 }
 
 func hash(s string) uint32 {
@@ -27,36 +25,27 @@ func hash(s string) uint32 {
 	return h.Sum32()
 }
 
-func (ss *ShardService) GetShardWithLeastNodes() (*domain.Shard, error) {
+func (ss *Service) Create(s *domain.Shard) error {
+	return ss.repo.Create(s)
+}
 
-	nodes, err := ss.nodeService.List()
+func (ss *Service) First() (*domain.Shard, error) {
+	shards, err := ss.repo.List()
 
 	if err != nil {
-		ss.logger.Errorf("Shard.Service.GetShardWithLeastNodes: error listing nodes: %v", err)
+		ss.logger.Errorf("Shard.Service.First: error listing shards: %v", err)
 		return nil, err
 	}
 
-	var shardDistribution = make(map[uint]int)
-
-	for _, node := range nodes {
-		shardDistribution[node.ShardID]++
+	if len(shards) == 0 {
+		ss.logger.Errorf("Shard.Service.First: no shards")
+		return nil, domain.ErrNoShards
 	}
 
-	var leastNodes *domain.Shard = nil
-	var leastNodesCount int = int(^uint(0) >> 1) // Set to maximum int value
-
-	for shardID, count := range shardDistribution {
-		if leastNodes == nil || count < leastNodesCount {
-			leastNodesCount = count
-			// Assuming leastNodes needs to be newly initialized each time
-			leastNodes = &domain.Shard{ID: shardID}
-		}
-	}
-
-	return leastNodes, nil
+	return shards[0], nil
 }
 
-func (ss *ShardService) GetURLShardID(url string) (int, error) {
+func (ss *Service) GetURLShardID(url string) (int, error) {
 
 	count, err := ss.repo.Count()
 
@@ -71,4 +60,8 @@ func (ss *ShardService) GetURLShardID(url string) (int, error) {
 	}
 
 	return int(hash(url) % uint32(count)), nil
+}
+
+func (ss *Service) List() ([]*domain.Shard, error) {
+	return ss.repo.List()
 }

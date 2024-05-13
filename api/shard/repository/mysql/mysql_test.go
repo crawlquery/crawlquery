@@ -59,6 +59,46 @@ func TestCreate(t *testing.T) {
 	})
 }
 
+func TestGet(t *testing.T) {
+	t.Run("can get a shard", func(t *testing.T) {
+		// Arrange
+		db := testutil.CreateTestMysqlDB()
+		defer db.Close()
+		migration.Up(db)
+
+		repo := mysql.NewRepository(db)
+
+		shard := &domain.Shard{
+			ID:        3,
+			CreatedAt: time.Now(),
+		}
+
+		defer db.Exec("DELETE FROM shards WHERE id = ?", shard.ID)
+
+		err := repo.Create(shard)
+
+		if err != nil {
+			t.Fatalf("Error creating shard: %v", err)
+		}
+
+		// Act
+		check, err := repo.Get(shard.ID)
+
+		// Assert
+		if err != nil {
+			t.Fatalf("Error getting shard: %v", err)
+		}
+
+		if check.ID != shard.ID {
+			t.Errorf("Expected ID to be %d, got %d", shard.ID, check.ID)
+		}
+
+		if check.CreatedAt.Sub(shard.CreatedAt) > time.Second || shard.CreatedAt.Sub(check.CreatedAt) > time.Second {
+			t.Errorf("Expected CreatedAt to be within one second of %v, got %v", shard.CreatedAt, check.CreatedAt)
+		}
+	})
+}
+
 func TestList(t *testing.T) {
 	t.Run("can list shards", func(t *testing.T) {
 		// Arrange

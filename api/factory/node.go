@@ -6,6 +6,7 @@ import (
 	"crawlquery/api/node/service"
 	"crawlquery/pkg/testutil"
 	"crawlquery/pkg/util"
+
 	"time"
 )
 
@@ -33,13 +34,13 @@ func NodeRepoWithNode(n *domain.Node) *mem.Repository {
 func NodeServiceWithNode(
 	as domain.AccountService,
 	n *domain.Node,
-) (domain.NodeService, *mem.Repository) {
+) (*service.Service, *mem.Repository) {
 	repo := NodeRepoWithNode(n)
-	return service.NewService(repo, as, testutil.NewTestLogger()), repo
+	return service.NewService(repo, as, nil, testutil.NewTestLogger()), repo
 }
 
 func NodeService(
 	as domain.AccountService,
-) (domain.NodeService, *mem.Repository) {
+) (*service.Service, *mem.Repository) {
 	return NodeServiceWithNode(as, nil)
 }
