@@ -41,6 +41,12 @@ var migrations = []Migration{
 		url VARCHAR(255) NOT NULL,
 		created_at TIMESTAMP NOT NULL)`,
 	},
+	{
+		Name: "create_shards_table",
+		SQL: `CREATE TABLE shards (
+		id INT PRIMARY KEY,
+		created_at TIMESTAMP NOT NULL)`,
+	},
 }
 
 var migrationTable = `CREATE TABLE IF NOT EXISTS migrations (
