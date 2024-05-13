@@ -3,12 +3,12 @@ package mem
 import "crawlquery/api/domain"
 
 type Repository struct {
-	shards map[int]*domain.Shard
+	shards map[uint]*domain.Shard
 }
 
 func NewRepository() *Repository {
 	return &Repository{
-		shards: make(map[int]*domain.Shard),
+		shards: make(map[uint]*domain.Shard),
 	}
 }
 
@@ -23,4 +23,8 @@ func (r *Repository) List() ([]*domain.Shard, error) {
 		shards = append(shards, s)
 	}
 	return shards, nil
+}
+
+func (r *Repository) Count() (int, error) {
+	return len(r.shards), nil
 }

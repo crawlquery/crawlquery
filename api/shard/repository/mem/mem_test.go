@@ -68,3 +68,29 @@ func TestList(t *testing.T) {
 		}
 	})
 }
+
+func TestCount(t *testing.T) {
+	t.Run("can count shards", func(t *testing.T) {
+		// Arrange
+		repo := NewRepository()
+
+		shard := &domain.Shard{
+			ID:        3,
+			CreatedAt: time.Now(),
+		}
+
+		repo.shards[shard.ID] = shard
+
+		// Act
+		count, err := repo.Count()
+
+		// Assert
+		if err != nil {
+			t.Fatalf("Error counting shards: %v", err)
+		}
+
+		if count != 1 {
+			t.Fatalf("Expected 1 shard, got %d", count)
+		}
+	})
+}

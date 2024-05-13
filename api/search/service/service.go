@@ -1,7 +1,7 @@
 package service
 
 import (
-	"crawlquery/pkg/domain"
+	"crawlquery/api/domain"
 	"crawlquery/pkg/dto"
 	"encoding/json"
 	"fmt"

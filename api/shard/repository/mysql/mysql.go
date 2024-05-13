@@ -43,3 +43,16 @@ func (r *Repository) List() ([]*domain.Shard, error) {
 
 	return shards, nil
 }
+
+func (r *Repository) Count() (int, error) {
+	row := r.db.QueryRow("SELECT COUNT(id) FROM shards")
+
+	var count int
+	err := row.Scan(&count)
+
+	if err != nil {
+		return 0, fmt.Errorf("error counting shards: %w", err)
+	}
+
+	return count, nil
+}
