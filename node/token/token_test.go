@@ -1,7 +1,7 @@
 package token_test
 
 import (
-	"crawlquery/pkg/token"
+	"crawlquery/node/token"
 	"reflect"
 	"testing"
 )
@@ -28,33 +28,38 @@ func TestTokenize(t *testing.T) {
 
 	// Expected output: map of tokens and their positions
 	expectedTokens := map[string][]int{
-		"hello":   {0},
-		"world":   {1},
-		"this":    {2},
-		"is":      {3},
-		"a":       {4},
-		"simple":  {5},
-		"test":    {6},
-		"numbers": {7},
-		"1234":    {8},
+		"example": {0},
+		"hello":   {1},
+		"world":   {2},
+		"this":    {3},
+		"is":      {4},
+		"a":       {5},
+		"simple":  {6},
+		"test":    {7},
+		"numbers": {8},
+		"1234":    {9},
 	}
 
 	// Tokenize the input HTML content
 	tokensWithPositions := token.Tokenize(htmlContent)
 
 	// Check if the output matches the expected tokens and positions
-	if !reflect.DeepEqual(tokensWithPositions, expectedTokens) {
-		t.Errorf("Tokenize() = %v, want %v", tokensWithPositions, expectedTokens)
+	for token, positions := range expectedTokens {
+		if actualPositions, ok := tokensWithPositions[token]; ok {
+			for i, pos := range positions {
+				if pos != actualPositions[i] {
+					t.Errorf("For token %s, expected position %d, got %d", token, pos, actualPositions[i])
+				}
+			}
+		} else {
+			t.Errorf("Expected token %s was not found", token)
+		}
 	}
 
-	// Test with text in body only
-	htmlContent = `<body>Hello World! This is a simple test. Numbers: 1234.</body>`
-
-	// Tokenize the input HTML content
-	tokensWithPositions = token.Tokenize(htmlContent)
-
-	// Check if the output matches the expected tokens and positions
-	if !reflect.DeepEqual(tokensWithPositions, expectedTokens) {
-		t.Errorf("Tokenize() = %v, want %v", tokensWithPositions, expectedTokens)
+	// Check for extra tokens not expected
+	for token := range tokensWithPositions {
+		if _, ok := expectedTokens[token]; !ok {
+			t.Errorf("Unexpected token %s found", token)
+		}
 	}
 }

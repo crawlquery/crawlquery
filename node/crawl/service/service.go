@@ -1,6 +1,7 @@
 package service
 
 import (
+	"crawlquery/node/index"
 	"crawlquery/pkg/domain"
 	"crawlquery/pkg/util"
 	"fmt"
@@ -10,12 +11,12 @@ import (
 )
 
 type CrawlService struct {
-	indexService domain.IndexService
+	idx *index.Index
 }
 
-func NewCrawlService(is domain.IndexService) *CrawlService {
+func NewService(idx *index.Index) *CrawlService {
 	return &CrawlService{
-		indexService: is,
+		idx: idx,
 	}
 }
 
@@ -50,5 +51,5 @@ func (cs *CrawlService) Crawl(url string) error {
 		Content:         html,
 		MetaDescription: doc.Find("meta[name=description]").AttrOr("content", ""),
 	}
-	return cs.indexService.AddPage(page)
+	return cs.idx.AddPage(page)
 }

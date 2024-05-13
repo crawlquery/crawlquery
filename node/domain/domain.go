@@ -1,19 +1,10 @@
 package domain
 
-type Result struct {
-	PageID string  `json:"id"`
-	Score  float64 `json:"score"`
-	Page   *Page   `json:"page"`
-}
+import (
+	"crawlquery/pkg/domain"
 
-// Page represents a web page with metadata.
-type Page struct {
-	ID              string `json:"id"`
-	URL             string `json:"url"`
-	Title           string `json:"title"`
-	Content         string `json:"content"`
-	MetaDescription string `json:"description"`
-}
+	"github.com/gin-gonic/gin"
+)
 
 // Posting lists entry
 type Posting struct {
@@ -26,27 +17,23 @@ type Posting struct {
 type InvertedIndex map[string][]*Posting
 
 // ForwardIndex maps page IDs to page metadata and keyword lists
-type ForwardIndex map[string]*Page
+type ForwardIndex map[string]*domain.Page
 
 type Index interface {
-	AddPage(doc *Page)
+	AddPage(doc *domain.Page)
 	GetForward() ForwardIndex
 	GetInverted() InvertedIndex
-	Search(query string) ([]Result, error)
+	Search(query string) ([]domain.Result, error)
 }
 
-type IndexRepository interface {
-	Save(idx Index) error
-	Load() (Index, error)
+type IndexHandler interface {
+	Search(c *gin.Context)
 }
 
-type IndexService interface {
-	Search(query string) ([]Result, error)
-	AddPage(doc *Page) error
+type CrawlHandler interface {
+	Crawl(c *gin.Context)
 }
 
-type ShardID int
-
-type SearchService interface {
-	Search(term string) ([]Result, error)
+type CrawlService interface {
+	Crawl(url string) error
 }

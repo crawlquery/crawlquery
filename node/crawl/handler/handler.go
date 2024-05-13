@@ -1,17 +1,17 @@
 package handler
 
 import (
-	"crawlquery/node/service"
+	"crawlquery/node/domain"
 	"net/url"
 
 	"github.com/gin-gonic/gin"
 )
 
 type CrawlHandler struct {
-	crawlService *service.CrawlService
+	crawlService domain.CrawlService
 }
 
-func NewCrawlHandler(cs *service.CrawlService) *CrawlHandler {
+func NewHandler(cs domain.CrawlService) *CrawlHandler {
 	return &CrawlHandler{
 		crawlService: cs,
 	}

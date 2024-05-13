@@ -1,7 +1,7 @@
 package router
 
 import (
-	"crawlquery/node/handler"
+	"crawlquery/node/domain"
 	"time"
 
 	"github.com/gin-contrib/cors"
@@ -25,8 +25,8 @@ func CORSMiddleware() gin.HandlerFunc {
 }
 
 func NewRouter(
-	searchHandler *handler.SearchHandler,
-	crawlHandler *handler.CrawlHandler,
+	indexHandler domain.IndexHandler,
+	crawlHandler domain.CrawlHandler,
 ) *gin.Engine {
 	router := gin.Default()
 	router.Use(cors.New(cors.Config{
@@ -37,7 +37,7 @@ func NewRouter(
 		AllowCredentials: true,
 		MaxAge:           12 * time.Hour,
 	}))
-	router.GET("/search", searchHandler.Search)
+	router.GET("/search", indexHandler.Search)
 	router.POST("/crawl", crawlHandler.Crawl)
 	return router
 }

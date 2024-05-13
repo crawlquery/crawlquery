@@ -1,7 +1,6 @@
 package token
 
 import (
-	"fmt"
 	"regexp"
 	"strings"
 
@@ -52,7 +51,6 @@ func Tokenize(htmlContent string) map[string][]int {
 
 	// Consolidated text from the builder
 	consolidatedText := textBuilder.String()
-	fmt.Println("Consolidated Text:", consolidatedText)
 
 	// Normalize text: convert to lower case
 	normalizedText := strings.ToLower(consolidatedText)

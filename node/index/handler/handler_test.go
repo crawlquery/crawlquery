@@ -1,13 +1,12 @@
 package handler_test
 
 import (
-	"crawlquery/node/handler"
+	crawlHandler "crawlquery/node/crawl/handler"
+	"crawlquery/node/index"
+	indexHandler "crawlquery/node/index/handler"
 	"crawlquery/node/router"
-	"crawlquery/node/service"
 	"crawlquery/pkg/domain"
 	"crawlquery/pkg/factory"
-	"crawlquery/pkg/index"
-	"crawlquery/pkg/repository/index/mem"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -16,29 +15,17 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func TestSearchHandler(t *testing.T) {
+func TestIndexHandler(t *testing.T) {
 
 	idx := index.NewIndex()
 	for _, page := range factory.TenPages() {
-		idx.AddPage(&page)
+		idx.AddPage(page)
 	}
 
-	memRepo := mem.NewMemoryRepository()
-	memRepo.Save(idx)
+	indexHandler := indexHandler.NewHandler(idx)
+	crawlHandler := crawlHandler.NewHandler(nil)
 
-	is := service.NewIndexService(
-		memRepo,
-	)
-
-	searchHandler := handler.NewSearchHandler(is)
-
-	crawlHandler := handler.NewCrawlHandler(
-		service.NewCrawlService(
-			nil,
-		),
-	)
-
-	r := router.NewRouter(searchHandler, crawlHandler)
+	r := router.NewRouter(indexHandler, crawlHandler)
 
 	req, _ := http.NewRequest("GET", "/search?q=homepage", nil)
 
@@ -50,7 +37,7 @@ func TestSearchHandler(t *testing.T) {
 			{
 				PageID: "1",
 				Score:  1.0,
-				Page:   &factory.HomePage,
+				Page:   factory.HomePage,
 			},
 		},
 	})

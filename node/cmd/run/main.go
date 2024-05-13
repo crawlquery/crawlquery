@@ -1,35 +1,29 @@
 package main
 
 import (
-	"crawlquery/node/handler"
+	crawlHandler "crawlquery/node/crawl/handler"
+	crawlService "crawlquery/node/crawl/service"
+	"crawlquery/node/index"
+	indexHandler "crawlquery/node/index/handler"
 	"crawlquery/node/router"
-	"crawlquery/node/service"
 	"crawlquery/pkg/factory"
-	"crawlquery/pkg/index"
-	"crawlquery/pkg/repository/index/mem"
 )
 
 func main() {
 
 	idx := index.NewIndex()
-
 	for _, page := range factory.TenPages() {
 		idx.AddPage(&page)
 	}
 
-	memRepo := mem.NewMemoryRepository()
-	memRepo.Save(idx)
-
-	svc := service.NewIndexService(memRepo)
-	searchHandler := handler.NewSearchHandler(svc)
-	crawlSvc := service.NewCrawlService(
-		svc,
-	)
-	crawlHandler := handler.NewCrawlHandler(
-		crawlSvc,
+	indexHandler := indexHandler.NewHandler(idx)
+	crawlHandler := crawlHandler.NewHandler(
+		crawlService.NewService(
+			idx,
+		),
 	)
 
-	r := router.NewRouter(searchHandler, crawlHandler)
+	r := router.NewRouter(indexHandler, crawlHandler)
 
 	r.Run(":9090")
 }

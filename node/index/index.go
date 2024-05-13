@@ -1,8 +1,9 @@
 package index
 
 import (
-	"crawlquery/pkg/domain"
-	"crawlquery/pkg/token"
+	"crawlquery/node/domain"
+	"crawlquery/node/token"
+	sharedDomain "crawlquery/pkg/domain"
 	"fmt"
 	"sort"
 	"strings"
@@ -22,14 +23,6 @@ func NewIndex() *Index {
 	}
 }
 
-func (idx *Index) SetInverted(inverted domain.InvertedIndex) {
-	idx.Inverted = inverted
-}
-
-func (idx *Index) SetForward(forward domain.ForwardIndex) {
-	idx.Forward = forward
-}
-
 func (idx *Index) fuzzySearch(term string) map[string]float64 {
 	results := make(map[string]float64)
 	for key, postings := range idx.Inverted {
@@ -44,7 +37,7 @@ func (idx *Index) fuzzySearch(term string) map[string]float64 {
 	return results
 }
 
-func (idx *Index) Search(query string) ([]domain.Result, error) {
+func (idx *Index) Search(query string) ([]sharedDomain.Result, error) {
 	// Tokenize the query the same way as the index was tokenized
 	queryTerms := token.TokenizeTerm(query)
 	results := make(map[string]float64) // map[PageID]relevanceScore
@@ -58,9 +51,12 @@ func (idx *Index) Search(query string) ([]domain.Result, error) {
 	}
 
 	// Convert the results map to a slice and sort by relevance score
-	var sortedResults []domain.Result
+	var sortedResults []sharedDomain.Result
 	for docID, score := range results {
-		sortedResults = append(sortedResults, domain.Result{PageID: docID, Score: score})
+		sortedResults = append(sortedResults, sharedDomain.Result{PageID: docID, Score: score})
+	}
+	for k, v := range idx.Forward {
+		fmt.Printf("Key: %s, Value: %v\n", k, v)
 	}
 	sort.Slice(sortedResults, func(i, j int) bool {
 		return sortedResults[i].Score > sortedResults[j].Score
@@ -76,7 +72,7 @@ func (idx *Index) Search(query string) ([]domain.Result, error) {
 }
 
 // AddPage adds a page to both forward and inverted indexes
-func (idx *Index) AddPage(doc *domain.Page) {
+func (idx *Index) AddPage(doc *sharedDomain.Page) error {
 	tokensWithPositions := token.Tokenize(doc.Content)
 
 	// Update forward index
@@ -86,18 +82,7 @@ func (idx *Index) AddPage(doc *domain.Page) {
 	for token, positions := range tokensWithPositions {
 		posting := domain.Posting{PageID: doc.ID, Frequency: len(positions), Positions: positions}
 		idx.Inverted[token] = append(idx.Inverted[token], &posting)
-		fmt.Println("adding invertted")
 	}
 
-	fmt.Printf("Added %d inverted entries for doc %s\n", len(tokensWithPositions), doc.ID)
-}
-
-// Forward returns the forward index
-func (idx *Index) GetForward() domain.ForwardIndex {
-	return idx.Forward
-}
-
-// Inverted returns the inverted index
-func (idx *Index) GetInverted() domain.InvertedIndex {
-	return idx.Inverted
+	return nil
 }

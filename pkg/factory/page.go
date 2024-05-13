@@ -4,7 +4,7 @@ import (
 	"crawlquery/pkg/domain"
 )
 
-var HomePage = domain.Page{
+var HomePage = &domain.Page{
 	ID:              "1",
 	URL:             "https://example.com",
 	Title:           "Home",
@@ -12,8 +12,8 @@ var HomePage = domain.Page{
 	MetaDescription: "Welcome to our official website where we offer the latest updates and information.",
 }
 
-func TenPages() []domain.Page {
-	return []domain.Page{
+func TenPages() []*domain.Page {
+	return []*domain.Page{
 		HomePage,
 		{ID: "2", URL: "https://example.com/about", Title: "About Us", Content: "<html><body>Learn more about our company's history and mission.</body></html>", MetaDescription: "Discover more about our company and what drives us."},
 		{ID: "3", URL: "https://example.com/contact", Title: "Contact Us", Content: "<html><body>Contact us via email or phone.</body></html>", MetaDescription: "Get in touch with us for more information and support."},
