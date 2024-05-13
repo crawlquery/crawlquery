@@ -11,10 +11,20 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
+
+// MockAuthHandler is a mock type for the AuthHandler
+type MockAuthHandler struct {
+	mock.Mock
+}
+
+// Login mocks the Login method of AuthHandler
+func (m *MockAuthHandler) Login(c *gin.Context) {
+	m.Called(c)
+	c.JSON(http.StatusOK, gin.H{"message": "Login successful"})
+}
 
 // MockAccountHandler is a mock type for the AccountHandler
 type MockAccountHandler struct {
@@ -48,7 +58,9 @@ func (m *MockNodeHandler) Create(c *gin.Context) {
 func setupRouterWithMocks() map[string]interface{} {
 	gin.SetMode(gin.TestMode)
 
-	// Create a mock handler
+	mockAuthHandler := new(MockAuthHandler)
+	mockAuthHandler.On("Login", mock.Anything).Return()
+
 	mockAccountHandler := new(MockAccountHandler)
 	mockAccountHandler.On("Create", mock.Anything).Return()
 
@@ -63,6 +75,7 @@ func setupRouterWithMocks() map[string]interface{} {
 	// Setup the router with the mock handler
 	testRouter := router.NewRouter(
 		accountService,
+		mockAuthHandler,
 		mockAccountHandler,
 		mockCrawlJobHandler,
 		mockNodeHandler,
@@ -76,6 +89,28 @@ func setupRouterWithMocks() map[string]interface{} {
 		"accountService":      accountService,
 		"accountRepo":         accountRepo,
 	}
+}
+
+func TestLoginEndpoint(t *testing.T) {
+
+	// Set the router to test mode
+	ifs := setupRouterWithMocks()
+
+	testRouter := ifs["testRouter"].(*gin.Engine)
+
+	// Create a response recorder
+	w := httptest.NewRecorder()
+
+	// Create a new request to the endpoint
+	req, _ := http.NewRequest("POST", "/login", bytes.NewBufferString(`{"email":"test@example.com","password":"testpass"}`))
+	req.Header.Set("Content-Type", "application/json")
+
+	// Perform the request
+	testRouter.ServeHTTP(w, req)
+
+	// Assert the response
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Contains(t, w.Body.String(), "Login successful")
 }
 
 func TestAccountCreationEndpoint(t *testing.T) {
@@ -138,9 +173,7 @@ func TestNodeCreationEndpoint(t *testing.T) {
 		t.Fatalf("Error getting account: %v", err)
 	}
 
-	token, err := authutil.GenerateToken(jwt.MapClaims{
-		"id": account.ID,
-	})
+	token, err := authutil.GenerateToken(account.ID)
 
 	if err != nil {
 		t.Fatalf("Error generating token: %v", err)

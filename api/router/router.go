@@ -11,6 +11,7 @@ import (
 
 func NewRouter(
 	as domain.AccountService,
+	authHandler domain.AuthHandler,
 	accountHandler domain.AccountHandler,
 	crawlJobHandler domain.CrawlJobHandler,
 	nodeHandler domain.NodeHandler,
@@ -26,6 +27,7 @@ func NewRouter(
 	}))
 	router.POST("/accounts", accountHandler.Create)
 	router.POST("/crawl-jobs", crawlJobHandler.Create)
+	router.POST("/login", authHandler.Login)
 
 	router.POST("/nodes", middleware.AuthMiddleware(as, nodeHandler.Create))
 	return router

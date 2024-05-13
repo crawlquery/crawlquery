@@ -11,7 +11,6 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt"
 )
 
 func TestAuthMiddleware(t *testing.T) {
@@ -23,9 +22,7 @@ func TestAuthMiddleware(t *testing.T) {
 			Email: "test@example.com",
 		}
 
-		token, err := authutil.GenerateToken(jwt.MapClaims{
-			"id": account.ID,
-		})
+		token, err := authutil.GenerateToken(account.ID)
 
 		if err != nil {
 			t.Fatalf("Error generating token: %v", err)

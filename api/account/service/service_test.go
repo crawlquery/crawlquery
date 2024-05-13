@@ -152,3 +152,44 @@ func TestGet(t *testing.T) {
 		}
 	})
 }
+
+func TestGetByEmail(t *testing.T) {
+	t.Run("can get an account by email", func(t *testing.T) {
+		repo := mem.NewRepository()
+		svc := service.NewService(repo, testutil.NewTestLogger())
+
+		account := &domain.Account{
+			Email:    "test@example.com",
+			Password: "password",
+		}
+
+		repo.Create(account)
+
+		check, err := svc.GetByEmail(account.Email)
+
+		if err != nil {
+			t.Fatalf("Error getting account: %v", err)
+		}
+
+		if check.Email != account.Email {
+			t.Errorf("Expected Email to be %s, got %s", account.Email, check.Email)
+		}
+
+		if check.Password != account.Password {
+			t.Errorf("Expected Password to be %s, got %s", account.Password, check.Password)
+		}
+	})
+
+	t.Run("returns error if account not found", func(t *testing.T) {
+		repo := mem.NewRepository()
+		svc := service.NewService(repo, testutil.NewTestLogger())
+
+		_, err := svc.GetByEmail("aa")
+
+		if err != domain.ErrAccountNotFound {
+			t.Errorf("Expected error getting account, got %v", err)
+		}
+
+	})
+
+}

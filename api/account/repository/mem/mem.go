@@ -58,5 +58,5 @@ func (r *Repository) GetByEmail(email string) (*domain.Account, error) {
 		}
 	}
 
-	return nil, errors.New("account not found")
+	return nil, domain.ErrAccountNotFound
 }

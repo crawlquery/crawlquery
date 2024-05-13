@@ -11,5 +11,4 @@ var validate = validator.New(
 )
 
 var ErrInternalError = errors.New("internal error")
-
 var ErrForbidden = errors.New("forbidden")

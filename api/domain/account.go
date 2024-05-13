@@ -30,6 +30,7 @@ type AccountRepository interface {
 type AccountService interface {
 	Create(email, password string) (*Account, error)
 	Get(string) (*Account, error)
+	GetByEmail(string) (*Account, error)
 }
 
 type AccountHandler interface {

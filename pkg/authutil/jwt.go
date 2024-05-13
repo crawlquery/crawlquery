@@ -26,9 +26,11 @@ func ParseClaims(token string) (jwt.MapClaims, error) {
 	return claims, nil
 }
 
-func GenerateToken(claims jwt.Claims) (string, error) {
+func GenerateToken(id string) (string, error) {
 
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"id": id,
+	})
 
 	t, err := token.SignedString([]byte(os.Getenv("JWT_SECRET")))
 
