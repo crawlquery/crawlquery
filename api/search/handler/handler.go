@@ -1,8 +1,7 @@
 package handler
 
 import (
-	"crawlquery/pkg/domain"
-	"fmt"
+	"crawlquery/api/domain"
 
 	"github.com/gin-gonic/gin"
 )
@@ -11,14 +10,13 @@ type SearchHandler struct {
 	searchService domain.SearchService
 }
 
-func NewSearchHandler(ss domain.SearchService) *SearchHandler {
+func NewHandler(ss domain.SearchService) *SearchHandler {
 	return &SearchHandler{
 		searchService: ss,
 	}
 }
 
 func (sh *SearchHandler) Search(c *gin.Context) {
-	fmt.Println(c.Query("q"))
 	res, err := sh.searchService.Search(c.Query("q"))
 	if err != nil {
 		c.JSON(500, gin.H{

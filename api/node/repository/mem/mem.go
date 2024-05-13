@@ -39,5 +39,6 @@ func (r *Repository) List() ([]*domain.Node, error) {
 	for _, n := range r.nodes {
 		nodes = append(nodes, n)
 	}
+
 	return nodes, nil
 }

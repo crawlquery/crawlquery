@@ -10,19 +10,23 @@ import (
 	"sync"
 
 	sharedDomain "crawlquery/pkg/domain"
+
+	"go.uber.org/zap"
 )
 
-type SearchService struct {
+type Service struct {
 	nodeService domain.NodeService
+	logger      *zap.SugaredLogger
 }
 
-func NewSearchService(nodeService domain.NodeService) *SearchService {
-	return &SearchService{
+func NewService(nodeService domain.NodeService, logger *zap.SugaredLogger) *Service {
+	return &Service{
 		nodeService: nodeService,
+		logger:      logger,
 	}
 }
 
-func (s *SearchService) Search(term string) ([]sharedDomain.Result, error) {
+func (s *Service) Search(term string) ([]sharedDomain.Result, error) {
 	shardNodes, err := s.nodeService.ListGroupByShard()
 
 	if err != nil {
@@ -40,14 +44,12 @@ func (s *SearchService) Search(term string) ([]sharedDomain.Result, error) {
 		go func(nodes []*domain.Node) {
 			defer wg.Done()
 			for _, node := range nodes {
-				endpoint := fmt.Sprintf("http://%s:%s/search?q=%s", node.Hostname, node.Port, strings.Replace(term, " ", "%20", -1))
-				fmt.Println(endpoint)
+				endpoint := fmt.Sprintf("http://%s:%d/search?q=%s", node.Hostname, node.Port, strings.Replace(term, " ", "%20", -1))
 				res, err := http.Get(endpoint)
 				if err != nil {
-					fmt.Println(err)
+					s.logger.Errorf("Search.Service.Search: Error searching node %s: %v", node.ID, err)
 					continue
 				}
-				fmt.Println("made id?")
 				defer res.Body.Close()
 
 				var response dto.NodeSearchResponse
@@ -55,6 +57,7 @@ func (s *SearchService) Search(term string) ([]sharedDomain.Result, error) {
 				err = json.NewDecoder(res.Body).Decode(&response)
 
 				if err != nil {
+					s.logger.Errorf("Search.Service.Search: Error decoding response from node %s: %v", node.ID, err)
 					continue
 				}
 				resultsLock.Lock()
