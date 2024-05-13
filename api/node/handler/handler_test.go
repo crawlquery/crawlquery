@@ -15,6 +15,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	shardRepo "crawlquery/api/shard/repository/mem"
+	shardSvc "crawlquery/api/shard/service"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -26,8 +29,14 @@ func TestCreate(t *testing.T) {
 		}
 		accSvc, _ := factory.AccountServiceWithAccount(account)
 
+		shardRepo := shardRepo.NewRepository()
+		shardRepo.Create(&domain.Shard{
+			ID: 0,
+		})
+		shardSvc := shardSvc.NewService(shardRepo, testutil.NewTestLogger())
+
 		repo := mem.NewRepository()
-		svc := service.NewService(repo, accSvc, testutil.NewTestLogger())
+		svc := service.NewService(repo, accSvc, shardSvc, testutil.NewTestLogger())
 		handler := handler.NewHandler(svc)
 
 		// given
@@ -79,7 +88,7 @@ func TestCreate(t *testing.T) {
 		accSvc, _ := factory.AccountServiceWithAccount(account)
 
 		repo := mem.NewRepository()
-		svc := service.NewService(repo, accSvc, testutil.NewTestLogger())
+		svc := service.NewService(repo, accSvc, nil, testutil.NewTestLogger())
 		handler := handler.NewHandler(svc)
 
 		responseWriter := httptest.NewRecorder()
@@ -102,7 +111,7 @@ func TestCreate(t *testing.T) {
 		accSvc, _ := factory.AccountServiceWithAccount(account)
 
 		repo := mem.NewRepository()
-		svc := service.NewService(repo, accSvc, testutil.NewTestLogger())
+		svc := service.NewService(repo, accSvc, nil, testutil.NewTestLogger())
 		handler := handler.NewHandler(svc)
 
 		a := &dto.CreateNodeRequest{
