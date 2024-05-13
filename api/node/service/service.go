@@ -1,9 +1,14 @@
 package service
 
 import (
+	"bytes"
 	"crawlquery/api/domain"
+	"crawlquery/pkg/dto"
 	"crawlquery/pkg/util"
+	"encoding/json"
+	"fmt"
 	"math/rand"
+	"net/http"
 	"time"
 
 	"go.uber.org/zap"
@@ -178,4 +183,52 @@ func (s *Service) ListGroupByShard() (map[uint][]*domain.Node, error) {
 
 func (s *Service) ListByAccountID(accountID string) ([]*domain.Node, error) {
 	return s.repo.ListByAccountID(accountID)
+}
+
+func (s *Service) ListByShardID(shardID uint) ([]*domain.Node, error) {
+	nodes, err := s.List()
+	if err != nil {
+		return nil, err
+	}
+
+	var filtered []*domain.Node
+
+	for _, node := range nodes {
+		if node.ShardID == shardID {
+			filtered = append(filtered, node)
+		}
+	}
+
+	return filtered, nil
+}
+
+func (s *Service) SendCrawlJob(node *domain.Node, job *domain.CrawlJob) error {
+
+	req := dto.CrawlRequest{
+		URL: job.URL,
+	}
+
+	jsonBody, err := json.Marshal(req)
+
+	if err != nil {
+		return err
+	}
+
+	res, err := http.Post(
+		fmt.Sprintf("http://%s:%d/crawl", node.Hostname, node.Port),
+		"application/json",
+		bytes.NewBuffer(jsonBody),
+	)
+
+	if err != nil {
+		return err
+	}
+
+	defer res.Body.Close()
+
+	if res.StatusCode != http.StatusOK {
+		return fmt.Errorf("unexpected status code: %d", res.StatusCode)
+	}
+
+	return nil
 }

@@ -4,7 +4,6 @@ import (
 	"crawlquery/node/domain"
 	"crawlquery/node/token"
 	sharedDomain "crawlquery/pkg/domain"
-	"fmt"
 	"sort"
 	"strings"
 )
@@ -55,9 +54,7 @@ func (idx *Index) Search(query string) ([]sharedDomain.Result, error) {
 	for docID, score := range results {
 		sortedResults = append(sortedResults, sharedDomain.Result{PageID: docID, Score: score})
 	}
-	for k, v := range idx.Forward {
-		fmt.Printf("Key: %s, Value: %v\n", k, v)
-	}
+
 	sort.Slice(sortedResults, func(i, j int) bool {
 		return sortedResults[i].Score > sortedResults[j].Score
 	})

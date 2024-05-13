@@ -62,10 +62,6 @@ func main() {
 	authService := authService.NewService(accountService, sugar)
 	authHandler := authHandler.NewHandler(authService)
 
-	crawlJobRepo := crawlJobMysqlRepo.NewRepository(db)
-	crawlJobService := crawlJobService.NewService(crawlJobRepo, sugar)
-	crawlJobHandler := crawlHandler.NewHandler(crawlJobService)
-
 	shardRepo := shardMysqlRepo.NewRepository(db)
 	shardService := shardService.NewService(shardRepo, sugar)
 
@@ -75,6 +71,12 @@ func main() {
 
 	searchService := searchService.NewService(nodeService, sugar)
 	searchHandler := searchHandler.NewHandler(searchService)
+
+	crawlJobRepo := crawlJobMysqlRepo.NewRepository(db)
+	crawlJobService := crawlJobService.NewService(crawlJobRepo, shardService, nodeService, sugar)
+	crawlJobHandler := crawlHandler.NewHandler(crawlJobService)
+
+	go crawlJobService.ProcessCrawlJobs()
 
 	r := router.NewRouter(
 		accountService,

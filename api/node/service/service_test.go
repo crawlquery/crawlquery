@@ -15,6 +15,8 @@ import (
 	shardService "crawlquery/api/shard/service"
 
 	"crawlquery/api/node/service"
+
+	"github.com/h2non/gock"
 )
 
 func TestCreate(t *testing.T) {
@@ -643,6 +645,121 @@ func TestListByAccountID(t *testing.T) {
 
 		if len(list) != 0 {
 			t.Fatalf("Expected 0 nodes, got %d", len(list))
+		}
+	})
+}
+
+func TestListByShardID(t *testing.T) {
+	t.Run("can list nodes by shard ID", func(t *testing.T) {
+		nodeRepo := nodeRepo.NewRepository()
+		nodeService := service.NewService(nodeRepo, nil, nil, testutil.NewTestLogger())
+
+		node := &domain.Node{
+			ID:      "1",
+			ShardID: 1,
+		}
+
+		node2 := &domain.Node{
+			ID:      "2",
+			ShardID: 1,
+		}
+
+		node3 := &domain.Node{
+			ID:      "3",
+			ShardID: 2,
+		}
+
+		nodeRepo.Create(node)
+		nodeRepo.Create(node2)
+		nodeRepo.Create(node3)
+
+		list, err := nodeService.ListByShardID(1)
+
+		if err != nil {
+			t.Fatalf("Error listing nodes: %v", err)
+		}
+
+		if len(list) != 2 {
+			t.Fatalf("Expected 2 nodes, got %d", len(list))
+		}
+
+		for _, n := range list {
+			if n.ID != "1" && n.ID != "2" {
+				t.Errorf("Expected node to be one of 1 or 2, got %s", n.ID)
+			}
+		}
+	})
+
+	t.Run("can list nodes by shard ID when no nodes exist", func(t *testing.T) {
+		nodeRepo := nodeRepo.NewRepository()
+		nodeService := service.NewService(nodeRepo, nil, nil, testutil.NewTestLogger())
+
+		list, err := nodeService.ListByShardID(1)
+
+		if err != nil {
+			t.Fatalf("Error listing nodes: %v", err)
+		}
+
+		if len(list) != 0 {
+			t.Fatalf("Expected 0 nodes, got %d", len(list))
+		}
+	})
+}
+
+func TestSendCrawlJob(t *testing.T) {
+	t.Run("can send a crawl job", func(t *testing.T) {
+		node := &domain.Node{
+			ID:       "1",
+			Hostname: "testnode",
+			Port:     8080,
+		}
+
+		crawlJob := &domain.CrawlJob{
+			ID:  "1",
+			URL: "http://google.com",
+		}
+
+		defer gock.Off()
+
+		gock.New("http://testnode:8080").
+			Post("/crawl").
+			JSON(`{"url":"http://google.com"`).
+			Reply(200)
+
+		nodeService := service.NewService(nil, nil, nil, testutil.NewTestLogger())
+
+		err := nodeService.SendCrawlJob(node, crawlJob)
+
+		if err != nil {
+			t.Fatalf("Error sending crawl job: %v", err)
+		}
+	})
+
+	t.Run("handles error sending crawl job", func(t *testing.T) {
+		node := &domain.Node{
+			ID:       "1",
+			Hostname: "testnode",
+			Port:     8080,
+		}
+
+		crawlJob := &domain.CrawlJob{
+			ID:  "1",
+			URL: "http://google.com",
+		}
+
+		defer gock.Off()
+
+		gock.New("http://testnode:8080").
+			Post("/crawl").
+			JSON(`{"url":"http://google.com"`).
+			Reply(500)
+
+		nodeService := service.NewService(nil, nil, nil, testutil.NewTestLogger())
+
+		err := nodeService.SendCrawlJob(node, crawlJob)
+
+		if err == nil {
+			t.Fatalf("Expected error sending crawl job")
 		}
 	})
 }

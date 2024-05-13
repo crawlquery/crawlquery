@@ -45,9 +45,10 @@ func (cs *CrawlService) Crawl(url string) error {
 	}
 
 	page := &domain.Page{
-		ID:              util.UUID(),
-		URL:             url,
-		Title:           doc.Find("title").Text(),
+		ID:  util.UUID(),
+		URL: url,
+		// get the title from the head of the HTML document
+		Title:           doc.Find("head title").Text(),
 		Content:         html,
 		MetaDescription: doc.Find("meta[name=description]").AttrOr("content", ""),
 	}

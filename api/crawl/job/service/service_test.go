@@ -13,7 +13,7 @@ func TestCreate(t *testing.T) {
 	t.Run("can create a job", func(t *testing.T) {
 		// Arrange
 		repo := mem.NewRepository()
-		svc := service.NewService(repo, testutil.NewTestLogger())
+		svc := service.NewService(repo, nil, nil, testutil.NewTestLogger())
 		url := "http://example.com"
 
 		// Act
@@ -40,7 +40,7 @@ func TestCreate(t *testing.T) {
 	t.Run("validates url", func(t *testing.T) {
 		// Arrange
 		repo := mem.NewRepository()
-		svc := service.NewService(repo, testutil.NewTestLogger())
+		svc := service.NewService(repo, nil, nil, testutil.NewTestLogger())
 		url := "x123!"
 
 		// Act
@@ -59,7 +59,7 @@ func TestCreate(t *testing.T) {
 	t.Run("handles repository error", func(t *testing.T) {
 		// Arrange
 		repo := mem.NewRepository()
-		svc := service.NewService(repo, testutil.NewTestLogger())
+		svc := service.NewService(repo, nil, nil, testutil.NewTestLogger())
 		expectErr := errors.New("db locked")
 		repo.ForceError(expectErr)
 

@@ -45,7 +45,7 @@ func (ss *Service) First() (*domain.Shard, error) {
 	return shards[0], nil
 }
 
-func (ss *Service) GetURLShardID(url string) (int, error) {
+func (ss *Service) GetURLShardID(url string) (uint, error) {
 
 	count, err := ss.repo.Count()
 
@@ -59,7 +59,7 @@ func (ss *Service) GetURLShardID(url string) (int, error) {
 		return 0, domain.ErrNoShards
 	}
 
-	return int(hash(url) % uint32(count)), nil
+	return uint(hash(url) % uint32(count)), nil
 }
 
 func (ss *Service) List() ([]*domain.Shard, error) {

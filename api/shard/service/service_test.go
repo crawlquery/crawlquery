@@ -40,7 +40,7 @@ func TestGetURLShardID(t *testing.T) {
 	tests := []struct {
 		url        string
 		numShards  int
-		expectedID int
+		expectedID uint
 	}{
 		{"https://www.amazon.com", 5000, 4786},
 		{"https://www.google.com", 10, 5},

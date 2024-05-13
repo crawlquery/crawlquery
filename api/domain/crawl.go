@@ -28,6 +28,7 @@ type CrawlJobRepository interface {
 
 type CrawlJobService interface {
 	Create(string) (*CrawlJob, error)
+	ProcessCrawlJobs()
 }
 
 type CrawlJobHandler interface {

@@ -22,6 +22,6 @@ type ShardRepository interface {
 type ShardService interface {
 	Create(*Shard) error
 	List() ([]*Shard, error)
-	GetURLShardID(url string) (int, error)
+	GetURLShardID(url string) (uint, error)
 	First() (*Shard, error)
 }
