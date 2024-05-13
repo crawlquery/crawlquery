@@ -55,6 +55,15 @@ func (m *MockNodeHandler) Create(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{"message": "Node created"})
 }
 
+type MockSearchHandler struct {
+	mock.Mock
+}
+
+func (m *MockSearchHandler) Search(c *gin.Context) {
+	m.Called(c)
+	c.JSON(http.StatusOK, gin.H{"message": "Search successful"})
+}
+
 func setupRouterWithMocks() map[string]interface{} {
 	gin.SetMode(gin.TestMode)
 
@@ -70,6 +79,9 @@ func setupRouterWithMocks() map[string]interface{} {
 	mockNodeHandler := new(MockNodeHandler)
 	mockNodeHandler.On("Create", mock.Anything).Return()
 
+	mockSearchHandler := new(MockSearchHandler)
+	mockSearchHandler.On("Search", mock.Anything).Return()
+
 	accountService, accountRepo := factory.AccountServiceWithAccount(&domain.Account{})
 
 	// Setup the router with the mock handler
@@ -79,6 +91,7 @@ func setupRouterWithMocks() map[string]interface{} {
 		mockAccountHandler,
 		mockCrawlJobHandler,
 		mockNodeHandler,
+		mockSearchHandler,
 	)
 
 	return map[string]interface{}{
@@ -86,6 +99,7 @@ func setupRouterWithMocks() map[string]interface{} {
 		"mockAccountHandler":  mockAccountHandler,
 		"mockCrawlJobHandler": mockCrawlJobHandler,
 		"mockNodeHandler":     mockNodeHandler,
+		"mockSearchHandler":   mockSearchHandler,
 		"accountService":      accountService,
 		"accountRepo":         accountRepo,
 	}
@@ -191,4 +205,23 @@ func TestNodeCreationEndpoint(t *testing.T) {
 	assert.Contains(t, w.Body.String(), "Node created")
 
 	mockNodeHandler.AssertExpectations(t)
+}
+
+func TestSearchEndpoint(t *testing.T) {
+	// Set the router to test mode
+	ifs := setupRouterWithMocks()
+
+	testRouter := ifs["testRouter"].(*gin.Engine)
+	mockSearchHandler := ifs["mockSearchHandler"].(*MockSearchHandler)
+
+	w := httptest.NewRecorder()
+
+	req, _ := http.NewRequest("GET", "/search?q=term", nil)
+
+	testRouter.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Contains(t, w.Body.String(), "Search successful")
+
+	mockSearchHandler.AssertExpectations(t)
 }

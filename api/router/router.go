@@ -15,6 +15,7 @@ func NewRouter(
 	accountHandler domain.AccountHandler,
 	crawlJobHandler domain.CrawlJobHandler,
 	nodeHandler domain.NodeHandler,
+	searchHandler domain.SearchHandler,
 ) *gin.Engine {
 	router := gin.Default()
 	router.Use(cors.New(cors.Config{
@@ -26,9 +27,12 @@ func NewRouter(
 		MaxAge:           12 * time.Hour,
 	}))
 	router.POST("/accounts", accountHandler.Create)
-	router.POST("/crawl-jobs", crawlJobHandler.Create)
 	router.POST("/login", authHandler.Login)
 
 	router.POST("/nodes", middleware.AuthMiddleware(as, nodeHandler.Create))
+
+	router.POST("/crawl-jobs", crawlJobHandler.Create)
+
+	router.GET("/search", searchHandler.Search)
 	return router
 }

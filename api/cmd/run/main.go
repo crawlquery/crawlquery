@@ -25,6 +25,9 @@ import (
 	shardMysqlRepo "crawlquery/api/shard/repository/mysql"
 	shardService "crawlquery/api/shard/service"
 
+	searchHandler "crawlquery/api/search/handler"
+	searchService "crawlquery/api/search/service"
+
 	_ "github.com/go-sql-driver/mysql"
 	"go.uber.org/zap"
 )
@@ -70,12 +73,16 @@ func main() {
 	nodeService := nodeService.NewService(nodeRepo, accountService, shardService, sugar)
 	nodeHandler := nodeHandler.NewHandler(nodeService)
 
+	searchService := searchService.NewService(nodeService, sugar)
+	searchHandler := searchHandler.NewHandler(searchService)
+
 	r := router.NewRouter(
 		accountService,
 		authHandler,
 		accountHandler,
 		crawlJobHandler,
 		nodeHandler,
+		searchHandler,
 	)
 
 	r.Run(":8080")
