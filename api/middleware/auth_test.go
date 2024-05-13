@@ -60,6 +60,31 @@ func TestAuthMiddleware(t *testing.T) {
 		if rec.Code != 200 {
 			t.Errorf("Expected status code to be 200, got %d", rec.Code)
 		}
-
 	})
+
+	t.Run("invalid token", func(t *testing.T) {
+		os.Setenv("JWT_SECRET", "secret")
+
+		req := httptest.NewRequest("GET", "/", nil)
+
+		rec := httptest.NewRecorder()
+
+		next := func(c *gin.Context) {
+			t.Errorf("Expected next to not be called")
+		}
+
+		svc, _ := factory.AccountServiceWithAccount(nil)
+
+		mw := middleware.AuthMiddleware(svc, next)
+
+		c, _ := gin.CreateTestContext(rec)
+
+		c.Request = req
+		mw(c)
+
+		if rec.Code != 401 {
+			t.Errorf("Expected status code to be 401, got %d", rec.Code)
+		}
+	})
+
 }

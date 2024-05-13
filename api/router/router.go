@@ -2,6 +2,7 @@ package router
 
 import (
 	"crawlquery/api/domain"
+	"crawlquery/api/middleware"
 	"time"
 
 	"github.com/gin-contrib/cors"
@@ -9,8 +10,10 @@ import (
 )
 
 func NewRouter(
+	as domain.AccountService,
 	accountHandler domain.AccountHandler,
 	crawlJobHandler domain.CrawlJobHandler,
+	nodeHandler domain.NodeHandler,
 ) *gin.Engine {
 	router := gin.Default()
 	router.Use(cors.New(cors.Config{
@@ -24,6 +27,6 @@ func NewRouter(
 	router.POST("/accounts", accountHandler.Create)
 	router.POST("/crawl-jobs", crawlJobHandler.Create)
 
-	router.POST("/nodes", middleware.AuthMiddleware(nodeHandler.Create))
+	router.POST("/nodes", middleware.AuthMiddleware(as, nodeHandler.Create))
 	return router
 }

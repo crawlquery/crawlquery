@@ -3,6 +3,8 @@ package domain
 import (
 	"errors"
 	"time"
+
+	"github.com/gin-gonic/gin"
 )
 
 var ErrInvalidAccountID = errors.New("invalid account id")
@@ -29,4 +31,8 @@ type NodeService interface {
 	Create(accountID, hostname string, port uint) (*Node, error)
 	List() ([]*Node, error)
 	RandomizedList() ([]*Node, error)
+}
+
+type NodeHandler interface {
+	Create(c *gin.Context)
 }

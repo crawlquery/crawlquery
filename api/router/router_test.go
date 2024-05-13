@@ -2,12 +2,16 @@ package router_test
 
 import (
 	"bytes"
+	"crawlquery/api/domain"
+	"crawlquery/api/factory"
 	"crawlquery/api/router"
+	"crawlquery/pkg/authutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -32,7 +36,16 @@ func (m *MockCrawlJobHandler) Create(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{"message": "Crawl job created"})
 }
 
-func TestAccountCreationEndpoint(t *testing.T) {
+type MockNodeHandler struct {
+	mock.Mock
+}
+
+func (m *MockNodeHandler) Create(c *gin.Context) {
+	m.Called(c)
+	c.JSON(http.StatusCreated, gin.H{"message": "Node created"})
+}
+
+func setupRouterWithMocks() map[string]interface{} {
 	gin.SetMode(gin.TestMode)
 
 	// Create a mock handler
@@ -42,8 +55,36 @@ func TestAccountCreationEndpoint(t *testing.T) {
 	mockCrawlJobHandler := new(MockCrawlJobHandler)
 	mockCrawlJobHandler.On("Create", mock.Anything).Return()
 
+	mockNodeHandler := new(MockNodeHandler)
+	mockNodeHandler.On("Create", mock.Anything).Return()
+
+	accountService, accountRepo := factory.AccountServiceWithAccount(&domain.Account{})
+
 	// Setup the router with the mock handler
-	testRouter := router.NewRouter(mockAccountHandler, mockCrawlJobHandler)
+	testRouter := router.NewRouter(
+		accountService,
+		mockAccountHandler,
+		mockCrawlJobHandler,
+		mockNodeHandler,
+	)
+
+	return map[string]interface{}{
+		"testRouter":          testRouter,
+		"mockAccountHandler":  mockAccountHandler,
+		"mockCrawlJobHandler": mockCrawlJobHandler,
+		"mockNodeHandler":     mockNodeHandler,
+		"accountService":      accountService,
+		"accountRepo":         accountRepo,
+	}
+}
+
+func TestAccountCreationEndpoint(t *testing.T) {
+
+	// Set the router to test mode
+	ifs := setupRouterWithMocks()
+
+	testRouter := ifs["testRouter"].(*gin.Engine)
+	mockAccountHandler := ifs["mockAccountHandler"].(*MockAccountHandler)
 
 	// Create a response recorder
 	w := httptest.NewRecorder()
@@ -64,15 +105,11 @@ func TestAccountCreationEndpoint(t *testing.T) {
 }
 
 func TestCrawlJobCreationEndpoint(t *testing.T) {
-	gin.SetMode(gin.TestMode)
+	// Set the router to test mode
+	ifs := setupRouterWithMocks()
 
-	mockAccountHandler := new(MockAccountHandler)
-	mockAccountHandler.On("Create", mock.Anything).Return()
-
-	mockCrawlJobHandler := new(MockCrawlJobHandler)
-	mockCrawlJobHandler.On("Create", mock.Anything).Return()
-
-	testRouter := router.NewRouter(mockAccountHandler, mockCrawlJobHandler)
+	testRouter := ifs["testRouter"].(*gin.Engine)
+	mockCrawlJobHandler := ifs["mockCrawlJobHandler"].(*MockCrawlJobHandler)
 
 	w := httptest.NewRecorder()
 
@@ -85,4 +122,40 @@ func TestCrawlJobCreationEndpoint(t *testing.T) {
 	assert.Contains(t, w.Body.String(), "Crawl job created")
 
 	mockCrawlJobHandler.AssertExpectations(t)
+}
+
+func TestNodeCreationEndpoint(t *testing.T) {
+	// Set the router to test mode
+	ifs := setupRouterWithMocks()
+
+	testRouter := ifs["testRouter"].(*gin.Engine)
+	mockNodeHandler := ifs["mockNodeHandler"].(*MockNodeHandler)
+	accountRepo := ifs["accountRepo"].(domain.AccountRepository)
+
+	account, err := accountRepo.GetByEmail("test@example.com")
+
+	if err != nil {
+		t.Fatalf("Error getting account: %v", err)
+	}
+
+	token, err := authutil.GenerateToken(jwt.MapClaims{
+		"id": account.ID,
+	})
+
+	if err != nil {
+		t.Fatalf("Error generating token: %v", err)
+	}
+
+	w := httptest.NewRecorder()
+
+	req, _ := http.NewRequest("POST", "/nodes", bytes.NewBufferString(`{"url":"http://example.com"}`))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+token)
+
+	testRouter.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusCreated, w.Code)
+	assert.Contains(t, w.Body.String(), "Node created")
+
+	mockNodeHandler.AssertExpectations(t)
 }
