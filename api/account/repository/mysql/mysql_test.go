@@ -199,8 +199,8 @@ func TestGet(t *testing.T) {
 		_, err := repo.Get(util.UUID())
 
 		// Assert
-		if err != domain.ErrNoAccountFound {
-			t.Errorf("Expected ErrNoAccountFound, got %v", err)
+		if err != domain.ErrAccountNotFound {
+			t.Errorf("Expected ErrAccountNotFound, got %v", err)
 		}
 	})
 }
@@ -266,8 +266,8 @@ func TestGetByEmail(t *testing.T) {
 		_, err := repo.GetByEmail("test@example.com")
 
 		// Assert
-		if err != domain.ErrNoAccountFound {
-			t.Errorf("Expected ErrNoAccountFound, got %v", err)
+		if err != domain.ErrAccountNotFound {
+			t.Errorf("Expected ErrAccountNotFound, got %v", err)
 		}
 	})
 }

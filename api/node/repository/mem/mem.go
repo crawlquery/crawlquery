@@ -1,40 +1,43 @@
 package mem
 
-import "crawlquery/pkg/domain"
+import "crawlquery/api/domain"
 
-type MemoryRepository struct {
-	nodes map[string]*domain.Node
+type Repository struct {
+	nodes            map[string]*domain.Node
+	forceCreateError error
+	forceListError   error
 }
 
-func NewMemoryRepository() *MemoryRepository {
-	return &MemoryRepository{
+func NewRepository() *Repository {
+	return &Repository{
 		nodes: make(map[string]*domain.Node),
 	}
 }
 
-func (mr *MemoryRepository) CreateOrUpdate(n *domain.Node) error {
-	mr.nodes[n.ID] = n
+func (r *Repository) ForceCreateError(e error) {
+	r.forceCreateError = e
+}
+
+func (r *Repository) ForceListError(e error) {
+	r.forceListError = e
+}
+
+func (r *Repository) Create(n *domain.Node) error {
+
+	if r.forceCreateError != nil {
+		return r.forceCreateError
+	}
+	r.nodes[n.ID] = n
 	return nil
 }
 
-func (mr *MemoryRepository) Create(n *domain.Node) error {
-	mr.nodes[n.ID] = n
-	return nil
-}
-
-func (mr *MemoryRepository) Get(id string) (*domain.Node, error) {
-	return mr.nodes[id], nil
-}
-
-func (mr *MemoryRepository) GetAll() ([]*domain.Node, error) {
-	nodes := make([]*domain.Node, 0, len(mr.nodes))
-	for _, n := range mr.nodes {
+func (r *Repository) List() ([]*domain.Node, error) {
+	if r.forceListError != nil {
+		return nil, r.forceListError
+	}
+	nodes := make([]*domain.Node, 0)
+	for _, n := range r.nodes {
 		nodes = append(nodes, n)
 	}
 	return nodes, nil
-}
-
-func (mr *MemoryRepository) Delete(id string) error {
-	delete(mr.nodes, id)
-	return nil
 }

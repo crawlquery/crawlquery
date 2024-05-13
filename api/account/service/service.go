@@ -53,3 +53,7 @@ func (s *Service) Create(email, password string) (*domain.Account, error) {
 
 	return a, nil
 }
+
+func (s *Service) Get(id string) (*domain.Account, error) {
+	return s.repo.Get(id)
+}

@@ -5,25 +5,41 @@ import (
 	"time"
 )
 
-var migrations = map[string]string{
-	"create_accounts_table": `CREATE TABLE accounts (
+type Migration struct {
+	Name string
+	SQL  string
+}
+
+var migrations = []Migration{
+	{
+		Name: "create_accounts_table",
+		SQL: `CREATE TABLE accounts (
 		id VARCHAR(36) PRIMARY KEY,
 		email VARCHAR(255) NOT NULL UNIQUE,
 		password VARCHAR(255) NOT NULL,
-		created_at TIMESTAMP NOT NULL
-	)`,
-	"create_crawl_jobs_table": `CREATE TABLE crawl_jobs (
+		created_at TIMESTAMP NOT NULL)`,
+	},
+	{
+		Name: "create_nodes_table",
+		SQL: `CREATE TABLE nodes (
+		id VARCHAR(36) PRIMARY KEY,
+		account_id VARCHAR(36) NOT NULL,
+		hostname VARCHAR(255) NOT NULL,
+		port INT UNSIGNED NOT NULL,
+		shard_id INT UNSIGNED NOT NULL,
+		created_at TIMESTAMP NOT NULL)`,
+	},
+	{
+		Name: "add_unique_hostname_port_index_to_nodes_table",
+		SQL:  `CREATE UNIQUE INDEX nodes_account_id_hostname_port ON nodes (account_id, hostname, port)`,
+	},
+	{
+		Name: "create_crawl_jobs_table",
+		SQL: `CREATE TABLE crawl_jobs (
 		id VARCHAR(36) PRIMARY KEY,
 		url VARCHAR(255) NOT NULL,
-		created_at TIMESTAMP NOT NULL
-	)`,
-	// "create_nodes_table": `CREATE TABLE nodes (
-	// 	id VARCHAR(36) PRIMARY KEY,
-	// 	account_id VARCHAR(36) NOT NULL,
-	// 	hostname VARCHAR(255) NOT NULL,
-	// 	port INT UNSIGNED NOT NULL,
-	// 	created_at TIMESTAMP NOT NULL
-	// )`,
+		created_at TIMESTAMP NOT NULL)`,
+	},
 }
 
 var migrationTable = `CREATE TABLE IF NOT EXISTS migrations (
@@ -38,29 +54,29 @@ func Up(db *sql.DB) error {
 		return err
 	}
 
-	for k, v := range migrations {
+	for _, migration := range migrations {
 
 		checkMigration := `SELECT name FROM migrations WHERE name = ?`
 
-		row := db.QueryRow(checkMigration, k)
+		row := db.QueryRow(checkMigration, migration.Name)
 
 		var name string
 		err := row.Scan(&name)
 
-		if err != nil {
+		if err != sql.ErrNoRows {
 			return err
 		}
 
-		if name == k {
+		if name == migration.Name {
 			continue
 		}
 
-		_, err = db.Exec(v)
+		_, err = db.Exec(migration.SQL)
 		if err != nil {
 			return err
 		}
 
-		_, err = db.Exec("INSERT INTO migrations (name, created_at) VALUES (?, ?)", k, time.Now())
+		_, err = db.Exec("INSERT INTO migrations (name, created_at) VALUES (?, ?)", migration.Name, time.Now())
 
 		if err != nil {
 			return err

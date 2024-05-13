@@ -1,143 +1,76 @@
 package service
 
 import (
-	"crawlquery/pkg/domain"
+	"crawlquery/api/domain"
 	"crawlquery/pkg/util"
-	"errors"
 	"math/rand"
-	"net/url"
+	"time"
+
+	"go.uber.org/zap"
 )
 
-type NodeService struct {
-	nr domain.NodeRepository
+type Service struct {
+	repo           domain.NodeRepository
+	accountService domain.AccountService
+	// shardService domain.ShardService
+	logger *zap.SugaredLogger
 }
 
-func NewNodeService(nr domain.NodeRepository) *NodeService {
-	return &NodeService{
-		nr: nr,
+func NewService(
+	repo domain.NodeRepository,
+	accountService domain.AccountService,
+	logger *zap.SugaredLogger,
+) *Service {
+	return &Service{
+		repo:           repo,
+		accountService: accountService,
+		logger:         logger,
 	}
 }
 
-func (service *NodeService) CreateOrUpdate(node *domain.Node) error {
-	node.ID = util.UUID()
-	return service.nr.CreateOrUpdate(node)
+func (cs *Service) Create(accountID, hostname string, port uint) (*domain.Node, error) {
+
+	// Check if the account exists
+	_, err := cs.accountService.Get(accountID)
+
+	if err != nil {
+		return nil, domain.ErrAccountNotFound
+	}
+
+	node := &domain.Node{
+		ID:        util.UUID(),
+		AccountID: accountID,
+		Hostname:  hostname,
+		Port:      port,
+		ShardID:   0,
+		CreatedAt: time.Now(),
+	}
+
+	if err := node.Validate(); err != nil {
+		return nil, err
+	}
+
+	// Save the node in the repository
+	if err := cs.repo.Create(node); err != nil {
+		cs.logger.Errorw("Node.Service.Create: error creating node", "error", err)
+		return nil, domain.ErrInternalError
+	}
+	return node, nil
 }
 
-func (service *NodeService) GetShardDistribution() (map[domain.ShardID]int, error) {
-	all, err := service.nr.GetAll()
+func (cs *Service) List() ([]*domain.Node, error) {
+	return cs.repo.List()
+}
 
+func (cs *Service) RandomizedList() ([]*domain.Node, error) {
+	nodes, err := cs.repo.List()
 	if err != nil {
 		return nil, err
 	}
 
-	shardDistribution := map[domain.ShardID]int{}
-
-	for _, node := range all {
-		shardDistribution[node.ShardID]++
-	}
-
-	return shardDistribution, nil
-}
-
-func (service *NodeService) Create(node *domain.Node) (*domain.Node, error) {
-
-	if node.Hostname == "" || node.Port == "" {
-		return nil, errors.New("hostname and port are required")
-	}
-
-	all, err := service.nr.GetAll()
-
-	if err != nil {
-		return nil, err
-	}
-
-	for _, n := range all {
-		if n.Hostname == node.Hostname && n.Port == node.Port {
-			return nil, errors.New("node already exists")
-		}
-	}
-
-	return nil, service.nr.Create(node)
-}
-
-func (service *NodeService) Add(uri string) error {
-
-	url, err := url.ParseRequestURI(uri)
-
-	if err != nil {
-		return err
-	}
-
-	hostname := url.Hostname()
-
-	if hostname == "" {
-		return errors.New("invalid url")
-	}
-
-	port := url.Port()
-
-	if port == "" {
-		port = "80"
-	}
-
-	return service.nr.CreateOrUpdate(&domain.Node{
-		ID:       util.UUID(),
-		Hostname: hostname,
-		Port:     port,
-		ShardID:  1,
-	})
-}
-
-func (service *NodeService) Get(id string) (*domain.Node, error) {
-	return service.nr.Get(id)
-}
-
-func (service *NodeService) GetRandom() (*domain.Node, error) {
-	all, err := service.nr.GetAll()
-
-	if err != nil {
-		return nil, err
-	}
-
-	if len(all) == 0 {
-		return nil, errors.New("no nodes found")
-	}
-
-	return all[rand.Intn(len(all))], nil
-}
-
-func (service *NodeService) RandomizeAll() ([]*domain.Node, error) {
-	all, err := service.nr.GetAll()
-
-	if err != nil {
-		return nil, err
-	}
-
-	rand.Shuffle(len(all), func(i, j int) {
-		all[i], all[j] = all[j], all[i]
+	rand.Shuffle(len(nodes), func(i, j int) {
+		nodes[i], nodes[j] = nodes[j], nodes[i]
 	})
 
-	return all, nil
-}
-
-func (service *NodeService) AllByShard() (map[domain.ShardID][]*domain.Node, error) {
-	all, err := service.RandomizeAll()
-
-	if err != nil {
-		return nil, err
-	}
-
-	shardNodes := map[domain.ShardID][]*domain.Node{}
-
-	for _, node := range all {
-		if shardNodes[node.ShardID] == nil {
-			shardNodes[node.ShardID] = []*domain.Node{
-				node,
-			}
-		} else {
-			shardNodes[node.ShardID] = append(shardNodes[node.ShardID], node)
-		}
-	}
-
-	return shardNodes, nil
+	return nodes, nil
 }

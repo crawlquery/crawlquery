@@ -7,6 +7,28 @@ import (
 	"time"
 )
 
+func TestCreateCrawlJobRequestToJSON(t *testing.T) {
+	t.Run("should return correct JSON", func(t *testing.T) {
+		// given
+		r := &dto.CreateCrawlJobRequest{
+			URL: "http://example.com",
+		}
+
+		// when
+		b, err := r.ToJSON()
+
+		// then
+		if err != nil {
+			t.Errorf("Expected error to be nil, got %v", err)
+		}
+
+		expected := `{"url":"http://example.com"}`
+		if string(b) != expected {
+			t.Errorf("Expected JSON to be %s, got %s", expected, string(b))
+		}
+	})
+}
+
 func TestNewCreateCrawlJobResponse(t *testing.T) {
 	t.Run("should return correct CreateCrawlResponse from Crawl", func(t *testing.T) {
 		// given

@@ -42,7 +42,7 @@ func (r *Repository) Create(a *domain.Account) error {
 func (r *Repository) Get(id string) (*domain.Account, error) {
 	account, ok := r.accounts[id]
 	if !ok {
-		return nil, errors.New("account not found")
+		return nil, domain.ErrAccountNotFound
 	}
 
 	return account, nil

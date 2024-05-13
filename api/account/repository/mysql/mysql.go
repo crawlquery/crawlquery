@@ -29,7 +29,7 @@ func (r *Repository) Get(id string) (*domain.Account, error) {
 	err := row.Scan(&account.ID, &account.Email, &account.Password, &account.CreatedAt)
 
 	if err == sql.ErrNoRows {
-		return nil, domain.ErrNoAccountFound
+		return nil, domain.ErrAccountNotFound
 	}
 
 	return &account, err
@@ -42,7 +42,7 @@ func (r *Repository) GetByEmail(email string) (*domain.Account, error) {
 	err := row.Scan(&account.ID, &account.Email, &account.Password, &account.CreatedAt)
 
 	if err == sql.ErrNoRows {
-		return nil, domain.ErrNoAccountFound
+		return nil, domain.ErrAccountNotFound
 	}
 
 	return &account, err

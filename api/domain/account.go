@@ -8,7 +8,7 @@ import (
 )
 
 var ErrAccountExists = errors.New("cannot create account")
-var ErrNoAccountFound = errors.New("no account found")
+var ErrAccountNotFound = errors.New("account not found")
 
 type Account struct {
 	ID        string    `validate:"required,uuid"`
@@ -29,6 +29,7 @@ type AccountRepository interface {
 
 type AccountService interface {
 	Create(email, password string) (*Account, error)
+	Get(string) (*Account, error)
 }
 
 type AccountHandler interface {
