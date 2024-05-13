@@ -7,6 +7,9 @@ import (
 	"fmt"
 	"os"
 
+	authHandler "crawlquery/api/auth/handler"
+	authService "crawlquery/api/auth/service"
+
 	accountHandler "crawlquery/api/account/handler"
 	accountMysqlRepo "crawlquery/api/account/repository/mysql"
 	accountService "crawlquery/api/account/service"
@@ -14,6 +17,10 @@ import (
 	crawlHandler "crawlquery/api/crawl/job/handler"
 	crawlJobMysqlRepo "crawlquery/api/crawl/job/repository/mysql"
 	crawlJobService "crawlquery/api/crawl/job/service"
+
+	nodeHandler "crawlquery/api/node/handler"
+	nodeMysqlRepo "crawlquery/api/node/repository/mysql"
+	nodeService "crawlquery/api/node/service"
 
 	_ "github.com/go-sql-driver/mysql"
 	"go.uber.org/zap"
@@ -45,11 +52,24 @@ func main() {
 	accountService := accountService.NewService(accountRepo, sugar)
 	accountHandler := accountHandler.NewHandler(accountService)
 
+	authService := authService.NewService(accountService, sugar)
+	authHandler := authHandler.NewHandler(authService)
+
 	crawlJobRepo := crawlJobMysqlRepo.NewRepository(db)
 	crawlJobService := crawlJobService.NewService(crawlJobRepo, sugar)
 	crawlJobHandler := crawlHandler.NewHandler(crawlJobService)
 
-	r := router.NewRouter(accountHandler, crawlJobHandler)
+	nodeRepo := nodeMysqlRepo.NewRepository(db)
+	nodeService := nodeService.NewService(nodeRepo, accountService, sugar)
+	nodeHandler := nodeHandler.NewHandler(nodeService)
+
+	r := router.NewRouter(
+		accountService,
+		authHandler,
+		accountHandler,
+		crawlJobHandler,
+		nodeHandler,
+	)
 
 	r.Run(":8080")
 }
