@@ -32,6 +32,7 @@ type NodeService interface {
 	Create(accountID, hostname string, port uint) (*Node, error)
 	List() ([]*Node, error)
 	RandomizedList() ([]*Node, error)
+	ListGroupByShard() (map[uint][]*Node, error)
 }
 
 type NodeHandler interface {

@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"strings"
 	"sync"
+
+	sharedDomain "crawlquery/pkg/domain"
 )
 
 type SearchService struct {
@@ -20,14 +22,14 @@ func NewSearchService(nodeService domain.NodeService) *SearchService {
 	}
 }
 
-func (s *SearchService) Search(term string) ([]domain.Result, error) {
-	shardNodes, err := s.nodeService.AllByShard()
+func (s *SearchService) Search(term string) ([]sharedDomain.Result, error) {
+	shardNodes, err := s.nodeService.ListGroupByShard()
 
 	if err != nil {
 		return nil, err
 	}
 
-	results := []domain.Result{}
+	results := []sharedDomain.Result{}
 	resultsLock := sync.Mutex{}
 
 	var wg sync.WaitGroup

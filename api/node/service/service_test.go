@@ -373,3 +373,59 @@ func TestGetShardWithLeastNodes(t *testing.T) {
 		}
 	})
 }
+
+func TestListGroupByShard(t *testing.T) {
+	t.Run("can group nodes by shard", func(t *testing.T) {
+		nodeRepo := nodeRepo.NewRepository()
+		nodeService := service.NewService(nodeRepo, nil, nil, testutil.NewTestLogger())
+
+		nodes := []*domain.Node{
+			{ID: "1", ShardID: 1},
+			{ID: "2", ShardID: 1},
+			{ID: "3", ShardID: 2},
+			{ID: "4", ShardID: 2},
+			{ID: "5", ShardID: 3},
+		}
+
+		for _, n := range nodes {
+			nodeRepo.Create(n)
+		}
+
+		grouped, err := nodeService.ListGroupByShard()
+
+		if err != nil {
+			t.Fatalf("Error grouping nodes by shard: %v", err)
+		}
+
+		if len(grouped) != 3 {
+			t.Fatalf("Expected 3 groups, got %d", len(grouped))
+		}
+
+		if len(grouped[1]) != 2 {
+			t.Errorf("Expected 2 nodes in shard 1, got %d", len(grouped[1]))
+		}
+
+		if len(grouped[2]) != 2 {
+			t.Errorf("Expected 2 nodes in shard 2, got %d", len(grouped[2]))
+		}
+
+		if len(grouped[3]) != 1 {
+			t.Errorf("Expected 1 node in shard 3, got %d", len(grouped[3]))
+		}
+	})
+
+	t.Run("can group nodes by shard when no nodes exist", func(t *testing.T) {
+		nodeRepo := nodeRepo.NewRepository()
+		nodeService := service.NewService(nodeRepo, nil, nil, testutil.NewTestLogger())
+
+		grouped, err := nodeService.ListGroupByShard()
+
+		if err != nil {
+			t.Fatalf("Error grouping nodes by shard: %v", err)
+		}
+
+		if len(grouped) != 0 {
+			t.Fatalf("Expected 0 groups, got %d", len(grouped))
+		}
+	})
+}

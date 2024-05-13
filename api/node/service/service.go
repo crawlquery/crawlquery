@@ -152,3 +152,18 @@ func (ss *Service) GetShardWithLeastNodes() (*domain.Shard, error) {
 
 	return leastNodes, nil
 }
+
+func (s *Service) ListGroupByShard() (map[uint][]*domain.Node, error) {
+	nodes, err := s.RandomizedList()
+	if err != nil {
+		return nil, err
+	}
+
+	grouped := make(map[uint][]*domain.Node)
+
+	for _, node := range nodes {
+		grouped[node.ShardID] = append(grouped[node.ShardID], node)
+	}
+
+	return grouped, nil
+}
