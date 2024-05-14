@@ -1,29 +1,16 @@
 package token_test
 
 import (
+	"bytes"
 	"crawlquery/node/token"
 	"reflect"
+	"slices"
 	"strings"
 	"testing"
 
+	"github.com/PuerkitoBio/goquery"
 	testdataloader "github.com/peteole/testdata-loader"
 )
-
-func TestTokenizeTerm(t *testing.T) {
-	// Input text content
-	textContent := "Hello World! This is a simple test. Numbers: 1234."
-
-	// Expected output: slice of tokens
-	expectedTokens := []string{"hello", "world", "this", "is", "a", "simple", "test", "numbers", "1234"}
-
-	// Tokenize the input text content
-	tokens := token.TokenizeTerm(textContent)
-
-	// Check if the output matches the expected tokens
-	if !reflect.DeepEqual(tokens, expectedTokens) {
-		t.Errorf("TokenizeTerms() = %v, want %v", tokens, expectedTokens)
-	}
-}
 
 func TestPositions(t *testing.T) {
 	// Input text content
@@ -51,35 +38,66 @@ func TestPositions(t *testing.T) {
 	}
 }
 
-func TestKeywords(t *testing.T) {
+func TestTokenizeTerm(t *testing.T) {
+	// Input text content
+	textContent := "Hello World! This is a simple test. Numbers: 1234."
 
+	// Expected output: slice of tokens
+	expectedTokens := []string{"hello", "world", "this", "is", "a", "simple", "test", "numbers", "1234"}
+
+	// Tokenize the input text content
+	tokens := token.TokenizeTerm(textContent)
+
+	// Check if the output matches the expected tokens
+	if !reflect.DeepEqual(tokens, expectedTokens) {
+		t.Errorf("TokenizeTerms() = %v, want %v", tokens, expectedTokens)
+	}
+}
+
+func TestParseGoogle(t *testing.T) {
 	testdata := testdataloader.GetTestFile("testdata/pages/google/search.html")
 
 	if len(testdata) == 0 {
 		t.Fatal("Failed to load test data")
 	}
 
-	//  [google aboutstore gmail images wrong history deleted choose youre giving feedback delete delete report inappropriate predictions dismiss watch google i/o learn latest innovations news ai updates united kingdom advertisingbusiness search works decade climate action join privacyterms settings search settings advanced search data search search history search send feedback dark theme google apps google account]
-	expectedKeywords := []string{"google", "aboutstore", "gmail", "images", "wrong", "history", "deleted", "choose", "youre", "giving", "feedback", "delete", "report", "inappropriate", "predictions", "dismiss", "watch", "google", "i/o", "learn", "latest", "innovations", "news", "ai", "updates", "united", "kingdom", "advertisingbusiness", "search", "works", "decade", "climate", "action", "join", "privacyterms", "settings", "search", "settings", "advanced", "search", "data", "search", "search", "history", "search", "send", "feedback", "dark", "theme", "google", "apps", "google", "account"}
+	doc, err := goquery.NewDocumentFromReader(bytes.NewReader(testdata))
 
-	// Extract keywords from the input data
-	keywords := token.Keywords(token.Tokenize(string(testdata)))
+	keywords := token.Keywords(doc)
 
-	if len(expectedKeywords) != len(keywords) {
-		t.Errorf("Keywords() = %v, want %v", keywords, expectedKeywords)
+	if err != nil {
+		t.Errorf("Error parsing: %v", err)
 	}
 
-	for _, expectedKeyword := range expectedKeywords {
-		var found bool
-		for _, keyword := range keywords {
-			if keyword == expectedKeyword {
-				found = true
-				break
-			}
-		}
+	expectKeywords := []string{"google", "search", "images", "news", "gmail"}
 
-		if !found {
-			t.Errorf("Expected keyword %s was not found", expectedKeyword)
+	for _, kw := range expectKeywords {
+		if !slices.Contains(keywords, kw) {
+			t.Errorf("Expected content to contain %s", kw)
+		}
+	}
+}
+
+func TestParseHowToMakeBologneseSauce(t *testing.T) {
+	testdata := testdataloader.GetTestFile("testdata/pages/recipe/how-to-make-bolognese-sauce.html")
+
+	if len(testdata) == 0 {
+		t.Fatal("Failed to load test data")
+	}
+
+	doc, err := goquery.NewDocumentFromReader(bytes.NewReader(testdata))
+
+	if err != nil {
+		t.Errorf("Error parsing: %v", err)
+	}
+
+	keywords := token.Keywords(doc)
+
+	expectKeywords := []string{"bolognese", "sauce", "recipe", "tomato", "beef", "pasta"}
+
+	for _, kw := range expectKeywords {
+		if !slices.Contains(keywords, kw) {
+			t.Errorf("Expected content to contain %s", kw)
 		}
 	}
 }

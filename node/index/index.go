@@ -71,11 +71,11 @@ func (idx *Index) Search(query string) ([]sharedDomain.Result, error) {
 }
 
 // AddPage adds a page to both forward and inverted indexes
-func (idx *Index) AddPage(doc *sharedDomain.Page) error {
-	tokensWithPositions := token.Tokenize(doc.Content)
+func (idx *Index) AddPage(page *sharedDomain.Page) error {
+	tokensWithPositions := token.Positions(page.Keywords)
 
 	// Update forward index
-	err := idx.forwardRepo.Save(doc.ID, doc)
+	err := idx.forwardRepo.Save(page.ID, page)
 
 	if err != nil {
 		idx.logger.Errorf("Index.AddPage: Error saving page metadata: %v", err)
@@ -85,7 +85,7 @@ func (idx *Index) AddPage(doc *sharedDomain.Page) error {
 
 	// Update inverted index
 	for token, positions := range tokensWithPositions {
-		posting := domain.Posting{PageID: doc.ID, Frequency: len(positions), Positions: positions}
+		posting := domain.Posting{PageID: page.ID, Frequency: len(positions), Positions: positions}
 		idx.invertedRepo.Save(token, &posting)
 	}
 

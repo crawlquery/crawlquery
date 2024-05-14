@@ -5,10 +5,20 @@ import (
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
-	goose "github.com/advancedlogic/GoOse"
 	rake "github.com/afjoseph/RAKE.Go"
 	"github.com/securisec/go-keywords"
 )
+
+func Positions(tokens []string) map[string][]int {
+	tokenPositions := make(map[string][]int)
+	position := 0
+	for _, token := range tokens {
+		tokenPositions[token] = append(tokenPositions[token], position)
+		position++
+	}
+
+	return tokenPositions
+}
 
 func TokenizeTerm(term string) []string {
 	// Normalize text: convert to lower case
@@ -28,15 +38,28 @@ func TokenizeTerm(term string) []string {
 	return words
 }
 
-func Keywords(data string) []string {
-	k, _ := keywords.Extract(data, keywords.ExtractOptions{
-		StripTags:        true,
-		RemoveDuplicates: true,
-		IgnorePattern:    "<.+>",
-		Lowercase:        true,
-	})
+// removeUnwantedElements removes script, style, and comments from the document
+func removeUnwantedElements(doc *goquery.Document) {
+	doc.Find("script").Remove()
+	doc.Find("style").Remove()
+	doc.Find("noscript").Remove()
+	doc.Find("comment").Remove()
+	doc.Find("head").Remove()
+	doc.Find("meta").Remove()
+}
 
-	return k
+// extractTextRecursively extracts text from a node and its children, ensuring proper spacing
+func extractTextRecursively(selection *goquery.Selection, textBuilder *strings.Builder) {
+	if goquery.NodeName(selection) == "#text" {
+		text := strings.TrimSpace(selection.Text())
+		if text != "" {
+			textBuilder.WriteString(text + " ")
+		}
+	} else {
+		selection.Contents().Each(func(i int, child *goquery.Selection) {
+			extractTextRecursively(child, textBuilder)
+		})
+	}
 }
 
 func RakeKeywords(data string) []string {
@@ -51,46 +74,14 @@ func RakeKeywords(data string) []string {
 	return words
 }
 
-func Positions(tokens []string) map[string][]int {
-	tokenPositions := make(map[string][]int)
-	position := 0
-	for _, token := range tokens {
-		tokenPositions[token] = append(tokenPositions[token], position)
-		position++
-	}
-
-	return tokenPositions
-}
-
-// tokenize takes HTML content, extracts text, and splits it into tokens.
-func Tokenize(htmlContent string) string {
-	doc, err := goquery.NewDocumentFromReader(strings.NewReader(htmlContent))
-	if err != nil {
-		panic(err) // Proper error handling should replace panic in production
-	}
+func Keywords(doc *goquery.Document) []string {
+	removeUnwantedElements(doc)
 
 	var textBuilder strings.Builder
 
-	doc.Find("script, style, noscript").Remove()
-
-	// Iterate over each text node within the body, ensuring proper spacing
-	doc.Find("body").Contents().Each(func(i int, selection *goquery.Selection) {
-		if goquery.NodeName(selection) == "#text" {
-			text := strings.TrimSpace(selection.Text())
-			if text != "" {
-				textBuilder.WriteString(text + " ")
-			}
-		}
-	})
-
-	// Iterate over all elements in the body to extract text content
-	doc.Find("body *").Each(func(i int, selection *goquery.Selection) {
-		if goquery.NodeName(selection) != "script" && goquery.NodeName(selection) != "style" && goquery.NodeName(selection) != "noscript" {
-			text := strings.TrimSpace(selection.Text())
-			if text != "" {
-				textBuilder.WriteString(text + " ")
-			}
-		}
+	// Recursively extract text from the body
+	doc.Find("body").Each(func(i int, s *goquery.Selection) {
+		extractTextRecursively(s, &textBuilder)
 	})
 
 	// Consolidated text from the builder
@@ -99,22 +90,11 @@ func Tokenize(htmlContent string) string {
 	// Normalize text: convert to lower case
 	normalizedText := strings.ToLower(consolidatedText)
 
-	// Remove punctuation using a regular expression
+	// Remove punctuation using a regular expression, ensuring spaces are not removed by the regex
 	reg := regexp.MustCompile(`[^a-zA-Z0-9\s]+`)
 	finalText := reg.ReplaceAllString(normalizedText, "")
 
-	// Return the cleaned text
-	return finalText
+	k, _ := keywords.Extract(finalText, keywords.ExtractOptions{})
 
-}
-
-func Tokens() []string {
-	g := goose.New()
-	article, _ := g.ExtractFromURL("http://edition.cnn.com/2012/07/08/opinion/banzi-ted-open-source/index.html")
-	println("title", article.Title)
-	println("description", article.MetaDescription)
-	println("keywords", article.MetaKeywords)
-	println("content", article.CleanedText)
-	println("url", article.FinalURL)
-	println("top image", article.TopImage)
+	return k
 }

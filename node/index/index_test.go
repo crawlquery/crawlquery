@@ -25,13 +25,12 @@ func TestAddPage(t *testing.T) {
 			ID:              "doc1",
 			URL:             "http://example.com",
 			Title:           "Test Page",
-			Content:         `<html><head><title>Example</title></head><body><h1>Hello World!</h1><p>This is a simple test. Numbers: 1234.</p></body></html>`,
 			MetaDescription: "A simple test page",
 		}
 
 		// Tokenize the content to predict what should be in the inverted index
 		// Assuming the existence of a Tokenize function that returns a map of token strings to their positions
-		tokens := token.Tokenize(doc.Content) // Make sure to implement this or adjust to your actual tokenize function
+		tokens := token.Tokenize(doc.K) // Make sure to implement this or adjust to your actual tokenize function
 		// Add page to the index
 		idx.AddPage(doc)
 		// Retrieve the page from the forward index and verify it
@@ -77,22 +76,22 @@ func TestAddPage(t *testing.T) {
 				ID:              "doc1",
 				URL:             "http://example.com",
 				Title:           "Test Page",
-				Content:         `<html><head><title>Example</title></head><body><h1>Hello World!</h1><p>This is a simple test. Numbers: 1234.</p></body></html>`,
 				MetaDescription: "A simple test page",
 			},
 			{
 				ID:              "doc2",
 				URL:             "http://example.com/2",
 				Title:           "Another Test Page",
-				Content:         `<html><head><title>Another Example</title></head><body><h1>Goodbye World!</h1><p>This is another test. Numbers: 5678.</p></body></html>`,
 				MetaDescription: "Another simple test page",
 			},
 		}
 
+		content := "<html><body><p>Hello world!</p></body></html>"
+
 		// Tokenize the content to predict what should be in the inverted index
 		// Assuming the existence of a Tokenize function that returns a map of token strings to their positions
 		for _, doc := range docs {
-			tokens := token.Tokenize(doc.Content) // Make sure to implement this or adjust to your actual tokenize function
+			tokens := token.Keywords(content) // Make sure to implement this or adjust to your actual tokenize function
 			// Add page to the index
 			idx.AddPage(doc)
 			// Retrieve the page from the forward index and verify it
@@ -151,14 +150,12 @@ func TestSearch(t *testing.T) {
 			ID:              "doc1",
 			URL:             "http://example.com/doc1",
 			Title:           "Test Page",
-			Content:         "This is a test page",
 			MetaDescription: "A test page for indexing",
 		},
 		"doc2": {
 			ID:              "doc2",
 			URL:             "http://example.com/doc2",
 			Title:           "Another Test",
-			Content:         "This is another test",
 			MetaDescription: "Another test page",
 		},
 	}
