@@ -5,35 +5,28 @@ import (
 	"crawlquery/node/token"
 	sharedDomain "crawlquery/pkg/domain"
 	"sort"
-	"strings"
+
+	"go.uber.org/zap"
 )
 
 // Index represents the search index on a node
 type Index struct {
-	Inverted domain.InvertedIndex
-	Forward  domain.ForwardIndex
+	forwardRepo  domain.ForwardIndexRepository
+	invertedRepo domain.InvertedIndexRepository
+	logger       *zap.SugaredLogger
 }
 
 // NewIndex initializes a new Index with prepared structures
-func NewIndex() *Index {
+func NewIndex(
+	forward domain.ForwardIndexRepository,
+	inverted domain.InvertedIndexRepository,
+	logger *zap.SugaredLogger,
+) *Index {
 	return &Index{
-		Inverted: make(domain.InvertedIndex),
-		Forward:  make(domain.ForwardIndex),
+		forwardRepo:  forward,
+		invertedRepo: inverted,
+		logger:       logger,
 	}
-}
-
-func (idx *Index) fuzzySearch(term string) map[string]float64 {
-	results := make(map[string]float64)
-	for key, postings := range idx.Inverted {
-		// Check if the term is a substring of the key
-		if strings.Contains(key, term) {
-			for _, posting := range postings {
-				// Add or increase the score based on frequency
-				results[posting.PageID] += float64(posting.Frequency)
-			}
-		}
-	}
-	return results
 }
 
 func (idx *Index) Search(query string) ([]sharedDomain.Result, error) {
@@ -43,7 +36,7 @@ func (idx *Index) Search(query string) ([]sharedDomain.Result, error) {
 
 	for _, term := range queryTerms {
 		// Use fuzzy search to find matching terms
-		partialResults := idx.fuzzySearch(term)
+		partialResults := idx.invertedRepo.FuzzySearch(term)
 		for docID, score := range partialResults {
 			results[docID] += score
 		}
@@ -61,7 +54,12 @@ func (idx *Index) Search(query string) ([]sharedDomain.Result, error) {
 
 	// Add the page metadata to the results
 	for i, result := range sortedResults {
-		page := idx.Forward[result.PageID]
+		page, err := idx.forwardRepo.Get(result.PageID)
+
+		if err != nil {
+			idx.logger.Errorf("Index.Search: Error getting page metadata: %v", err)
+			continue
+		}
 		sortedResults[i].Page = page
 	}
 
@@ -73,12 +71,12 @@ func (idx *Index) AddPage(doc *sharedDomain.Page) error {
 	tokensWithPositions := token.Tokenize(doc.Content)
 
 	// Update forward index
-	idx.Forward[doc.ID] = doc
+	idx.forwardRepo.Save(doc.ID, doc)
 
 	// Update inverted index
 	for token, positions := range tokensWithPositions {
 		posting := domain.Posting{PageID: doc.ID, Frequency: len(positions), Positions: positions}
-		idx.Inverted[token] = append(idx.Inverted[token], &posting)
+		idx.invertedRepo.Save(token, &posting)
 	}
 
 	return nil

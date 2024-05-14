@@ -4,6 +4,10 @@ import (
 	"crawlquery/node/domain"
 	"crawlquery/node/token"
 	sharedDomain "crawlquery/pkg/domain"
+	"crawlquery/pkg/testutil"
+
+	forwardRepo "crawlquery/node/index/forward/repository/mem"
+	invertedRepo "crawlquery/node/index/inverted/repository/mem"
 	"reflect"
 	"sort"
 	"testing"
@@ -12,7 +16,11 @@ import (
 func TestAddPage(t *testing.T) {
 	t.Run("should add a page to the index", func(t *testing.T) {
 		// Initialize index and page as before
-		idx := NewIndex() // Assuming you have a constructor for Index
+		idx := NewIndex(
+			forwardRepo.NewRepository(),
+			invertedRepo.NewRepository(),
+			testutil.NewTestLogger(),
+		) // Assuming you have a constructor for Index
 		doc := &sharedDomain.Page{
 			ID:              "doc1",
 			URL:             "http://example.com",
@@ -27,8 +35,8 @@ func TestAddPage(t *testing.T) {
 		// Add page to the index
 		idx.AddPage(doc)
 		// Retrieve the page from the forward index and verify it
-		indexedDoc, exists := idx.Forward[doc.ID]
-		if !exists {
+		indexedDoc, err := idx.forwardRepo.Get(doc.ID)
+		if err != nil {
 			t.Fatalf("Page with ID %s not found in forward index", doc.ID)
 		}
 		if !reflect.DeepEqual(indexedDoc, doc) {
@@ -37,8 +45,8 @@ func TestAddPage(t *testing.T) {
 
 		// Check the inverted index for correctness
 		for token, positions := range tokens {
-			postings, found := idx.Inverted[token]
-			if !found {
+			postings, err := idx.invertedRepo.Get(token)
+			if err != nil {
 				t.Errorf("Token %q not found in the inverted index", token)
 				continue
 			}
@@ -59,7 +67,11 @@ func TestAddPage(t *testing.T) {
 
 	t.Run("can add multiple pages to the index", func(t *testing.T) {
 		// Initialize index and pages as before
-		idx := NewIndex() // Assuming you have a constructor for Index
+		idx := NewIndex(
+			forwardRepo.NewRepository(),
+			invertedRepo.NewRepository(),
+			testutil.NewTestLogger(),
+		) // Assuming you have a constructor for Index
 		docs := []*sharedDomain.Page{
 			{
 				ID:              "doc1",
@@ -84,8 +96,8 @@ func TestAddPage(t *testing.T) {
 			// Add page to the index
 			idx.AddPage(doc)
 			// Retrieve the page from the forward index and verify it
-			indexedDoc, exists := idx.Forward[doc.ID]
-			if !exists {
+			indexedDoc, err := idx.forwardRepo.Get(doc.ID)
+			if err != nil {
 				t.Fatalf("Page with ID %s not found in forward index", doc.ID)
 			}
 			if !reflect.DeepEqual(indexedDoc, doc) {
@@ -94,8 +106,8 @@ func TestAddPage(t *testing.T) {
 
 			// Check the inverted index for correctness
 			for token, positions := range tokens {
-				postings, found := idx.Inverted[token]
-				if !found {
+				postings, err := idx.invertedRepo.Get(token)
+				if err != nil {
 					t.Errorf("Token %q not found in the inverted index", token)
 					continue
 				}
@@ -119,8 +131,12 @@ func TestAddPage(t *testing.T) {
 
 func TestSearch(t *testing.T) {
 	// Create a test index with some pages
-	index := NewIndex()
-	index.Inverted = map[string][]*domain.Posting{
+	index := NewIndex(
+		forwardRepo.NewRepository(),
+		invertedRepo.NewRepository(),
+		testutil.NewTestLogger(),
+	)
+	inverted := map[string][]*domain.Posting{
 		"test": {
 			{PageID: "doc1", Frequency: 2},
 			{PageID: "doc2", Frequency: 1},
@@ -130,7 +146,7 @@ func TestSearch(t *testing.T) {
 		},
 	}
 
-	index.Forward = map[string]*sharedDomain.Page{
+	forward := map[string]*sharedDomain.Page{
 		"doc1": {
 			ID:              "doc1",
 			URL:             "http://example.com/doc1",
@@ -147,6 +163,16 @@ func TestSearch(t *testing.T) {
 		},
 	}
 
+	for token, postings := range inverted {
+		for _, posting := range postings {
+			index.invertedRepo.Save(token, posting)
+		}
+	}
+
+	for _, page := range forward {
+		index.forwardRepo.Save(page.ID, page)
+	}
+
 	// Define test cases
 	tests := []struct {
 		query      string
@@ -155,8 +181,8 @@ func TestSearch(t *testing.T) {
 		{
 			query: "test page",
 			wantResult: []sharedDomain.Result{
-				{PageID: "doc1", Score: 3, Page: index.Forward["doc1"]},
-				{PageID: "doc2", Score: 1, Page: index.Forward["doc2"]},
+				{PageID: "doc1", Score: 3, Page: forward["doc1"]},
+				{PageID: "doc2", Score: 1, Page: forward["doc2"]},
 			},
 		},
 	}

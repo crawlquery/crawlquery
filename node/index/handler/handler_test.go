@@ -7,17 +7,25 @@ import (
 	"crawlquery/node/router"
 	"crawlquery/pkg/domain"
 	"crawlquery/pkg/factory"
+	"crawlquery/pkg/testutil"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	forwardRepository "crawlquery/node/index/forward/repository/mem"
+	invertedRepository "crawlquery/node/index/inverted/repository/mem"
 
 	"github.com/gin-gonic/gin"
 )
 
 func TestIndexHandler(t *testing.T) {
 
-	idx := index.NewIndex()
+	idx := index.NewIndex(
+		forwardRepository.NewRepository(),
+		invertedRepository.NewRepository(),
+		testutil.NewTestLogger(),
+	)
 	for _, page := range factory.TenPages() {
 		idx.AddPage(page)
 	}

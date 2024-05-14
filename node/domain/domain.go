@@ -37,3 +37,14 @@ type CrawlHandler interface {
 type CrawlService interface {
 	Crawl(url string) error
 }
+
+type ForwardIndexRepository interface {
+	Get(pageID string) (*domain.Page, error)
+	Save(pageID string, page *domain.Page) error
+}
+
+type InvertedIndexRepository interface {
+	Get(keyword string) ([]*Posting, error)
+	Save(token string, posting *Posting) error
+	FuzzySearch(token string) map[string]float64
+}
