@@ -6,7 +6,6 @@ import (
 	"crawlquery/node/index"
 	indexHandler "crawlquery/node/index/handler"
 	"crawlquery/node/router"
-	"crawlquery/pkg/factory"
 
 	forwardRepo "crawlquery/node/index/forward/repository/bolt"
 	invertedRepo "crawlquery/node/index/inverted/repository/bolt"
@@ -48,9 +47,6 @@ func main() {
 		invertedRepo,
 		sugar,
 	)
-	for _, page := range factory.TenPages() {
-		idx.AddPage(page)
-	}
 
 	indexHandler := indexHandler.NewHandler(idx)
 	crawlHandler := crawlHandler.NewHandler(
