@@ -15,9 +15,7 @@ func TestGet(t *testing.T) {
 		t.Fatalf("error creating repository: %v", err)
 	}
 
-	err = r.Save("keyword", []*domain.Posting{
-		{PageID: "page1", Frequency: 1},
-	})
+	err = r.Save("keyword", &domain.Posting{PageID: "page1", Frequency: 1})
 
 	if err != nil {
 		t.Fatalf("error saving page: %v", err)
@@ -49,10 +47,7 @@ func TestSave(t *testing.T) {
 		t.Fatalf("error creating repository: %v", err)
 	}
 
-	err = r.Save("keyword", []*domain.Posting{
-		{PageID: "page1", Frequency: 1},
-	})
-
+	err = r.Save("keyword", &domain.Posting{PageID: "page1", Frequency: 1})
 	if err != nil {
 		t.Fatalf("error saving page: %v", err)
 	}
@@ -66,9 +61,7 @@ func TestFuzzySearch(t *testing.T) {
 		t.Fatalf("error creating repository: %v", err)
 	}
 
-	err = r.Save("keyword", []*domain.Posting{
-		{PageID: "page1", Frequency: 1},
-	})
+	err = r.Save("keyword", &domain.Posting{PageID: "page1", Frequency: 1})
 
 	if err != nil {
 		t.Fatalf("error saving page: %v", err)

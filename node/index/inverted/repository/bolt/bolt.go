@@ -30,15 +30,31 @@ func NewRepository(dbPath string) (*Repository, error) {
 	return &Repository{db: db}, nil
 }
 
-func (repo *Repository) Save(keyword string, postings []*domain.Posting) error {
-	return repo.db.Update(func(tx *bolt.Tx) error {
+func (repo *Repository) Save(keyword string, posting *domain.Posting) error {
+	err := repo.db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte("InvertedIndex"))
-		encoded, err := json.Marshal(postings)
+		v := b.Get([]byte(keyword))
+		if v == nil {
+			postings := []*domain.Posting{posting}
+			encoded, err := json.Marshal(postings)
+			if err != nil {
+				return err
+			}
+			return b.Put([]byte(keyword), encoded)
+		}
+		var existing []*domain.Posting
+		err := json.Unmarshal(v, &existing)
+		if err != nil {
+			return err
+		}
+		existing = append(existing, posting)
+		encoded, err := json.Marshal(existing)
 		if err != nil {
 			return err
 		}
 		return b.Put([]byte(keyword), encoded)
 	})
+	return err
 }
 
 func (repo *Repository) Get(keyword string) ([]*domain.Posting, error) {
