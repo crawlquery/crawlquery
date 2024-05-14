@@ -63,6 +63,10 @@ func (idx *Index) Search(query string) ([]sharedDomain.Result, error) {
 		sortedResults[i].Page = page
 	}
 
+	if len(sortedResults) >= 10 {
+		sortedResults = sortedResults[:10]
+	}
+
 	return sortedResults, nil
 }
 

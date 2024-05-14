@@ -2,12 +2,12 @@
 import { ref } from 'vue'
 import axios from 'axios'
 import { useResultStore } from '@/stores/result';
-
+import _ from 'lodash'
 const resultStore = useResultStore()
 const latency = ref('0ms')
 const term = ref('')
 
-const search = () => {
+const search = _.debounce(() => {
     const start = Date.now()
     axios.get(`http://localhost:8080/search?q=${term.value}`)
         .then((response: any) => {
@@ -15,7 +15,8 @@ const search = () => {
             resultStore.setResults(response.data.results)
             console.log(response.data.results)
         })
-}
+}, 300)
+
 </script>
 <template>
 

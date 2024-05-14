@@ -56,7 +56,7 @@ func (s *Service) Search(term string) ([]sharedDomain.Result, error) {
 
 			// Initialize results channel with buffer size of the number of nodes
 			resultsChan := make(chan []sharedDomain.Result, len(nodes))
-			ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+			ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 			defer cancel()
 
 			for _, node := range nodes {

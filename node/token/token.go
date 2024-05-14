@@ -5,6 +5,9 @@ import (
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
+	goose "github.com/advancedlogic/GoOse"
+	rake "github.com/afjoseph/RAKE.Go"
+	"github.com/securisec/go-keywords"
 )
 
 func TokenizeTerm(term string) []string {
@@ -25,8 +28,42 @@ func TokenizeTerm(term string) []string {
 	return words
 }
 
+func Keywords(data string) []string {
+	k, _ := keywords.Extract(data, keywords.ExtractOptions{
+		StripTags:        true,
+		RemoveDuplicates: true,
+		IgnorePattern:    "<.+>",
+		Lowercase:        true,
+	})
+
+	return k
+}
+
+func RakeKeywords(data string) []string {
+	candidates := rake.RunRake(data)
+
+	words := make([]string, 0)
+
+	for _, candidate := range candidates {
+		words = append(words, candidate.Key)
+	}
+
+	return words
+}
+
+func Positions(tokens []string) map[string][]int {
+	tokenPositions := make(map[string][]int)
+	position := 0
+	for _, token := range tokens {
+		tokenPositions[token] = append(tokenPositions[token], position)
+		position++
+	}
+
+	return tokenPositions
+}
+
 // tokenize takes HTML content, extracts text, and splits it into tokens.
-func Tokenize(htmlContent string) map[string][]int {
+func Tokenize(htmlContent string) string {
 	doc, err := goquery.NewDocumentFromReader(strings.NewReader(htmlContent))
 	if err != nil {
 		panic(err) // Proper error handling should replace panic in production
@@ -34,19 +71,26 @@ func Tokenize(htmlContent string) map[string][]int {
 
 	var textBuilder strings.Builder
 
-	if titleText := doc.Find("title").Text(); titleText != "" {
-		textBuilder.WriteString(strings.TrimSpace(titleText) + " ")
-	}
+	doc.Find("script, style, noscript").Remove()
 
-	if bodyText := doc.Find("body").Contents().Not("body > *").Text(); bodyText != "" {
-		textBuilder.WriteString(strings.TrimSpace(bodyText) + " ")
-	}
-	// Iterate over each node within the body, ensuring proper spacing
+	// Iterate over each text node within the body, ensuring proper spacing
+	doc.Find("body").Contents().Each(func(i int, selection *goquery.Selection) {
+		if goquery.NodeName(selection) == "#text" {
+			text := strings.TrimSpace(selection.Text())
+			if text != "" {
+				textBuilder.WriteString(text + " ")
+			}
+		}
+	})
+
+	// Iterate over all elements in the body to extract text content
 	doc.Find("body *").Each(func(i int, selection *goquery.Selection) {
-		nodeText := selection.Text()
-		// Ensure each text node ends with a space to prevent merging
-		trimmedText := strings.TrimSpace(nodeText) + " "
-		textBuilder.WriteString(trimmedText)
+		if goquery.NodeName(selection) != "script" && goquery.NodeName(selection) != "style" && goquery.NodeName(selection) != "noscript" {
+			text := strings.TrimSpace(selection.Text())
+			if text != "" {
+				textBuilder.WriteString(text + " ")
+			}
+		}
 	})
 
 	// Consolidated text from the builder
@@ -56,22 +100,21 @@ func Tokenize(htmlContent string) map[string][]int {
 	normalizedText := strings.ToLower(consolidatedText)
 
 	// Remove punctuation using a regular expression
-	// Ensuring spaces are not removed by the regex
 	reg := regexp.MustCompile(`[^a-zA-Z0-9\s]+`)
 	finalText := reg.ReplaceAllString(normalizedText, "")
 
-	// Remove multiple spaces resulting from removals and edge cases
-	spaceCleanedText := strings.Join(strings.Fields(finalText), " ")
+	// Return the cleaned text
+	return finalText
 
-	// Split text into words based on whitespace
-	words := strings.Fields(spaceCleanedText)
+}
 
-	tokens := make(map[string][]int)
-	position := 0
-	for _, word := range words {
-		tokens[word] = append(tokens[word], position)
-		position++
-	}
-
-	return tokens
+func Tokens() []string {
+	g := goose.New()
+	article, _ := g.ExtractFromURL("http://edition.cnn.com/2012/07/08/opinion/banzi-ted-open-source/index.html")
+	println("title", article.Title)
+	println("description", article.MetaDescription)
+	println("keywords", article.MetaKeywords)
+	println("content", article.CleanedText)
+	println("url", article.FinalURL)
+	println("top image", article.TopImage)
 }
