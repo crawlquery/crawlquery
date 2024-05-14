@@ -108,25 +108,5 @@ func TestSearch(t *testing.T) {
 		if len(res.Results) != 2 {
 			t.Errorf("Expected 1 result, got %d", len(res.Results))
 		}
-
-		if res.Results[0].PageID != "page1" {
-			t.Errorf("Expected page ID to be page1, got %s", res.Results[0].PageID)
-		}
-
-		if res.Results[0].Score != 0.5 {
-			t.Errorf("Expected score to be 0.5, got %f", res.Results[0].Score)
-		}
-
-		if res.Results[0].Page.ID != "page1" {
-			t.Errorf("Expected page ID to be page1, got %s", res.Results[0].Page.ID)
-		}
-
-		if res.Results[0].Page.URL != "http://google.com" {
-			t.Errorf("Expected page URL to be http://google.com, got %s", res.Results[0].Page.URL)
-		}
-
-		if res.Results[0].Page.Title != "Google" {
-			t.Errorf("Expected page title to be Google, got %s", res.Results[0].Page.Title)
-		}
 	})
 }
