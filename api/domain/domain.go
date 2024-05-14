@@ -12,3 +12,4 @@ var validate = validator.New(
 
 var ErrInternalError = errors.New("internal error")
 var ErrForbidden = errors.New("forbidden")
+var ErrNoRowsUpdated = errors.New("no rows updated")

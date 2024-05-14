@@ -33,6 +33,37 @@ func TestCreate(t *testing.T) {
 	}
 }
 
+func TestUpdate(t *testing.T) {
+	repo := NewRepository()
+
+	job := &domain.CrawlJob{
+		ID:  "job1",
+		URL: "http://example.com",
+	}
+
+	repo.jobs[job.ID] = job
+
+	job.URL = "http://example2.com"
+
+	err := repo.Update(job)
+
+	if err != nil {
+		t.Fatalf("Error updating job: %v", err)
+	}
+
+	if repo.jobs[job.ID].ID != job.ID {
+		t.Errorf("Expected ID to be %s, got %s", job.ID, repo.jobs[job.ID].ID)
+	}
+
+	if repo.jobs[job.ID].URL != job.URL {
+		t.Errorf("Expected URL to be %s, got %s", job.URL, repo.jobs[job.ID].URL)
+	}
+
+	if repo.jobs[job.ID].CreatedAt.Sub(job.CreatedAt) > time.Second || job.CreatedAt.Sub(repo.jobs[job.ID].CreatedAt) > time.Second {
+		t.Errorf("Expected CreatedAt to be within one second of %v, got %v", job.CreatedAt, repo.jobs[job.ID].CreatedAt)
+	}
+}
+
 func TestGet(t *testing.T) {
 	repo := NewRepository()
 

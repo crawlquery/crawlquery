@@ -25,6 +25,15 @@ func (r *Repository) Create(j *domain.CrawlJob) error {
 	return nil
 }
 
+func (r *Repository) Update(j *domain.CrawlJob) error {
+	if r.forceError != nil {
+		return r.forceError
+	}
+
+	r.jobs[j.ID] = j
+	return nil
+}
+
 func (r *Repository) Get(id string) (*domain.CrawlJob, error) {
 	job, ok := r.jobs[id]
 	if !ok {

@@ -3,6 +3,7 @@ package service
 import (
 	"crawlquery/api/domain"
 	"crawlquery/pkg/util"
+	"database/sql"
 	"errors"
 	"time"
 
@@ -52,7 +53,7 @@ func (cs *Service) Create(url string) (*domain.CrawlJob, error) {
 func (cs *Service) ProcessCrawlJobs() {
 	for {
 		// Get the first job
-		job, err := cs.repo.First()
+		job, err := cs.repo.FirstAvailable()
 		if err != nil {
 			time.Sleep(1 * time.Second)
 			continue
@@ -69,7 +70,17 @@ func (cs *Service) ProcessCrawlJobs() {
 
 		if err != nil {
 			cs.logger.Errorw("Crawl.Service.ProcessCrawlJobs: error processing job", "error", err)
-			time.Sleep(1 * time.Second)
+			job.BackoffUntil = sql.NullTime{
+				Time: time.Now().Add(1 * time.Hour),
+			}
+			job.FailedReason = sql.NullString{
+				String: err.Error(),
+			}
+
+			if err := cs.repo.Update(job); err != nil {
+				cs.logger.Errorw("Crawl.Service.ProcessCrawlJobs: error updating job", "error", err)
+			}
+
 			continue
 		}
 

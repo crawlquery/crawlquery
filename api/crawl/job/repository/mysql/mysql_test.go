@@ -6,6 +6,7 @@ import (
 	"crawlquery/api/migration"
 	"crawlquery/pkg/testutil"
 	"crawlquery/pkg/util"
+	"database/sql"
 	"testing"
 	"time"
 
@@ -33,7 +34,7 @@ func TestCreate(t *testing.T) {
 		if err != nil {
 			t.Errorf("Error creating job: %v", err)
 		}
-		res, err := db.Query("SELECT * FROM crawl_jobs WHERE id = ?", job.ID)
+		res, err := db.Query("SELECT id, url, url_hash, created_at FROM crawl_jobs WHERE id = ?", job.ID)
 
 		if err != nil {
 			t.Errorf("Error querying for job: %v", err)
@@ -41,10 +42,11 @@ func TestCreate(t *testing.T) {
 
 		var id string
 		var url string
+		var urlHash string
 		var createdAt time.Time
 
 		for res.Next() {
-			err = res.Scan(&id, &url, &createdAt)
+			err = res.Scan(&id, &url, &urlHash, &createdAt)
 			if err != nil {
 				t.Errorf("Error scanning job: %v", err)
 			}
@@ -77,9 +79,10 @@ func TestCreate(t *testing.T) {
 		job := &domain.CrawlJob{
 			ID:        util.UUID(),
 			URL:       "http://example.com",
+			URLHash:   "hash",
 			CreatedAt: time.Now().UTC(),
 		}
-		db.Exec("INSERT INTO crawl_jobs (id, url, created_at) VALUES (?, ?, ?)", job.ID, job.URL, job.CreatedAt)
+		db.Exec("INSERT INTO crawl_jobs (id, url, url_hash, created_at) VALUES (?, ?, ?, ?)", job.ID, job.URLHash, job.URL, job.CreatedAt)
 
 		defer db.Exec("DELETE FROM crawl_jobs WHERE id = ?", job.ID)
 
@@ -90,6 +93,114 @@ func TestCreate(t *testing.T) {
 		if err == nil {
 			t.Errorf("Expected error, got nil")
 		}
+	})
+}
+
+func TestUpdate(t *testing.T) {
+	t.Run("can update a job", func(t *testing.T) {
+		// Arrange
+		db := testutil.CreateTestMysqlDB()
+		defer db.Close()
+		migration.Up(db)
+
+		repo := mysql.NewRepository(db)
+
+		job := &domain.CrawlJob{
+			ID:        util.UUID(),
+			URL:       "http://example.com",
+			URLHash:   "hash",
+			CreatedAt: time.Now().UTC(),
+		}
+		_, err := db.Exec("INSERT INTO crawl_jobs (id, url, url_hash, created_at) VALUES (?, ?, ?, ?)", job.ID, job.URL, job.URLHash, job.CreatedAt)
+
+		if err != nil {
+			t.Fatalf("Error inserting job: %v", err)
+		}
+
+		defer db.Exec("DELETE FROM crawl_jobs WHERE id = ?", job.ID)
+
+		// Act
+		job.BackoffUntil = sql.NullTime{Time: time.Now(), Valid: true}
+		reason := "returned 404"
+		job.FailedReason = sql.NullString{String: reason, Valid: true}
+		job.LastCrawledAt = sql.NullTime{Time: time.Now(), Valid: true}
+
+		err = repo.Update(job)
+
+		// Assert
+		if err != nil && err != domain.ErrNoRowsUpdated {
+			t.Errorf("Error updating job: %v", err)
+		}
+
+		res, err := db.Query("SELECT id, url, url_hash, backoff_until, failed_reason, last_crawled_at, created_at FROM crawl_jobs WHERE id = ?", job.ID)
+
+		if err != nil {
+			t.Errorf("Error querying for job: %v", err)
+		}
+
+		var id string
+		var url string
+		var urlHash string
+		var backoffUntil sql.NullTime
+		var failedReason sql.NullString
+		var lastCrawledAt sql.NullTime
+		var createdAt time.Time
+
+		for res.Next() {
+			err = res.Scan(&id, &url, &urlHash, &backoffUntil, &failedReason, &lastCrawledAt, &createdAt)
+			if err != nil {
+				t.Errorf("Error scanning job: %v", err)
+			}
+		}
+
+		if id != job.ID {
+			t.Errorf("Expected ID to be %s, got %s", job.ID, id)
+		}
+
+		if url != job.URL {
+			t.Errorf("Expected URL to be %s, got %s", job.URL, url)
+		}
+
+		if urlHash != job.URLHash {
+			t.Errorf("Expected URLHash to be %s, got %s", job.URLHash, urlHash)
+		}
+
+		if backoffUntil.Time.Sub(job.BackoffUntil.Time) > time.Second || job.BackoffUntil.Time.Sub(backoffUntil.Time) > time.Second {
+			t.Errorf("Expected BackoffUntil to be within one second of %v, got %v", job.BackoffUntil, backoffUntil)
+		}
+
+		if failedReason != job.FailedReason {
+			t.Errorf("Expected FailedReason to be %s, got %s", job.FailedReason.String, failedReason.String)
+		}
+
+		if createdAt.Sub(job.CreatedAt) > time.Second || job.CreatedAt.Sub(createdAt) > time.Second {
+			t.Errorf("Expected CreatedAt to be within one second of %v, got %v", job.CreatedAt, createdAt)
+		}
+	})
+
+	t.Run("returns error if job does not exist", func(t *testing.T) {
+		// Arrange
+		db := testutil.CreateTestMysqlDB()
+		defer db.Close()
+		migration.Up(db)
+
+		repo := mysql.NewRepository(db)
+
+		job := &domain.CrawlJob{
+			ID:        util.UUID(),
+			URL:       "http://example.com",
+			URLHash:   "hash",
+			CreatedAt: time.Now().UTC(),
+		}
+
+		// Act
+		err := repo.Update(job)
+
+		// Assert
+		if err != domain.ErrNoRowsUpdated {
+			t.Errorf("Expected error, got %v", err)
+		}
+
 	})
 }
 
@@ -105,9 +216,14 @@ func TestGet(t *testing.T) {
 		job := &domain.CrawlJob{
 			ID:        util.UUID(),
 			URL:       "http://example.com",
+			URLHash:   "hash",
 			CreatedAt: time.Now().UTC(),
 		}
-		db.Exec("INSERT INTO crawl_jobs (id, url, created_at) VALUES (?, ?, ?)", job.ID, job.URL, job.CreatedAt)
+		_, err := db.Exec("INSERT INTO crawl_jobs (id, url, url_hash, created_at) VALUES (?, ?, ?, ?)", job.ID, job.URL, job.URLHash, job.CreatedAt)
+
+		if err != nil {
+			t.Fatalf("Error inserting job: %v", err)
+		}
 
 		defer db.Exec("DELETE FROM crawl_jobs WHERE id = ?", job.ID)
 
@@ -166,16 +282,18 @@ func TestFirst(t *testing.T) {
 		job := &domain.CrawlJob{
 			ID:        util.UUID(),
 			URL:       "http://example.com",
+			URLHash:   "hash",
 			CreatedAt: time.Now().UTC(),
 		}
-		db.Exec("INSERT INTO crawl_jobs (id, url, created_at) VALUES (?, ?, ?)", job.ID, job.URL, job.CreatedAt)
+		db.Exec("INSERT INTO crawl_jobs (id, url, url_hash, created_at) VALUES (?, ?, ?, ?)", job.ID, job.URL, job.URLHash, job.CreatedAt)
 
 		job2 := &domain.CrawlJob{
 			ID:        util.UUID(),
 			URL:       "http://example2.com",
+			URLHash:   "hash2",
 			CreatedAt: time.Now().UTC().Add(time.Second),
 		}
-		db.Exec("INSERT INTO crawl_jobs (id, url, created_at) VALUES (?, ?, ?)", job2.ID, job2.URL, job2.CreatedAt)
+		db.Exec("INSERT INTO crawl_jobs (id, url, url_hash, created_at) VALUES (?, ?, ?)", job2.ID, job2.URL, job2.URLHash, job2.CreatedAt)
 
 		defer db.Exec("DELETE FROM crawl_jobs WHERE id = ?", job.ID)
 		defer db.Exec("DELETE FROM crawl_jobs WHERE id = ?", job2.ID)
@@ -194,6 +312,10 @@ func TestFirst(t *testing.T) {
 
 		if res.URL != job.URL {
 			t.Errorf("Expected URL to be %s, got %s", job.URL, res.URL)
+		}
+
+		if res.URLHash != job.URLHash {
+			t.Errorf("Expected URLHash to be %s, got %s", job.URLHash, res.URLHash)
 		}
 
 		if res.CreatedAt.Sub(job.CreatedAt) > time.Second || job.CreatedAt.Sub(res.CreatedAt) > time.Second {
@@ -238,7 +360,7 @@ func TestDelete(t *testing.T) {
 			URL:       "http://example.com",
 			CreatedAt: time.Now().UTC(),
 		}
-		db.Exec("INSERT INTO crawl_jobs (id, url, created_at) VALUES (?, ?, ?)", job.ID, job.URL, job.CreatedAt)
+		db.Exec("INSERT INTO crawl_jobs (id, url, url_hash, created_at) VALUES (?, ?, ?, ?)", job.ID, job.URL, job.URLHash, job.CreatedAt)
 		defer db.Exec("DELETE FROM crawl_jobs WHERE id = ?", job.ID)
 
 		// Act

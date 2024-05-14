@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"database/sql"
 	"errors"
 	"time"
 
@@ -10,9 +11,13 @@ import (
 var ErrCrawlJobNotFound = errors.New("crawl job not found")
 
 type CrawlJob struct {
-	ID        string    `validate:"required,uuid"`
-	URL       string    `validate:"required,url"`
-	CreatedAt time.Time `validate:"required"`
+	ID            string         `validate:"required,uuid"`
+	URL           string         `validate:"required,url"`
+	URLHash       string         `validate:"required,sha256"`
+	BackoffUntil  sql.NullTime   `validate:""`
+	LastCrawledAt sql.NullTime   `validate:""`
+	FailedReason  sql.NullString `validate:""`
+	CreatedAt     time.Time      `validate:"required"`
 }
 
 func (j *CrawlJob) Validate() error {
@@ -22,6 +27,7 @@ func (j *CrawlJob) Validate() error {
 type CrawlJobRepository interface {
 	Create(*CrawlJob) error
 	Get(string) (*CrawlJob, error)
+	Update(*CrawlJob) error
 	First() (*CrawlJob, error)
 	Delete(string) error
 }
