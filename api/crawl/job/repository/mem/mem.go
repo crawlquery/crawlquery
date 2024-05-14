@@ -1,6 +1,9 @@
 package mem
 
-import "crawlquery/api/domain"
+import (
+	"crawlquery/api/domain"
+	"time"
+)
 
 type Repository struct {
 	jobs       map[string]*domain.CrawlJob
@@ -47,6 +50,25 @@ func (r *Repository) First() (*domain.CrawlJob, error) {
 
 	var earliest *domain.CrawlJob
 	for _, job := range r.jobs {
+
+		if earliest == nil || job.CreatedAt.Before(earliest.CreatedAt) {
+			earliest = job
+		}
+	}
+
+	return earliest, nil
+}
+
+func (r *Repository) FirstProcessable() (*domain.CrawlJob, error) {
+	var earliest *domain.CrawlJob
+	for _, job := range r.jobs {
+		if job.BackoffUntil.Valid && job.BackoffUntil.Time.After(job.CreatedAt) {
+			continue
+		}
+
+		if job.LastCrawledAt.Valid && !job.LastCrawledAt.Time.Add(time.Hour*24*31).Before(time.Now()) {
+			continue
+		}
 
 		if earliest == nil || job.CreatedAt.Before(earliest.CreatedAt) {
 			earliest = job

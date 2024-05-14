@@ -52,6 +52,7 @@ func main() {
 	crawlHandler := crawlHandler.NewHandler(
 		crawlService.NewService(
 			idx,
+			sugar,
 		),
 	)
 

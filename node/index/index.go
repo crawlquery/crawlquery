@@ -71,7 +71,13 @@ func (idx *Index) AddPage(doc *sharedDomain.Page) error {
 	tokensWithPositions := token.Tokenize(doc.Content)
 
 	// Update forward index
-	idx.forwardRepo.Save(doc.ID, doc)
+	err := idx.forwardRepo.Save(doc.ID, doc)
+
+	if err != nil {
+		idx.logger.Errorf("Index.AddPage: Error saving page metadata: %v", err)
+
+		return err
+	}
 
 	// Update inverted index
 	for token, positions := range tokensWithPositions {

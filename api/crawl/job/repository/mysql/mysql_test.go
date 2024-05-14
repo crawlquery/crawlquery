@@ -346,6 +346,169 @@ func TestFirst(t *testing.T) {
 	})
 }
 
+func TestFirstProcessable(t *testing.T) {
+	t.Run("can get first processable job", func(t *testing.T) {
+		// Arrange
+		db := testutil.CreateTestMysqlDB()
+		defer db.Close()
+		migration.Up(db)
+
+		repo := mysql.NewRepository(db)
+
+		job := &domain.CrawlJob{
+			ID:        util.UUID(),
+			URL:       "http://example.com",
+			URLHash:   "hash",
+			CreatedAt: time.Now().UTC(),
+		}
+		db.Exec("INSERT INTO crawl_jobs (id, url, url_hash, created_at) VALUES (?, ?, ?, ?)", job.ID, job.URL, job.URLHash, job.CreatedAt)
+
+		job2 := &domain.CrawlJob{
+			ID:        util.UUID(),
+			URL:       "http://example2.com",
+			URLHash:   "hash2",
+			CreatedAt: time.Now().UTC().Add(time.Second),
+		}
+		db.Exec("INSERT INTO crawl_jobs (id, url, url_hash, created_at) VALUES (?, ?, ?)", job2.ID, job2.URL, job2.URLHash, job2.CreatedAt)
+
+		defer db.Exec("DELETE FROM crawl_jobs WHERE id = ?", job.ID)
+		defer db.Exec("DELETE FROM crawl_jobs WHERE id = ?", job2.ID)
+
+		// Act
+		res, err := repo.FirstProcessable()
+
+		// Assert
+		if err != nil {
+			t.Errorf("Error getting first available job: %v", err)
+		}
+
+		if res.ID != job.ID {
+			t.Errorf("Expected ID to be %s, got %s", job.ID, res.ID)
+		}
+
+		if res.URL != job.URL {
+			t.Errorf("Expected URL to be %s, got %s", job.URL, res.URL)
+		}
+
+		if res.URLHash != job.URLHash {
+			t.Errorf("Expected URLHash to be %s, got %s", job.URLHash, res.URLHash)
+		}
+
+		if res.CreatedAt.Sub(job.CreatedAt) > time.Second || job.CreatedAt.Sub(res.CreatedAt) > time.Second {
+			t.Errorf("Expected CreatedAt to be within one second of %v, got %v", job.CreatedAt, res.CreatedAt)
+		}
+
+	})
+
+	t.Run("does not return job where backoff_until is in the future", func(t *testing.T) {
+		// Arrange
+		db := testutil.CreateTestMysqlDB()
+		defer db.Close()
+		migration.Up(db)
+
+		repo := mysql.NewRepository(db)
+
+		job := &domain.CrawlJob{
+			ID:           util.UUID(),
+			URL:          "http://example.com",
+			URLHash:      "hash",
+			CreatedAt:    time.Now().UTC(),
+			BackoffUntil: sql.NullTime{Time: time.Now().Add(time.Hour), Valid: true},
+		}
+		db.Exec("INSERT INTO crawl_jobs (id, url, url_hash, backoff_until, created_at) VALUES (?, ?, ?, ?, ?)", job.ID, job.URL, job.URLHash, job.BackoffUntil, job.CreatedAt)
+
+		job2 := &domain.CrawlJob{
+			ID:        util.UUID(),
+			URL:       "http://example2.com",
+			URLHash:   "hash2",
+			CreatedAt: time.Now().UTC().Add(time.Second),
+		}
+		db.Exec("INSERT INTO crawl_jobs (id, url, url_hash, created_at) VALUES (?, ?, ?, ?)", job2.ID, job2.URL, job2.URLHash, job2.CreatedAt)
+
+		defer db.Exec("DELETE FROM crawl_jobs WHERE id = ?", job.ID)
+		defer db.Exec("DELETE FROM crawl_jobs WHERE id = ?", job2.ID)
+
+		// Act
+		res, err := repo.FirstProcessable()
+
+		// Assert
+		if err != nil {
+			t.Errorf("Error getting first available job: %v", err)
+		}
+
+		if res.ID != job2.ID {
+			t.Errorf("Expected ID to be %s, got %s", job2.ID, res.ID)
+		}
+
+		if res.URL != job2.URL {
+			t.Errorf("Expected URL to be %s, got %s", job2.URL, res.URL)
+		}
+
+		if res.URLHash != job2.URLHash {
+			t.Errorf("Expected URLHash to be %s, got %s", job2.URLHash, res.URLHash)
+		}
+
+		if res.CreatedAt.Sub(job2.CreatedAt) > time.Second || job2.CreatedAt.Sub(res.CreatedAt) > time.Second {
+			t.Errorf("Expected CreatedAt to be within one second of %v, got %v", job2.CreatedAt, res.CreatedAt)
+		}
+	})
+
+	t.Run("does not return job where last_crawled_at is within the last month", func(t *testing.T) {
+		// Arrange
+		db := testutil.CreateTestMysqlDB()
+		defer db.Close()
+		migration.Up(db)
+
+		repo := mysql.NewRepository(db)
+
+		job := &domain.CrawlJob{
+			ID:            "job1",
+			URL:           "http://example.com",
+			URLHash:       "hash",
+			CreatedAt:     time.Now().UTC(),
+			LastCrawledAt: sql.NullTime{Time: time.Now().Add(-(time.Hour * 24 * 20)), Valid: true},
+		}
+		db.Exec("INSERT INTO crawl_jobs (id, url, url_hash, last_crawled_at, created_at) VALUES (?, ?, ?, ?, ?)", job.ID, job.URL, job.URLHash, job.LastCrawledAt, job.CreatedAt)
+
+		job2 := &domain.CrawlJob{
+			ID:        "job2",
+			URL:       "http://example2.com",
+			URLHash:   "hash2",
+			CreatedAt: time.Now().UTC().Add(time.Second),
+		}
+		db.Exec("INSERT INTO crawl_jobs (id, url, url_hash, created_at) VALUES (?, ?, ?, ?)", job2.ID, job2.URL, job2.URLHash, job2.CreatedAt)
+
+		defer db.Exec("DELETE FROM crawl_jobs WHERE id = ?", job.ID)
+		defer db.Exec("DELETE FROM crawl_jobs WHERE id = ?", job2.ID)
+
+		// Act
+		res, err := repo.FirstProcessable()
+
+		// Assert
+		if err != nil {
+			t.Errorf("Error getting first job without backoff: %v", err)
+		}
+
+		if res.ID != job2.ID {
+			t.Errorf("Expected ID to be %s, got %s", job2.ID, res.ID)
+		}
+
+		if res.URL != job2.URL {
+			t.Errorf("Expected URL to be %s, got %s", job2.URL, res.URL)
+		}
+
+		if res.URLHash != job2.URLHash {
+			t.Errorf("Expected URLHash to be %s, got %s", job2.URLHash, res.URLHash)
+		}
+
+		if res.CreatedAt.Sub(job2.CreatedAt) > time.Second || job2.CreatedAt.Sub(res.CreatedAt) > time.Second {
+			t.Errorf("Expected CreatedAt to be within one second of %v, got %v", job.CreatedAt, res.CreatedAt)
+		}
+
+	})
+
+}
+
 func TestDelete(t *testing.T) {
 	t.Run("can delete a job", func(t *testing.T) {
 		// Arrange

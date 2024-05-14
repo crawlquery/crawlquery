@@ -2,6 +2,7 @@ package mem
 
 import (
 	"crawlquery/api/domain"
+	"database/sql"
 	"testing"
 	"time"
 )
@@ -113,6 +114,52 @@ func TestFirst(t *testing.T) {
 
 	if err != nil {
 		t.Fatalf("Error getting first job: %v", err)
+	}
+
+	if first.ID != job1.ID {
+		t.Errorf("Expected ID to be %s, got %s", job1.ID, first.ID)
+	}
+
+	if first.URL != job1.URL {
+		t.Errorf("Expected URL to be %s, got %s", job1.URL, first.URL)
+	}
+
+	if first.CreatedAt.Sub(job1.CreatedAt) > time.Second || job1.CreatedAt.Sub(first.CreatedAt) > time.Second {
+		t.Errorf("Expected CreatedAt to be within one second of %v, got %v", job1.CreatedAt, first.CreatedAt)
+	}
+}
+
+func TestFirstProcessable(t *testing.T) {
+	repo := NewRepository()
+
+	job1 := &domain.CrawlJob{
+		ID:            "job1",
+		URL:           "http://example.com",
+		LastCrawledAt: sql.NullTime{Time: time.Now().Add(-(time.Hour * 24 * 32)), Valid: true},
+	}
+
+	job2 := &domain.CrawlJob{
+		ID:           "job2",
+		URL:          "http://example.com",
+		BackoffUntil: sql.NullTime{Time: time.Now().Add(time.Hour), Valid: true},
+	}
+
+	job3 := &domain.CrawlJob{
+		ID:            "job3",
+		URL:           "http://example.com",
+		LastCrawledAt: sql.NullTime{Time: time.Now().Add(-1 * time.Hour), Valid: true},
+	}
+
+	job2.BackoffUntil = sql.NullTime{Time: time.Now().Add(1 * time.Hour), Valid: true}
+
+	repo.jobs[job3.ID] = job3
+	repo.jobs[job1.ID] = job1
+	repo.jobs[job2.ID] = job2
+
+	first, err := repo.FirstProcessable()
+
+	if err != nil {
+		t.Fatalf("Error getting first job without backoff: %v", err)
 	}
 
 	if first.ID != job1.ID {

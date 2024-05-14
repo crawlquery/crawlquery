@@ -35,6 +35,7 @@ func (cs *Service) Create(url string) (*domain.CrawlJob, error) {
 	job := &domain.CrawlJob{
 		ID:        util.UUID(),
 		URL:       url,
+		URLHash:   util.SHA1(url),
 		CreatedAt: time.Now(),
 	}
 
@@ -53,7 +54,7 @@ func (cs *Service) Create(url string) (*domain.CrawlJob, error) {
 func (cs *Service) ProcessCrawlJobs() {
 	for {
 		// Get the first job
-		job, err := cs.repo.FirstAvailable()
+		job, err := cs.repo.FirstProcessable()
 		if err != nil {
 			time.Sleep(1 * time.Second)
 			continue
@@ -69,26 +70,31 @@ func (cs *Service) ProcessCrawlJobs() {
 		err = cs.processJob(job)
 
 		if err != nil {
-			cs.logger.Errorw("Crawl.Service.ProcessCrawlJobs: error processing job", "error", err)
+			cs.logger.Errorw("Crawl.Service.ProcessCrawlJobs: error processing job", "error", err, "job", job)
 			job.BackoffUntil = sql.NullTime{
-				Time: time.Now().Add(1 * time.Hour),
+				Time:  time.Now().Add(1 * time.Hour),
+				Valid: true,
 			}
 			job.FailedReason = sql.NullString{
 				String: err.Error(),
+				Valid:  true,
 			}
 
 			if err := cs.repo.Update(job); err != nil {
-				cs.logger.Errorw("Crawl.Service.ProcessCrawlJobs: error updating job", "error", err)
+				cs.logger.Errorw("Crawl.Service.ProcessCrawlJobs: error updating job", "error", err, "job", job)
 			}
-
+			time.Sleep(1 * time.Second)
 			continue
 		}
 
-		// Delete the job
-		if err := cs.repo.Delete(job.ID); err != nil {
-			cs.logger.Errorw("Crawl.Service.ProcessCrawlJobs: error deleting job", "error", err)
-			time.Sleep(1 * time.Second)
-			continue
+		job.LastCrawledAt = sql.NullTime{
+			Time:  time.Now(),
+			Valid: true,
+		}
+
+		if err := cs.repo.Update(job); err != nil {
+			cs.logger.Errorw("Crawl.Service.ProcessCrawlJobs: error updating job", "error", err)
+			time.Sleep(5 * time.Second)
 		}
 	}
 }
@@ -127,7 +133,6 @@ func (cs *Service) processJob(job *domain.CrawlJob) error {
 		}
 
 		cs.logger.Infow("Crawl.Service.ProcessCrawlJobs: job sent to node", "node", node)
-		cs.repo.Delete(job.ID)
 
 		return nil
 	}

@@ -67,6 +67,28 @@ func (r *Repository) First() (*domain.CrawlJob, error) {
 	return &job, err
 }
 
+func (r *Repository) FirstProcessable() (*domain.CrawlJob, error) {
+	row := r.db.QueryRow(`
+	SELECT 
+		id, url, url_hash, backoff_until, failed_reason, last_crawled_at, created_at 
+	FROM 
+		crawl_jobs 
+	WHERE 
+		(backoff_until IS NULL OR backoff_until < ?) AND
+		(last_crawled_at IS NULL OR last_crawled_at < ?) 
+	ORDER BY 
+		created_at ASC 
+	LIMIT 1`, time.Now(), time.Now().Add(-time.Hour*24*31))
+
+	var job domain.CrawlJob
+	err := row.Scan(&job.ID, &job.URL, &job.URLHash, &job.BackoffUntil, &job.FailedReason, &job.LastCrawledAt, &job.CreatedAt)
+	if err == sql.ErrNoRows {
+		return nil, domain.ErrCrawlJobNotFound
+	}
+
+	return &job, err
+}
+
 func (r *Repository) Delete(id string) error {
 	_, err := r.db.Exec("DELETE FROM crawl_jobs WHERE id = ?", id)
 	if err != nil {

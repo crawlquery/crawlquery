@@ -13,7 +13,7 @@ var ErrCrawlJobNotFound = errors.New("crawl job not found")
 type CrawlJob struct {
 	ID            string         `validate:"required,uuid"`
 	URL           string         `validate:"required,url"`
-	URLHash       string         `validate:"required,sha256"`
+	URLHash       string         `validate:"required,min=20"`
 	BackoffUntil  sql.NullTime   `validate:""`
 	LastCrawledAt sql.NullTime   `validate:""`
 	FailedReason  sql.NullString `validate:""`
@@ -29,6 +29,7 @@ type CrawlJobRepository interface {
 	Get(string) (*CrawlJob, error)
 	Update(*CrawlJob) error
 	First() (*CrawlJob, error)
+	FirstProcessable() (*CrawlJob, error)
 	Delete(string) error
 }
 
