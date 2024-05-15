@@ -13,8 +13,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	forwardRepository "crawlquery/node/index/forward/repository/mem"
-	invertedRepository "crawlquery/node/index/inverted/repository/mem"
+	keywordRepo "crawlquery/node/index/keyword/repository/mem"
+	pageRepo "crawlquery/node/index/page/repository/mem"
 
 	"github.com/gin-gonic/gin"
 )
@@ -22,8 +22,8 @@ import (
 func TestIndexHandler(t *testing.T) {
 
 	idx := index.NewIndex(
-		forwardRepository.NewRepository(),
-		invertedRepository.NewRepository(),
+		pageRepo.NewRepository(),
+		keywordRepo.NewRepository(),
 		testutil.NewTestLogger(),
 	)
 	for _, page := range factory.TenPages() {

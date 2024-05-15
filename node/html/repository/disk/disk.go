@@ -1,6 +1,7 @@
 package disk
 
 import (
+	"crawlquery/node/domain"
 	"fmt"
 	"io"
 	"os"
@@ -45,7 +46,7 @@ func (r *Repository) Read(pageID string) ([]byte, error) {
 	file, err := os.Open(fmt.Sprintf("%s/%s", r.path, pageID))
 
 	if err != nil {
-		return nil, err
+		return nil, domain.ErrHTMLNotFound
 	}
 
 	defer file.Close()

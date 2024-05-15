@@ -30,7 +30,7 @@ func NewRepository(dbPath string) (*Repository, error) {
 	return &Repository{db: db}, nil
 }
 
-func (repo *Repository) Save(keyword string, posting *domain.Posting) error {
+func (repo *Repository) SavePosting(keyword string, posting *domain.Posting) error {
 	err := repo.db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte("InvertedIndex"))
 		v := b.Get([]byte(keyword))
@@ -57,7 +57,7 @@ func (repo *Repository) Save(keyword string, posting *domain.Posting) error {
 	return err
 }
 
-func (repo *Repository) Get(keyword string) ([]*domain.Posting, error) {
+func (repo *Repository) GetPostings(keyword string) ([]*domain.Posting, error) {
 	var postings []*domain.Posting
 	err := repo.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte("InvertedIndex"))

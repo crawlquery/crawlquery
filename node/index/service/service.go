@@ -1,0 +1,157 @@
+package service
+
+import (
+	"bytes"
+	"crawlquery/node/domain"
+	"crawlquery/node/token"
+	"sort"
+
+	sharedDomain "crawlquery/pkg/domain"
+
+	"github.com/PuerkitoBio/goquery"
+	"go.uber.org/zap"
+)
+
+type Service struct {
+	pageService    domain.PageService
+	htmlService    domain.HTMLService
+	keywordService domain.KeywordService
+	logger         *zap.SugaredLogger
+}
+
+func NewService(
+	pageService domain.PageService,
+	htmlService domain.HTMLService,
+	keywordService domain.KeywordService,
+	logger *zap.SugaredLogger,
+) *Service {
+	return &Service{
+		pageService:    pageService,
+		htmlService:    htmlService,
+		keywordService: keywordService,
+		logger:         logger,
+	}
+}
+
+func (s *Service) MakePostings(page *sharedDomain.Page, keywords []string) map[string]*domain.Posting {
+	postings := make(map[string]*domain.Posting, 0)
+
+	for i, keyword := range keywords {
+		if _, ok := postings[keyword]; !ok {
+			postings[keyword] = &domain.Posting{
+				Frequency: 1,
+				PageID:    page.ID,
+				Positions: []int{i},
+			}
+		} else {
+			postings[keyword].Frequency++
+			postings[keyword].Positions = append(postings[keyword].Positions, i)
+		}
+	}
+
+	return postings
+}
+
+func (s *Service) Index(pageID string) error {
+	page, err := s.pageService.Get(pageID)
+	if err != nil {
+		s.logger.Errorw("Error getting page", "error", err, "pageID", page, "pageID", pageID)
+		return err
+	}
+
+	html, err := s.htmlService.Get(page.ID)
+
+	if err != nil {
+		s.logger.Errorw("Error getting html", "error", err, "pageID", pageID)
+		return err
+	}
+
+	doc, err := goquery.NewDocumentFromReader(bytes.NewReader(html))
+
+	if err != nil {
+		s.logger.Errorw("Error parsing html", "error", err, "pageID", pageID)
+		return err
+	}
+
+	keywords := token.Keywords(doc)
+
+	postings := s.MakePostings(page, keywords)
+
+	err = s.keywordService.SavePostings(postings)
+
+	if err != nil {
+		s.logger.Errorw("Error getting keywords", "error", err, "pageID", pageID)
+		return err
+	}
+
+	return nil
+}
+
+func (s *Service) Search(query string) ([]sharedDomain.Result, error) {
+	// Tokenize the query the same way as the index was tokenized
+	queryTokens := token.TokenizeTerm(query)
+	results := make(map[string]float64) // map[PageID]relevanceScore
+
+	// use full token search first
+	for _, term := range queryTokens {
+		postings, err := s.keywordService.GetPostings(term)
+
+		if err != nil {
+			s.logger.Errorf("Error getting postings: %v", err)
+			continue
+		}
+
+		for _, posting := range postings {
+			results[posting.PageID] += float64(posting.Frequency)
+		}
+
+	}
+
+	if len(results) == 0 {
+		for _, term := range queryTokens {
+			fuzzyTokens, err := s.keywordService.FuzzySearch(term)
+			if err != nil {
+				s.logger.Errorf("Error getting fuzzy search results: %v", err)
+				continue
+			}
+
+			for _, token := range fuzzyTokens {
+				postings, err := s.keywordService.GetPostings(token)
+				if err != nil {
+					s.logger.Errorf("Error getting postings: %v", err)
+					continue
+				}
+				for _, posting := range postings {
+					results[posting.PageID] += float64(posting.Frequency)
+				}
+			}
+		}
+	}
+
+	// Convert the results map to a slice and sort by relevance score
+	var sortedResults []sharedDomain.Result
+	for docID, score := range results {
+		sortedResults = append(sortedResults, sharedDomain.Result{PageID: docID, Score: score})
+	}
+
+	sort.Slice(sortedResults, func(i, j int) bool {
+		return sortedResults[i].Score > sortedResults[j].Score
+	})
+
+	// Add the page metadata to the results
+	for i, result := range sortedResults {
+		page, err := s.pageService.Get(result.PageID)
+
+		if err != nil {
+			s.logger.Errorf("Index.Search: Error getting page metadata: %v", err)
+			continue
+		}
+		sortedResults[i].Page = page
+	}
+
+	if len(sortedResults) >= 10 {
+		sortedResults = sortedResults[:10]
+	}
+
+	return sortedResults, nil
+}

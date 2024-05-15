@@ -35,16 +35,37 @@ type CrawlHandler interface {
 }
 
 type CrawlService interface {
-	Crawl(url string) error
+	Crawl(pageID, url string) error
 }
 
-type ForwardIndexRepository interface {
+type PageRepository interface {
 	Get(pageID string) (*domain.Page, error)
 	Save(pageID string, page *domain.Page) error
 }
 
-type InvertedIndexRepository interface {
-	Get(keyword string) ([]*Posting, error)
-	Save(token string, posting *Posting) error
-	FuzzySearch(token string) map[string]float64
+type PageService interface {
+	Get(pageID string) (*domain.Page, error)
+	Save(pageID, url string) (*domain.Page, error)
+}
+
+type HTMLService interface {
+	Get(pageID string) ([]byte, error)
+	Save(pageID string, html []byte) error
+}
+
+type HTMLRepository interface {
+	Get(pageID string) ([]byte, error)
+	Save(pageID string, html []byte) error
+}
+
+type KeywordRepository interface {
+	GetPostings(keyword string) ([]*Posting, error)
+	SavePosting(token string, posting *Posting) error
+	FuzzySearch(token string) []string
+}
+
+type KeywordService interface {
+	GetPostings(keyword string) ([]*Posting, error)
+	SavePostings(postings map[string]*Posting) error
+	FuzzySearch(token string) ([]string, error)
 }

@@ -3,6 +3,7 @@ package main
 import (
 	crawlHandler "crawlquery/node/crawl/handler"
 	crawlService "crawlquery/node/crawl/service"
+	htmlRepo "crawlquery/node/html/repository/disk"
 	"crawlquery/node/index"
 	indexHandler "crawlquery/node/index/handler"
 	"crawlquery/node/router"
@@ -48,10 +49,16 @@ func main() {
 		sugar,
 	)
 
+	htmlRepo, err := htmlRepo.NewRepository("/tmp/crawlquery-html")
+
+	if err != nil {
+		panic(err)
+	}
+
 	indexHandler := indexHandler.NewHandler(idx)
 	crawlHandler := crawlHandler.NewHandler(
 		crawlService.NewService(
-			idx,
+			htmlRepo,
 			sugar,
 		),
 	)

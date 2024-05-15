@@ -2,7 +2,7 @@ package bolt_test
 
 import (
 	"crawlquery/node/domain"
-	"crawlquery/node/index/inverted/repository/bolt"
+	"crawlquery/node/keyword/repository/bolt"
 	"os"
 	"testing"
 )
@@ -15,27 +15,27 @@ func TestGet(t *testing.T) {
 		t.Fatalf("error creating repository: %v", err)
 	}
 
-	err = r.Save("keyword", &domain.Posting{PageID: "page1", Frequency: 1})
+	err = r.SavePosting("keyword", &domain.Posting{PageID: "page1", Frequency: 1})
 
 	if err != nil {
 		t.Fatalf("error saving page: %v", err)
 	}
 
-	page, err := r.Get("keyword")
+	postings, err := r.GetPostings("keyword")
 	if err != nil {
 		t.Fatalf("error getting page: %v", err)
 	}
 
-	if page == nil {
-		t.Fatalf("expected page to be found")
+	if postings == nil {
+		t.Fatalf("expected postings to be found")
 	}
 
-	if page[0].PageID != "page1" {
-		t.Fatalf("expected page id to be page1, got %s", page[0].PageID)
+	if postings[0].PageID != "page1" {
+		t.Fatalf("expected page id to be page1, got %s", postings[0].PageID)
 	}
 
-	if page[0].Frequency != 1 {
-		t.Fatalf("expected frequency to be 1, got %d", page[0].Frequency)
+	if postings[0].Frequency != 1 {
+		t.Fatalf("expected frequency to be 1, got %d", postings[0].Frequency)
 	}
 }
 
@@ -47,7 +47,7 @@ func TestSave(t *testing.T) {
 		t.Fatalf("error creating repository: %v", err)
 	}
 
-	err = r.Save("keyword", &domain.Posting{PageID: "page1", Frequency: 1})
+	err = r.SavePosting("keyword", &domain.Posting{PageID: "page1", Frequency: 1})
 	if err != nil {
 		t.Fatalf("error saving page: %v", err)
 	}
@@ -61,7 +61,7 @@ func TestFuzzySearch(t *testing.T) {
 		t.Fatalf("error creating repository: %v", err)
 	}
 
-	err = r.Save("keyword", &domain.Posting{PageID: "page1", Frequency: 1})
+	err = r.SavePosting("keyword", &domain.Posting{PageID: "page1", Frequency: 1})
 
 	if err != nil {
 		t.Fatalf("error saving page: %v", err)

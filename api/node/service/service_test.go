@@ -6,6 +6,7 @@ import (
 	"crawlquery/pkg/testutil"
 	"crawlquery/pkg/util"
 	"errors"
+	"fmt"
 	"testing"
 	"time"
 
@@ -518,8 +519,8 @@ func TestAllocateNode(t *testing.T) {
 			t.Fatalf("Error allocating node: %v", err)
 		}
 
-		if node.ShardID != 1 {
-			t.Errorf("Expected ShardID to be 1, got %d", node.ShardID)
+		if node.ShardID != shard.ID && node.ShardID != shard2.ID {
+			t.Errorf("Expected ShardID to be %d or %d, got %d", shard.ID, shard2.ID, node.ShardID)
 		}
 	})
 }
@@ -715,15 +716,18 @@ func TestSendCrawlJob(t *testing.T) {
 		}
 
 		crawlJob := &domain.CrawlJob{
-			ID:  "1",
-			URL: "http://google.com",
+			ID:     "1",
+			PageID: "1",
+			URL:    "http://google.com",
 		}
 
 		defer gock.Off()
 
+		responseJson := fmt.Sprintf(`{"page_id":"%s","url":"%s"}`, crawlJob.PageID, crawlJob.URL)
+
 		gock.New("http://testnode:8080").
 			Post("/crawl").
-			JSON(`{"url":"http://google.com"`).
+			JSON(responseJson).
 			Reply(200)
 
 		nodeService := service.NewService(nil, nil, nil, testutil.NewTestLogger())

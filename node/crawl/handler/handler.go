@@ -46,7 +46,7 @@ func (ch *CrawlHandler) Crawl(c *gin.Context) {
 		return
 	}
 
-	err = ch.crawlService.Crawl(req.URL)
+	err = ch.crawlService.Crawl(req.PageID, req.URL)
 
 	if err != nil {
 		c.JSON(500, gin.H{

@@ -13,7 +13,7 @@ func TestCrawlJobValidate(t *testing.T) {
 		cj := &domain.CrawlJob{
 			ID:        util.UUID(),
 			URL:       "http://example.com",
-			PageID:    util.SHA1("http://example.com"),
+			PageID:    util.PageID("http://example.com"),
 			CreatedAt: time.Now(),
 		}
 

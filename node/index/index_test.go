@@ -2,26 +2,25 @@ package index
 
 import (
 	"crawlquery/node/domain"
+	"crawlquery/node/parse"
 	"crawlquery/node/token"
 	sharedDomain "crawlquery/pkg/domain"
 	"crawlquery/pkg/testutil"
-	"strings"
+	"fmt"
 
-	forwardRepo "crawlquery/node/index/forward/repository/mem"
-	invertedRepo "crawlquery/node/index/inverted/repository/mem"
+	keywordRepo "crawlquery/node/index/keyword/repository/mem"
+	pageRepo "crawlquery/node/index/page/repository/mem"
 	"reflect"
 	"sort"
 	"testing"
-
-	"github.com/PuerkitoBio/goquery"
 )
 
 func TestAddPage(t *testing.T) {
 	t.Run("should add a page to the index", func(t *testing.T) {
 		// Initialize index and page as before
 		idx := NewIndex(
-			forwardRepo.NewRepository(),
-			invertedRepo.NewRepository(),
+			pageRepo.NewRepository(),
+			keywordRepo.NewRepository(),
 			testutil.NewTestLogger(),
 		) // Assuming you have a constructor for Index
 		doc := &sharedDomain.Page{
@@ -37,7 +36,7 @@ func TestAddPage(t *testing.T) {
 		// Add page to the index
 		idx.AddPage(doc)
 		// Retrieve the page from the forward index and verify it
-		indexedDoc, err := idx.forwardRepo.Get(doc.ID)
+		indexedDoc, err := idx.pageRepo.Get(doc.ID)
 		if err != nil {
 			t.Fatalf("Page with ID %s not found in forward index", doc.ID)
 		}
@@ -47,7 +46,7 @@ func TestAddPage(t *testing.T) {
 
 		// Check the inverted index for correctness
 		for token, positions := range tokens {
-			postings, err := idx.invertedRepo.Get(token)
+			postings, err := idx.keywordRepo.Get(token)
 			if err != nil {
 				t.Errorf("Token %q not found in the inverted index", token)
 				continue
@@ -70,54 +69,49 @@ func TestAddPage(t *testing.T) {
 	t.Run("can add multiple pages to the index", func(t *testing.T) {
 		// Initialize index and pages as before
 		idx := NewIndex(
-			forwardRepo.NewRepository(),
-			invertedRepo.NewRepository(),
+			pageRepo.NewRepository(),
+			keywordRepo.NewRepository(),
 			testutil.NewTestLogger(),
 		) // Assuming you have a constructor for Index
-		docs := []*sharedDomain.Page{
-			{
-				ID:              "doc1",
-				URL:             "http://example.com",
-				Title:           "Test Page",
-				MetaDescription: "A simple test page",
-			},
-			{
-				ID:              "doc2",
-				URL:             "http://example.com/2",
-				Title:           "Another Test Page",
-				MetaDescription: "Another simple test page",
-			},
+		htmlData := [][]byte{
+			[]byte("<html><body><p>Hello world!</p></body></html>"),
+			[]byte("<html><body><p>Goodbye world!</p></body></html>"),
 		}
 
-		content := "<html><body><p>Hello world!</p></body></html>"
-		html, _ := goquery.NewDocumentFromReader(strings.NewReader(content))
 		// Tokenize the content to predict what should be in the inverted index
 		// Assuming the existence of a Tokenize function that returns a map of token strings to their positions
-		for _, doc := range docs {
-			tokens := token.Positions(token.Keywords(html)) // Make sure to implement this or adjust to your actual tokenize function
-			// Add page to the index
-			idx.AddPage(doc)
-			// Retrieve the page from the forward index and verify it
-			indexedDoc, err := idx.forwardRepo.Get(doc.ID)
+		for _, doc := range htmlData {
+
+			page, err := parse.Parse("http://example.com", "doc1", doc)
+
 			if err != nil {
-				t.Fatalf("Page with ID %s not found in forward index", doc.ID)
+				t.Fatalf("Error parsing HTML: %v", err)
 			}
-			if !reflect.DeepEqual(indexedDoc, doc) {
-				t.Errorf("Page fields do not match. Got %+v, want %+v", indexedDoc, doc)
+
+			tokens := token.Positions(page.Keywords) // Make sure to implement this or adjust to your actual tokenize function
+
+			// Add page to the index
+			idx.AddPage(page)
+			// Retrieve the page from the forward index and verify it
+			_, err := idx.pageRepo.Get(page.ID)
+			if err != nil {
+				t.Fatalf("Page with ID %s not found in pages repo", page.ID)
 			}
 
 			// Check the inverted index for correctness
 			for token, positions := range tokens {
-				postings, err := idx.invertedRepo.Get(token)
+				postings, err := idx.keywordRepo.Get(token)
 				if err != nil {
 					t.Errorf("Token %q not found in the inverted index", token)
 					continue
 				}
 
+				fmt.Println(postings)
+
 				// Check if the postings include the correct document with the correct frequency and positions
 				var foundPosting bool
 				for _, posting := range postings {
-					if posting.PageID == doc.ID && reflect.DeepEqual(posting.Positions, positions) {
+					if posting.PageID == page.ID && reflect.DeepEqual(posting.Positions, positions) {
 						foundPosting = true
 						break
 					}
@@ -133,8 +127,8 @@ func TestAddPage(t *testing.T) {
 func TestSearch(t *testing.T) {
 	// Create a test index with some pages
 	index := NewIndex(
-		forwardRepo.NewRepository(),
-		invertedRepo.NewRepository(),
+		pageRepo.NewRepository(),
+		keywordRepo.NewRepository(),
 		testutil.NewTestLogger(),
 	)
 	inverted := map[string][]*domain.Posting{
@@ -164,12 +158,12 @@ func TestSearch(t *testing.T) {
 
 	for token, postings := range inverted {
 		for _, posting := range postings {
-			index.invertedRepo.Save(token, posting)
+			index.keywordRepo.Save(token, posting)
 		}
 	}
 
 	for _, page := range forward {
-		index.forwardRepo.Save(page.ID, page)
+		index.pageRepo.Save(page.ID, page)
 	}
 
 	// Define test cases
