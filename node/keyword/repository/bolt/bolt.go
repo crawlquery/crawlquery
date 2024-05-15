@@ -4,6 +4,7 @@ import (
 	"crawlquery/node/domain"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/boltdb/bolt"
@@ -73,42 +74,17 @@ func (repo *Repository) GetPostings(keyword string) ([]*domain.Posting, error) {
 	return postings, nil
 }
 
-func (repo *Repository) FuzzySearch(token string) map[string]float64 {
-	results := make(map[string]float64)
+func (repo *Repository) FuzzySearch(token string) []string {
+	results := []string{}
 
 	err := repo.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte("InvertedIndex"))
 		c := b.Cursor()
 
-		for k, v := c.First(); k != nil; k, v = c.Next() {
+		for k, _ := c.First(); k != nil; k, _ = c.Next() {
 			key := string(k)
-			postings := make([]*domain.Posting, 0)
-			err := json.Unmarshal(v, &postings)
-			if err != nil {
-				return err
-			}
-
-			if len(postings) == 0 {
-				continue
-			}
-
-			if len(token) > len(key) {
-				continue
-			}
-
-			if key == token {
-				for _, posting := range postings {
-					results[posting.PageID] += float64(posting.Frequency)
-				}
-			} else {
-				for i := 0; i < len(key)-len(token)+1; i++ {
-					if key[i:i+len(token)] == token {
-						for _, posting := range postings {
-							results[posting.PageID] += float64(posting.Frequency)
-						}
-						break
-					}
-				}
+			if strings.Contains(key, token) {
+				results = append(results, key)
 			}
 		}
 		return nil

@@ -3,6 +3,7 @@ package service
 import (
 	"bytes"
 	"crawlquery/node/domain"
+	"crawlquery/node/parse"
 	"crawlquery/node/token"
 	"sort"
 
@@ -73,14 +74,25 @@ func (s *Service) Index(pageID string) error {
 		return err
 	}
 
-	keywords := token.Keywords(doc)
+	page.Title = parse.Title(doc)
+	page.MetaDescription = parse.MetaDescription(doc)
 
+	// FOR NOW KEYWORDS MUST COME LAST AS IT REMOVES HTML TAGS
+	// TO GET THE KEYWORDS
+	keywords := token.Keywords(doc)
 	postings := s.MakePostings(page, keywords)
 
 	err = s.keywordService.SavePostings(postings)
 
 	if err != nil {
 		s.logger.Errorw("Error getting keywords", "error", err, "pageID", pageID)
+		return err
+	}
+
+	err = s.pageService.Update(page)
+
+	if err != nil {
+		s.logger.Errorw("Error saving page", "error", err, "pageID", pageID)
 		return err
 	}
 

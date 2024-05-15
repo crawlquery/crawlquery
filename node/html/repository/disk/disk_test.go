@@ -18,7 +18,7 @@ func TestDisk(t *testing.T) {
 		t.Fatalf("Error saving data: %v", err)
 	}
 
-	data, err := repo.Read("test1")
+	data, err := repo.Get("test1")
 
 	if err != nil {
 		t.Fatalf("Error reading data: %v", err)

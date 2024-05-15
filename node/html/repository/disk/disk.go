@@ -42,7 +42,7 @@ func (r *Repository) Save(pageID string, data []byte) error {
 	return nil
 }
 
-func (r *Repository) Read(pageID string) ([]byte, error) {
+func (r *Repository) Get(pageID string) ([]byte, error) {
 	file, err := os.Open(fmt.Sprintf("%s/%s", r.path, pageID))
 
 	if err != nil {

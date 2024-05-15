@@ -2,9 +2,13 @@ package service_test
 
 import (
 	"crawlquery/node/crawl/service"
-	"crawlquery/node/html/repository/disk"
+	htmlRepo "crawlquery/node/html/repository/mem"
+	htmlService "crawlquery/node/html/service"
+
+	pageRepo "crawlquery/node/page/repository/mem"
+	pageService "crawlquery/node/page/service"
+
 	"crawlquery/pkg/testutil"
-	"os"
 	"testing"
 
 	"github.com/h2non/gock"
@@ -13,14 +17,12 @@ import (
 func TestCrawl(t *testing.T) {
 	t.Run("can crawl a page", func(t *testing.T) {
 
-		path := "/tmp/crawlquery-node-crawl-test"
-		defer os.RemoveAll(path)
-		htmlRepo, err := disk.NewRepository(path)
-		if err != nil {
-			t.Fatalf("Error creating repository: %v", err)
-		}
+		htmlRepo := htmlRepo.NewRepository()
+		htmlService := htmlService.NewService(htmlRepo)
+		pageRepo := pageRepo.NewRepository()
+		pageService := pageService.NewService(pageRepo)
 
-		service := service.NewService(htmlRepo, testutil.NewTestLogger())
+		service := service.NewService(htmlService, pageService, testutil.NewTestLogger())
 
 		defer gock.Off()
 
@@ -31,7 +33,7 @@ func TestCrawl(t *testing.T) {
 			Reply(200).
 			BodyString(expectedData)
 
-		err = service.Crawl("test1", "http://example.com")
+		err := service.Crawl("test1", "http://example.com")
 
 		if err != nil {
 			t.Errorf("Error crawling page: %v", err)
@@ -41,7 +43,7 @@ func TestCrawl(t *testing.T) {
 			t.Fatalf("Error creating repository: %v", err)
 		}
 
-		data, err := htmlRepo.Read("test1")
+		data, err := htmlRepo.Get("test1")
 
 		if err != nil {
 			t.Fatalf("Error reading data: %v", err)
@@ -50,39 +52,44 @@ func TestCrawl(t *testing.T) {
 		if string(data) != expectedData {
 			t.Fatalf("Expected data to be '%s', got '%s'", expectedData, data)
 		}
-	})
 
-	t.Run("handles error saving page", func(t *testing.T) {
-		path := "/tmp/crawlquery-node-crawl-test"
-		defer os.RemoveAll(path)
-		htmlRepo, err := disk.NewRepository(path)
+		page, err := pageRepo.Get("test1")
+
 		if err != nil {
-			t.Fatalf("Error creating repository: %v", err)
+			t.Fatalf("Error getting page: %v", err)
 		}
 
-		service := service.NewService(htmlRepo, testutil.NewTestLogger())
+		if page == nil {
+			t.Fatalf("Expected page to be found")
+		}
+
+		if page.ID != "test1" {
+			t.Fatalf("Expected page ID to be 'test1', got '%s'", page.ID)
+		}
+
+		if page.URL != "http://example.com" {
+			t.Fatalf("Expected page URL to be 'http://example.com', got '%s'", page.URL)
+		}
+	})
+
+	t.Run("handles 404", func(t *testing.T) {
+		htmlRepo := htmlRepo.NewRepository()
+		htmlService := htmlService.NewService(htmlRepo)
+		pageRepo := pageRepo.NewRepository()
+		pageService := pageService.NewService(pageRepo)
+
+		service := service.NewService(htmlService, pageService, testutil.NewTestLogger())
 
 		defer gock.Off()
 
 		gock.New("http://example.com").
 			Get("/").
-			Reply(200).
-			BodyString("")
+			Reply(404)
 
-		err = service.Crawl("test1", "http://example2.com")
-
-		if err == nil {
-			t.Fatalf("Expected error crawling page")
-		}
-
-		data, err := htmlRepo.Read("test1")
+		err := service.Crawl("test1", "http://example.com")
 
 		if err == nil {
-			t.Fatalf("Expected error reading data")
-		}
-
-		if data != nil {
-			t.Fatalf("Expected data to be nil")
+			t.Fatalf("Expected error crawling page, got nil")
 		}
 	})
 }

@@ -45,7 +45,8 @@ type PageRepository interface {
 
 type PageService interface {
 	Get(pageID string) (*domain.Page, error)
-	Save(pageID, url string) (*domain.Page, error)
+	Create(pageID, url string) (*domain.Page, error)
+	Update(page *domain.Page) error
 }
 
 type HTMLService interface {
@@ -68,4 +69,9 @@ type KeywordService interface {
 	GetPostings(keyword string) ([]*Posting, error)
 	SavePostings(postings map[string]*Posting) error
 	FuzzySearch(token string) ([]string, error)
+}
+
+type IndexService interface {
+	Search(query string) ([]domain.Result, error)
+	Index(pageID string) error
 }

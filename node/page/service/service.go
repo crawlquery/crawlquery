@@ -15,7 +15,7 @@ func NewService(pr domain.PageRepository) *Service {
 	}
 }
 
-func (s *Service) Save(pageID string, url string) (*sharedDomain.Page, error) {
+func (s *Service) Create(pageID string, url string) (*sharedDomain.Page, error) {
 
 	page := &sharedDomain.Page{
 		ID:  pageID,
@@ -25,6 +25,10 @@ func (s *Service) Save(pageID string, url string) (*sharedDomain.Page, error) {
 	s.pageRepo.Save(pageID, page)
 
 	return page, nil
+}
+
+func (s *Service) Update(page *sharedDomain.Page) error {
+	return s.pageRepo.Save(page.ID, page)
 }
 
 func (s *Service) Get(pageID string) (*sharedDomain.Page, error) {

@@ -123,6 +123,7 @@ func TestSearch(t *testing.T) {
 		<html>
 			<head>
 				<title>Test Page</title>
+				<meta name="description" content="This is a test page">
 			</head>
 
 			<body>
@@ -161,5 +162,17 @@ func TestSearch(t *testing.T) {
 
 	if results[0].Score != 4 {
 		t.Fatalf("Expected score to be 4, got %f", results[0].Score)
+	}
+
+	if results[0].Page.URL != "http://example.com" {
+		t.Fatalf("Expected URL to be http://example.com, got %s", results[0].Page.URL)
+	}
+
+	if results[0].Page.Title != "Test Page" {
+		t.Fatalf("Expected title to be Test Page, got %s", results[0].Page.Title)
+	}
+
+	if results[0].Page.MetaDescription != "This is a test page" {
+		t.Fatalf("Expected meta description to be This is a test page, got %s", results[0].Page.MetaDescription)
 	}
 }

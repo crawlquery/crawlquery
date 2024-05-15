@@ -73,7 +73,7 @@ func TestFuzzySearch(t *testing.T) {
 		t.Fatalf("expected 1 result, got %d", len(results))
 	}
 
-	if results["page1"] != 1 {
-		t.Fatalf("expected score to be 1, got %f", results["page1"])
+	if results[0] != "keyword" {
+		t.Fatalf("expected result to be 'keyword', got '%s'", results[0])
 	}
 }
