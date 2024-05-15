@@ -60,11 +60,11 @@ func main() {
 	pageService := pageService.NewService(pageRepo)
 	keywordService := keywordService.NewService(keywordRepo)
 	indexService := indexService.NewService(pageService, htmlService, keywordService, sugar)
-	crawlService := crawlService.NewService(htmlService, pageService, sugar)
+	crawlService := crawlService.NewService(htmlService, pageService, indexService, sugar)
 
 	// Create handlers
 	indexHandler := indexHandler.NewHandler(indexService, sugar)
-	crawlHandler := crawlHandler.NewHandler(crawlService)
+	crawlHandler := crawlHandler.NewHandler(crawlService, sugar)
 
 	r := router.NewRouter(indexHandler, crawlHandler)
 

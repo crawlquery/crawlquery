@@ -163,6 +163,10 @@ func (ss *Service) GetShardWithLeastNodes() (*domain.Shard, error) {
 		return shards[0], nil
 	}
 
+	if minShard == nil {
+		return nil, domain.ErrNoShards
+	}
+
 	return minShard, nil
 }
 

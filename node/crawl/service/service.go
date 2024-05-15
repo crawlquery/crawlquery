@@ -8,20 +8,23 @@ import (
 )
 
 type CrawlService struct {
-	htmlService domain.HTMLService
-	pageService domain.PageService
-	logger      *zap.SugaredLogger
+	htmlService  domain.HTMLService
+	pageService  domain.PageService
+	indexService domain.IndexService
+	logger       *zap.SugaredLogger
 }
 
 func NewService(
 	htmlService domain.HTMLService,
 	pageService domain.PageService,
+	indexService domain.IndexService,
 	logger *zap.SugaredLogger,
 ) *CrawlService {
 	return &CrawlService{
-		htmlService: htmlService,
-		pageService: pageService,
-		logger:      logger,
+		htmlService:  htmlService,
+		pageService:  pageService,
+		indexService: indexService,
+		logger:       logger,
 	}
 }
 
@@ -33,26 +36,39 @@ func (cs *CrawlService) Crawl(pageID, url string) error {
 	var failedErr error
 
 	c.OnResponse(func(r *colly.Response) {
+
+		if r.StatusCode != 200 {
+			cs.logger.Errorw("Error fetching page", "status", r.StatusCode, "pageID", pageID)
+
+			failedErr = domain.ErrCrawlFailedToFetchHtml
+			return
+		}
+
 		err := cs.htmlService.Save(pageID, r.Body)
 		if err != nil {
 			cs.logger.Errorw("Error saving page", "error", err, "pageID", pageID)
 			failedErr = domain.ErrCrawlFailedToStoreHtml
 			return
 		}
-
-		if found, err := cs.pageService.Get(pageID); err == nil && found.ID == pageID {
-			cs.logger.Info("Page already exists", "pageID", pageID)
-			return
-		}
-
-		page, err := cs.pageService.Create(pageID, url)
-
-		if err != nil {
-			cs.logger.Errorw("Error creating page", "error", err, "pageID", pageID)
-			failedErr = err
+		page, err := cs.pageService.Get(pageID)
+		if err != nil && page.ID != pageID {
+			cs.logger.Info("Existing page found", "pageID", pageID)
+		} else {
+			page, err = cs.pageService.Create(pageID, url)
+			if err != nil {
+				cs.logger.Errorw("Error creating page", "error", err, "pageID", pageID)
+				failedErr = err
+			}
 		}
 
 		cs.logger.Infow("Page created", "pageID", page.ID, "url", page.URL)
+
+		if err := cs.indexService.Index(pageID); err != nil {
+			cs.logger.Errorw("Error indexing page", "error", err, "pageID", pageID)
+			failedErr = domain.ErrCrawlFailedToIndexPage
+		}
+
+		cs.logger.Infow("Page indexed", "pageID", page.ID)
 	})
 
 	c.OnError(func(r *colly.Response, e error) {
