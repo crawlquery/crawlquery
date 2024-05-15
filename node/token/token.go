@@ -74,6 +74,26 @@ func RakeKeywords(data string) []string {
 	return words
 }
 
+func TopKeywords(positions map[string][]int) []string {
+	// Find the most used keywords
+	max := 0
+	for _, v := range positions {
+		if len(v) > max {
+			max = len(v)
+		}
+	}
+
+	// Find the keywords that are used the most
+	topKeywords := make([]string, 0)
+	for k, v := range positions {
+		if len(v) == max {
+			topKeywords = append(topKeywords, k)
+		}
+	}
+
+	return topKeywords
+}
+
 func Keywords(doc *goquery.Document) []string {
 	removeUnwantedElements(doc)
 

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crawlquery/node/token"
 	"crawlquery/pkg/domain"
+	"strings"
 
 	"github.com/PuerkitoBio/goquery"
 )
@@ -30,7 +31,11 @@ func Parse(html []byte, url string) (*domain.Page, error) {
 	page.Title = Title(doc)
 	page.MetaDescription = MetaDescription(doc)
 	page.Keywords = token.Keywords(doc)
-	page.KeywordPositions = token.Positions(page.Keywords)
+
+	// if the description is empty, set to the the highest used keywords comma separated
+	if page.MetaDescription == "" {
+		page.MetaDescription = strings.Join(token.TopKeywords(page.Keywords), ", ")
+	}
 
 	return page, nil
 }

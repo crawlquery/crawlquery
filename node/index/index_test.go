@@ -5,12 +5,15 @@ import (
 	"crawlquery/node/token"
 	sharedDomain "crawlquery/pkg/domain"
 	"crawlquery/pkg/testutil"
+	"strings"
 
 	forwardRepo "crawlquery/node/index/forward/repository/mem"
 	invertedRepo "crawlquery/node/index/inverted/repository/mem"
 	"reflect"
 	"sort"
 	"testing"
+
+	"github.com/PuerkitoBio/goquery"
 )
 
 func TestAddPage(t *testing.T) {
@@ -30,7 +33,7 @@ func TestAddPage(t *testing.T) {
 
 		// Tokenize the content to predict what should be in the inverted index
 		// Assuming the existence of a Tokenize function that returns a map of token strings to their positions
-		tokens := token.Tokenize(doc.K) // Make sure to implement this or adjust to your actual tokenize function
+		tokens := token.Positions(doc.Keywords) // Make sure to implement this or adjust to your actual tokenize function
 		// Add page to the index
 		idx.AddPage(doc)
 		// Retrieve the page from the forward index and verify it
@@ -87,11 +90,11 @@ func TestAddPage(t *testing.T) {
 		}
 
 		content := "<html><body><p>Hello world!</p></body></html>"
-
+		html, _ := goquery.NewDocumentFromReader(strings.NewReader(content))
 		// Tokenize the content to predict what should be in the inverted index
 		// Assuming the existence of a Tokenize function that returns a map of token strings to their positions
 		for _, doc := range docs {
-			tokens := token.Keywords(content) // Make sure to implement this or adjust to your actual tokenize function
+			tokens := token.Positions(token.Keywords(html)) // Make sure to implement this or adjust to your actual tokenize function
 			// Add page to the index
 			idx.AddPage(doc)
 			// Retrieve the page from the forward index and verify it
@@ -122,7 +125,6 @@ func TestAddPage(t *testing.T) {
 				if !foundPosting {
 					t.Errorf("Posting for token %q with expected positions %v not found", token, positions)
 				}
-
 			}
 		}
 	})
