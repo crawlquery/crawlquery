@@ -13,7 +13,7 @@ func TestCrawlJobValidate(t *testing.T) {
 		cj := &domain.CrawlJob{
 			ID:        util.UUID(),
 			URL:       "http://example.com",
-			URLHash:   util.SHA1("http://example.com"),
+			PageID:    util.SHA1("http://example.com"),
 			CreatedAt: time.Now(),
 		}
 
@@ -64,7 +64,7 @@ func TestCrawlJobValidate(t *testing.T) {
 		cj := &domain.CrawlJob{
 			ID:        util.UUID(),
 			URL:       "http://example.com",
-			URLHash:   "abc",
+			PageID:    "abc",
 			CreatedAt: time.Now(),
 		}
 
@@ -74,8 +74,8 @@ func TestCrawlJobValidate(t *testing.T) {
 			t.Errorf("Expected crawl job to be invalid, got nil")
 		}
 
-		if !strings.Contains(err.Error(), "CrawlJob.URLHash") {
-			t.Errorf("Expected error to contain 'CrawlJob.URLHash', got %v", err)
+		if !strings.Contains(err.Error(), "CrawlJob.PageID") {
+			t.Errorf("Expected error to contain 'CrawlJob.PageID', got %v", err)
 		}
 	})
 }

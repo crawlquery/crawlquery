@@ -1,5 +1,6 @@
 package dto
 
 type CrawlRequest struct {
-	URL string `json:"url"`
+	PageID string `json:"page_id"`
+	URL    string `json:"url"`
 }

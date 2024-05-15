@@ -35,7 +35,7 @@ func (cs *Service) Create(url string) (*domain.CrawlJob, error) {
 	job := &domain.CrawlJob{
 		ID:        util.UUID(),
 		URL:       url,
-		URLHash:   util.SHA1(url),
+		PageID:    util.PageID(url),
 		CreatedAt: time.Now(),
 	}
 

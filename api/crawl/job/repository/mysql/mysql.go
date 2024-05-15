@@ -15,7 +15,7 @@ func NewRepository(db *sql.DB) *Repository {
 }
 
 func (r *Repository) Create(j *domain.CrawlJob) error {
-	_, err := r.db.Exec("INSERT INTO crawl_jobs (id, url, url_hash, created_at) VALUES (?, ?, ?, ?)", j.ID, j.URL, j.URLHash, time.Now())
+	_, err := r.db.Exec("INSERT INTO crawl_jobs (id, url, page_id, created_at) VALUES (?, ?, ?, ?)", j.ID, j.URL, j.PageID, time.Now())
 	if err != nil {
 		return err
 	}
@@ -43,10 +43,10 @@ func (r *Repository) Update(j *domain.CrawlJob) error {
 }
 
 func (r *Repository) Get(id string) (*domain.CrawlJob, error) {
-	row := r.db.QueryRow("SELECT id, url, url_hash, backoff_until, failed_reason, last_crawled_at, created_at FROM crawl_jobs WHERE id = ?", id)
+	row := r.db.QueryRow("SELECT id, url, page_id, backoff_until, failed_reason, last_crawled_at, created_at FROM crawl_jobs WHERE id = ?", id)
 
 	var job domain.CrawlJob
-	err := row.Scan(&job.ID, &job.URL, &job.URLHash, &job.BackoffUntil, &job.FailedReason, &job.LastCrawledAt, &job.CreatedAt)
+	err := row.Scan(&job.ID, &job.URL, &job.PageID, &job.BackoffUntil, &job.FailedReason, &job.LastCrawledAt, &job.CreatedAt)
 
 	if err == sql.ErrNoRows {
 		return nil, domain.ErrCrawlJobNotFound
@@ -56,10 +56,10 @@ func (r *Repository) Get(id string) (*domain.CrawlJob, error) {
 }
 
 func (r *Repository) First() (*domain.CrawlJob, error) {
-	row := r.db.QueryRow("SELECT id, url, url_hash, backoff_until, failed_reason, last_crawled_at, created_at FROM crawl_jobs ORDER BY created_at ASC LIMIT 1")
+	row := r.db.QueryRow("SELECT id, url, page_id, backoff_until, failed_reason, last_crawled_at, created_at FROM crawl_jobs ORDER BY created_at ASC LIMIT 1")
 
 	var job domain.CrawlJob
-	err := row.Scan(&job.ID, &job.URL, &job.URLHash, &job.BackoffUntil, &job.FailedReason, &job.LastCrawledAt, &job.CreatedAt)
+	err := row.Scan(&job.ID, &job.URL, &job.PageID, &job.BackoffUntil, &job.FailedReason, &job.LastCrawledAt, &job.CreatedAt)
 	if err == sql.ErrNoRows {
 		return nil, domain.ErrCrawlJobNotFound
 	}
@@ -70,7 +70,7 @@ func (r *Repository) First() (*domain.CrawlJob, error) {
 func (r *Repository) FirstProcessable() (*domain.CrawlJob, error) {
 	row := r.db.QueryRow(`
 	SELECT 
-		id, url, url_hash, backoff_until, failed_reason, last_crawled_at, created_at 
+		id, url, page_id, backoff_until, failed_reason, last_crawled_at, created_at 
 	FROM 
 		crawl_jobs 
 	WHERE 
@@ -81,7 +81,7 @@ func (r *Repository) FirstProcessable() (*domain.CrawlJob, error) {
 	LIMIT 1`, time.Now(), time.Now().Add(-time.Hour*24*31))
 
 	var job domain.CrawlJob
-	err := row.Scan(&job.ID, &job.URL, &job.URLHash, &job.BackoffUntil, &job.FailedReason, &job.LastCrawledAt, &job.CreatedAt)
+	err := row.Scan(&job.ID, &job.URL, &job.PageID, &job.BackoffUntil, &job.FailedReason, &job.LastCrawledAt, &job.CreatedAt)
 	if err == sql.ErrNoRows {
 		return nil, domain.ErrCrawlJobNotFound
 	}

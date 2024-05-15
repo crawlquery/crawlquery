@@ -5,6 +5,8 @@ import (
 	"crawlquery/api/crawl/job/service"
 	"crawlquery/api/domain"
 	"crawlquery/pkg/testutil"
+	"crawlquery/pkg/util"
+	"fmt"
 	"time"
 
 	nodeRepo "crawlquery/api/node/repository/mem"
@@ -122,15 +124,20 @@ func TestProcessCrawlJobs(t *testing.T) {
 
 		defer gock.Off()
 
+		url := "http://example.com"
+
+		pageID := util.PageID(url)
+
+		responseJson := fmt.Sprintf(`{"page_id":"%s","url":"%s"}`, pageID, url)
+
 		gock.New("http://node1.cluster.com:8080").
 			Post("/crawl").
-			JSON(`{"url":"http://example.com"}`).
+			JSON(responseJson).
 			Reply(200)
 
 		// Arrange
 		repo := mem.NewRepository()
 		svc := service.NewService(repo, shardService, nodeService, testutil.NewTestLogger())
-		url := "http://example.com"
 		job, _ := svc.Create(url)
 
 		// Act

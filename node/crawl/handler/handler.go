@@ -2,6 +2,7 @@ package handler
 
 import (
 	"crawlquery/node/domain"
+	"crawlquery/pkg/dto"
 	"net/url"
 
 	"github.com/gin-gonic/gin"
@@ -18,9 +19,8 @@ func NewHandler(cs domain.CrawlService) *CrawlHandler {
 }
 
 func (ch *CrawlHandler) Crawl(c *gin.Context) {
-	var req struct {
-		URL string `json:"url"`
-	}
+
+	var req dto.CrawlRequest
 
 	if err := c.BindJSON(&req); err != nil {
 		c.JSON(400, gin.H{

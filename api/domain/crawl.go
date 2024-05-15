@@ -13,7 +13,7 @@ var ErrCrawlJobNotFound = errors.New("crawl job not found")
 type CrawlJob struct {
 	ID            string         `validate:"required,uuid"`
 	URL           string         `validate:"required,url"`
-	URLHash       string         `validate:"required,min=20"`
+	PageID        string         `validate:"required,min=32,max=32"`
 	BackoffUntil  sql.NullTime   `validate:""`
 	LastCrawledAt sql.NullTime   `validate:""`
 	FailedReason  sql.NullString `validate:""`

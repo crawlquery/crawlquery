@@ -34,7 +34,7 @@ func TestCreate(t *testing.T) {
 		if err != nil {
 			t.Errorf("Error creating job: %v", err)
 		}
-		res, err := db.Query("SELECT id, url, url_hash, created_at FROM crawl_jobs WHERE id = ?", job.ID)
+		res, err := db.Query("SELECT id, url, page_id, created_at FROM crawl_jobs WHERE id = ?", job.ID)
 
 		if err != nil {
 			t.Errorf("Error querying for job: %v", err)
@@ -79,10 +79,10 @@ func TestCreate(t *testing.T) {
 		job := &domain.CrawlJob{
 			ID:        util.UUID(),
 			URL:       "http://example.com",
-			URLHash:   "hash",
+			PageID:    "hash",
 			CreatedAt: time.Now().UTC(),
 		}
-		db.Exec("INSERT INTO crawl_jobs (id, url, url_hash, created_at) VALUES (?, ?, ?, ?)", job.ID, job.URLHash, job.URL, job.CreatedAt)
+		db.Exec("INSERT INTO crawl_jobs (id, url, page_id, created_at) VALUES (?, ?, ?, ?)", job.ID, job.PageID, job.URL, job.CreatedAt)
 
 		defer db.Exec("DELETE FROM crawl_jobs WHERE id = ?", job.ID)
 
@@ -108,10 +108,10 @@ func TestUpdate(t *testing.T) {
 		job := &domain.CrawlJob{
 			ID:        util.UUID(),
 			URL:       "http://example.com",
-			URLHash:   "hash",
+			PageID:    "hash",
 			CreatedAt: time.Now().UTC(),
 		}
-		_, err := db.Exec("INSERT INTO crawl_jobs (id, url, url_hash, created_at) VALUES (?, ?, ?, ?)", job.ID, job.URL, job.URLHash, job.CreatedAt)
+		_, err := db.Exec("INSERT INTO crawl_jobs (id, url, page_id, created_at) VALUES (?, ?, ?, ?)", job.ID, job.URL, job.PageID, job.CreatedAt)
 
 		if err != nil {
 			t.Fatalf("Error inserting job: %v", err)
@@ -132,7 +132,7 @@ func TestUpdate(t *testing.T) {
 			t.Errorf("Error updating job: %v", err)
 		}
 
-		res, err := db.Query("SELECT id, url, url_hash, backoff_until, failed_reason, last_crawled_at, created_at FROM crawl_jobs WHERE id = ?", job.ID)
+		res, err := db.Query("SELECT id, url, page_id, backoff_until, failed_reason, last_crawled_at, created_at FROM crawl_jobs WHERE id = ?", job.ID)
 
 		if err != nil {
 			t.Errorf("Error querying for job: %v", err)
@@ -161,8 +161,8 @@ func TestUpdate(t *testing.T) {
 			t.Errorf("Expected URL to be %s, got %s", job.URL, url)
 		}
 
-		if urlHash != job.URLHash {
-			t.Errorf("Expected URLHash to be %s, got %s", job.URLHash, urlHash)
+		if urlHash != job.PageID {
+			t.Errorf("Expected PageID to be %s, got %s", job.PageID, urlHash)
 		}
 
 		if backoffUntil.Time.Sub(job.BackoffUntil.Time) > time.Second || job.BackoffUntil.Time.Sub(backoffUntil.Time) > time.Second {
@@ -189,7 +189,7 @@ func TestUpdate(t *testing.T) {
 		job := &domain.CrawlJob{
 			ID:        util.UUID(),
 			URL:       "http://example.com",
-			URLHash:   "hash",
+			PageID:    "hash",
 			CreatedAt: time.Now().UTC(),
 		}
 
@@ -216,10 +216,10 @@ func TestGet(t *testing.T) {
 		job := &domain.CrawlJob{
 			ID:        util.UUID(),
 			URL:       "http://example.com",
-			URLHash:   "hash",
+			PageID:    "hash",
 			CreatedAt: time.Now().UTC(),
 		}
-		_, err := db.Exec("INSERT INTO crawl_jobs (id, url, url_hash, created_at) VALUES (?, ?, ?, ?)", job.ID, job.URL, job.URLHash, job.CreatedAt)
+		_, err := db.Exec("INSERT INTO crawl_jobs (id, url, page_id, created_at) VALUES (?, ?, ?, ?)", job.ID, job.URL, job.PageID, job.CreatedAt)
 
 		if err != nil {
 			t.Fatalf("Error inserting job: %v", err)
@@ -282,18 +282,18 @@ func TestFirst(t *testing.T) {
 		job := &domain.CrawlJob{
 			ID:        util.UUID(),
 			URL:       "http://example.com",
-			URLHash:   "hash",
+			PageID:    "hash",
 			CreatedAt: time.Now().UTC(),
 		}
-		db.Exec("INSERT INTO crawl_jobs (id, url, url_hash, created_at) VALUES (?, ?, ?, ?)", job.ID, job.URL, job.URLHash, job.CreatedAt)
+		db.Exec("INSERT INTO crawl_jobs (id, url, page_id, created_at) VALUES (?, ?, ?, ?)", job.ID, job.URL, job.PageID, job.CreatedAt)
 
 		job2 := &domain.CrawlJob{
 			ID:        util.UUID(),
 			URL:       "http://example2.com",
-			URLHash:   "hash2",
+			PageID:    "hash2",
 			CreatedAt: time.Now().UTC().Add(time.Second),
 		}
-		db.Exec("INSERT INTO crawl_jobs (id, url, url_hash, created_at) VALUES (?, ?, ?)", job2.ID, job2.URL, job2.URLHash, job2.CreatedAt)
+		db.Exec("INSERT INTO crawl_jobs (id, url, page_id, created_at) VALUES (?, ?, ?)", job2.ID, job2.URL, job2.PageID, job2.CreatedAt)
 
 		defer db.Exec("DELETE FROM crawl_jobs WHERE id = ?", job.ID)
 		defer db.Exec("DELETE FROM crawl_jobs WHERE id = ?", job2.ID)
@@ -314,8 +314,8 @@ func TestFirst(t *testing.T) {
 			t.Errorf("Expected URL to be %s, got %s", job.URL, res.URL)
 		}
 
-		if res.URLHash != job.URLHash {
-			t.Errorf("Expected URLHash to be %s, got %s", job.URLHash, res.URLHash)
+		if res.PageID != job.PageID {
+			t.Errorf("Expected PageID to be %s, got %s", job.PageID, res.PageID)
 		}
 
 		if res.CreatedAt.Sub(job.CreatedAt) > time.Second || job.CreatedAt.Sub(res.CreatedAt) > time.Second {
@@ -358,18 +358,18 @@ func TestFirstProcessable(t *testing.T) {
 		job := &domain.CrawlJob{
 			ID:        util.UUID(),
 			URL:       "http://example.com",
-			URLHash:   "hash",
+			PageID:    "hash",
 			CreatedAt: time.Now().UTC(),
 		}
-		db.Exec("INSERT INTO crawl_jobs (id, url, url_hash, created_at) VALUES (?, ?, ?, ?)", job.ID, job.URL, job.URLHash, job.CreatedAt)
+		db.Exec("INSERT INTO crawl_jobs (id, url, page_id, created_at) VALUES (?, ?, ?, ?)", job.ID, job.URL, job.PageID, job.CreatedAt)
 
 		job2 := &domain.CrawlJob{
 			ID:        util.UUID(),
 			URL:       "http://example2.com",
-			URLHash:   "hash2",
+			PageID:    "hash2",
 			CreatedAt: time.Now().UTC().Add(time.Second),
 		}
-		db.Exec("INSERT INTO crawl_jobs (id, url, url_hash, created_at) VALUES (?, ?, ?)", job2.ID, job2.URL, job2.URLHash, job2.CreatedAt)
+		db.Exec("INSERT INTO crawl_jobs (id, url, page_id, created_at) VALUES (?, ?, ?)", job2.ID, job2.URL, job2.PageID, job2.CreatedAt)
 
 		defer db.Exec("DELETE FROM crawl_jobs WHERE id = ?", job.ID)
 		defer db.Exec("DELETE FROM crawl_jobs WHERE id = ?", job2.ID)
@@ -390,8 +390,8 @@ func TestFirstProcessable(t *testing.T) {
 			t.Errorf("Expected URL to be %s, got %s", job.URL, res.URL)
 		}
 
-		if res.URLHash != job.URLHash {
-			t.Errorf("Expected URLHash to be %s, got %s", job.URLHash, res.URLHash)
+		if res.PageID != job.PageID {
+			t.Errorf("Expected PageID to be %s, got %s", job.PageID, res.PageID)
 		}
 
 		if res.CreatedAt.Sub(job.CreatedAt) > time.Second || job.CreatedAt.Sub(res.CreatedAt) > time.Second {
@@ -411,19 +411,19 @@ func TestFirstProcessable(t *testing.T) {
 		job := &domain.CrawlJob{
 			ID:           util.UUID(),
 			URL:          "http://example.com",
-			URLHash:      "hash",
+			PageID:       "hash",
 			CreatedAt:    time.Now().UTC(),
 			BackoffUntil: sql.NullTime{Time: time.Now().Add(time.Hour), Valid: true},
 		}
-		db.Exec("INSERT INTO crawl_jobs (id, url, url_hash, backoff_until, created_at) VALUES (?, ?, ?, ?, ?)", job.ID, job.URL, job.URLHash, job.BackoffUntil, job.CreatedAt)
+		db.Exec("INSERT INTO crawl_jobs (id, url, page_id, backoff_until, created_at) VALUES (?, ?, ?, ?, ?)", job.ID, job.URL, job.PageID, job.BackoffUntil, job.CreatedAt)
 
 		job2 := &domain.CrawlJob{
 			ID:        util.UUID(),
 			URL:       "http://example2.com",
-			URLHash:   "hash2",
+			PageID:    "hash2",
 			CreatedAt: time.Now().UTC().Add(time.Second),
 		}
-		db.Exec("INSERT INTO crawl_jobs (id, url, url_hash, created_at) VALUES (?, ?, ?, ?)", job2.ID, job2.URL, job2.URLHash, job2.CreatedAt)
+		db.Exec("INSERT INTO crawl_jobs (id, url, page_id, created_at) VALUES (?, ?, ?, ?)", job2.ID, job2.URL, job2.PageID, job2.CreatedAt)
 
 		defer db.Exec("DELETE FROM crawl_jobs WHERE id = ?", job.ID)
 		defer db.Exec("DELETE FROM crawl_jobs WHERE id = ?", job2.ID)
@@ -444,8 +444,8 @@ func TestFirstProcessable(t *testing.T) {
 			t.Errorf("Expected URL to be %s, got %s", job2.URL, res.URL)
 		}
 
-		if res.URLHash != job2.URLHash {
-			t.Errorf("Expected URLHash to be %s, got %s", job2.URLHash, res.URLHash)
+		if res.PageID != job2.PageID {
+			t.Errorf("Expected PageID to be %s, got %s", job2.PageID, res.PageID)
 		}
 
 		if res.CreatedAt.Sub(job2.CreatedAt) > time.Second || job2.CreatedAt.Sub(res.CreatedAt) > time.Second {
@@ -464,19 +464,19 @@ func TestFirstProcessable(t *testing.T) {
 		job := &domain.CrawlJob{
 			ID:            "job1",
 			URL:           "http://example.com",
-			URLHash:       "hash",
+			PageID:        "hash",
 			CreatedAt:     time.Now().UTC(),
 			LastCrawledAt: sql.NullTime{Time: time.Now().Add(-(time.Hour * 24 * 20)), Valid: true},
 		}
-		db.Exec("INSERT INTO crawl_jobs (id, url, url_hash, last_crawled_at, created_at) VALUES (?, ?, ?, ?, ?)", job.ID, job.URL, job.URLHash, job.LastCrawledAt, job.CreatedAt)
+		db.Exec("INSERT INTO crawl_jobs (id, url, page_id, last_crawled_at, created_at) VALUES (?, ?, ?, ?, ?)", job.ID, job.URL, job.PageID, job.LastCrawledAt, job.CreatedAt)
 
 		job2 := &domain.CrawlJob{
 			ID:        "job2",
 			URL:       "http://example2.com",
-			URLHash:   "hash2",
+			PageID:    "hash2",
 			CreatedAt: time.Now().UTC().Add(time.Second),
 		}
-		db.Exec("INSERT INTO crawl_jobs (id, url, url_hash, created_at) VALUES (?, ?, ?, ?)", job2.ID, job2.URL, job2.URLHash, job2.CreatedAt)
+		db.Exec("INSERT INTO crawl_jobs (id, url, page_id, created_at) VALUES (?, ?, ?, ?)", job2.ID, job2.URL, job2.PageID, job2.CreatedAt)
 
 		defer db.Exec("DELETE FROM crawl_jobs WHERE id = ?", job.ID)
 		defer db.Exec("DELETE FROM crawl_jobs WHERE id = ?", job2.ID)
@@ -497,8 +497,8 @@ func TestFirstProcessable(t *testing.T) {
 			t.Errorf("Expected URL to be %s, got %s", job2.URL, res.URL)
 		}
 
-		if res.URLHash != job2.URLHash {
-			t.Errorf("Expected URLHash to be %s, got %s", job2.URLHash, res.URLHash)
+		if res.PageID != job2.PageID {
+			t.Errorf("Expected PageID to be %s, got %s", job2.PageID, res.PageID)
 		}
 
 		if res.CreatedAt.Sub(job2.CreatedAt) > time.Second || job2.CreatedAt.Sub(res.CreatedAt) > time.Second {
@@ -523,7 +523,7 @@ func TestDelete(t *testing.T) {
 			URL:       "http://example.com",
 			CreatedAt: time.Now().UTC(),
 		}
-		db.Exec("INSERT INTO crawl_jobs (id, url, url_hash, created_at) VALUES (?, ?, ?, ?)", job.ID, job.URL, job.URLHash, job.CreatedAt)
+		db.Exec("INSERT INTO crawl_jobs (id, url, page_id, created_at) VALUES (?, ?, ?, ?)", job.ID, job.URL, job.PageID, job.CreatedAt)
 		defer db.Exec("DELETE FROM crawl_jobs WHERE id = ?", job.ID)
 
 		// Act

@@ -205,7 +205,8 @@ func (s *Service) ListByShardID(shardID uint) ([]*domain.Node, error) {
 func (s *Service) SendCrawlJob(node *domain.Node, job *domain.CrawlJob) error {
 
 	req := dto.CrawlRequest{
-		URL: job.URL,
+		PageID: job.PageID,
+		URL:    job.URL,
 	}
 
 	jsonBody, err := json.Marshal(req)

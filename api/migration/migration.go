@@ -39,7 +39,7 @@ var migrations = []Migration{
 		SQL: `CREATE TABLE crawl_jobs (
 		id VARCHAR(36) PRIMARY KEY,
 		url TEXT NOT NULL,
-		url_hash VARCHAR(255) NOT NULL UNIQUE,
+		page_id VARCHAR(32) NOT NULL UNIQUE,
 		backoff_until TIMESTAMP,
 		last_crawled_at TIMESTAMP,
 		failed_reason VARCHAR(255),
