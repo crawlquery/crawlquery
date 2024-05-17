@@ -35,3 +35,7 @@ func (s *Service) FuzzySearch(token string) ([]string, error) {
 	results := s.repo.FuzzySearch(token)
 	return results, nil
 }
+
+func (s *Service) RemovePostingsByPageID(pageID string) error {
+	return s.repo.RemovePostingsByPageID(pageID)
+}

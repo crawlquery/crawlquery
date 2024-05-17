@@ -95,6 +95,36 @@ func (repo *Repository) FuzzySearch(token string) []string {
 	return results
 }
 
+func (repo *Repository) RemovePostingsByPageID(pageID string) error {
+	err := repo.db.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte("InvertedIndex"))
+		c := b.Cursor()
+
+		for k, v := c.First(); k != nil; k, v = c.Next() {
+			var postings []*domain.Posting
+			err := json.Unmarshal(v, &postings)
+			if err != nil {
+				return err
+			}
+			for i, posting := range postings {
+				if posting.PageID == pageID {
+					postings = append(postings[:i], postings[i+1:]...)
+				}
+			}
+			encoded, err := json.Marshal(postings)
+			if err != nil {
+				return err
+			}
+			err = b.Put(k, encoded)
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+	return err
+}
+
 func (repo *Repository) Close() error {
 	return repo.db.Close()
 }

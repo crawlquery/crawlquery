@@ -1,7 +1,7 @@
 package bolt_test
 
 import (
-	"crawlquery/node/index/forward/repository/bolt"
+	"crawlquery/node/page/repository/bolt"
 	"crawlquery/pkg/domain"
 	"os"
 	"testing"

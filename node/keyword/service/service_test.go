@@ -8,7 +8,7 @@ import (
 	"testing"
 )
 
-func Test(t *testing.T) {
+func TestService(t *testing.T) {
 	keywordPostings := map[string]*domain.Posting{
 		"test1": {
 			PageID:    "page1",
@@ -136,5 +136,71 @@ func TestFuzzySearch(t *testing.T) {
 
 	if results[0] != "test2" && results[1] != "test2" {
 		t.Fatalf("Expected test2 to be in results")
+	}
+}
+
+func TestRemovePostingsByPageID(t *testing.T) {
+	keywordPostings := map[string]*domain.Posting{
+		"test1": {
+			PageID:    "page1",
+			Frequency: 1,
+			Positions: []int{0},
+		},
+		"test2": {
+			PageID:    "page1",
+			Frequency: 2,
+			Positions: []int{1, 2},
+		},
+		"notinresults": {
+			PageID:    "page2",
+			Frequency: 1,
+			Positions: []int{0},
+		},
+	}
+
+	repo := keywordRepo.NewRepository()
+
+	s := service.NewService(repo)
+
+	err := s.SavePostings(keywordPostings)
+
+	if err != nil {
+		t.Fatalf("Error saving postings: %v", err)
+	}
+
+	err = s.RemovePostingsByPageID("page1")
+
+	if err != nil {
+		t.Fatalf("Error removing postings: %v", err)
+	}
+
+	postings, err := repo.GetPostings("test1")
+
+	if err != nil {
+		t.Fatalf("Error getting postings: %v", err)
+	}
+
+	if len(postings) != 0 {
+		t.Fatalf("Expected 0 postings, got %d", len(postings))
+	}
+
+	postings, err = repo.GetPostings("test2")
+
+	if err != nil {
+		t.Fatalf("Error getting postings: %v", err)
+	}
+
+	if len(postings) != 0 {
+		t.Fatalf("Expected 0 postings, got %d", len(postings))
+	}
+
+	postings, err = repo.GetPostings("notinresults")
+
+	if err != nil {
+		t.Fatalf("Error getting postings: %v", err)
+	}
+
+	if len(postings) != 1 {
+		t.Fatalf("Expected 1 posting, got %d", len(postings))
 	}
 }

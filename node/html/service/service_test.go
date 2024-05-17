@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-func Test(t *testing.T) {
+func TestService(t *testing.T) {
 	repo := mem.NewRepository()
 
 	service := service.NewService(repo)

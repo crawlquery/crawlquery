@@ -45,3 +45,14 @@ func (r *Repository) GetPostings(token string) ([]*domain.Posting, error) {
 	}
 	return postings, nil
 }
+
+func (r *Repository) RemovePostingsByPageID(pageID string) error {
+	for token, postings := range r.keywordPostings {
+		for i, posting := range postings {
+			if posting.PageID == pageID {
+				r.keywordPostings[token] = append(r.keywordPostings[token][:i], r.keywordPostings[token][i+1:]...)
+			}
+		}
+	}
+	return nil
+}

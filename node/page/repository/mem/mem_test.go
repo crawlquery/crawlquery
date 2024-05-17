@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func Test(t *testing.T) {
+func TestService(t *testing.T) {
 	r := NewRepository()
 	err := r.Save("page1", &domain.Page{
 		ID: "page1",

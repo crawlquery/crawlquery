@@ -28,6 +28,7 @@ type Index interface {
 
 type IndexHandler interface {
 	Search(c *gin.Context)
+	Event(c *gin.Context)
 }
 
 type CrawlHandler interface {
@@ -63,15 +64,18 @@ type KeywordRepository interface {
 	GetPostings(keyword string) ([]*Posting, error)
 	SavePosting(token string, posting *Posting) error
 	FuzzySearch(token string) []string
+	RemovePostingsByPageID(pageID string) error
 }
 
 type KeywordService interface {
 	GetPostings(keyword string) ([]*Posting, error)
 	SavePostings(postings map[string]*Posting) error
 	FuzzySearch(token string) ([]string, error)
+	RemovePostingsByPageID(pageID string) error
 }
 
 type IndexService interface {
 	Search(query string) ([]domain.Result, error)
 	Index(pageID string) error
+	ApplyIndexEvent(event *IndexEvent) error
 }

@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func Test(t *testing.T) {
+func TestMem(t *testing.T) {
 	repo := mem.NewRepository()
 
 	err := repo.Save("test1", []byte("test-data"))

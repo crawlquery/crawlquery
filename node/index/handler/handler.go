@@ -41,3 +41,26 @@ func (sh *IndexHandler) Search(c *gin.Context) {
 		"results": res,
 	})
 }
+
+func (ih *IndexHandler) Event(c *gin.Context) {
+	var event domain.IndexEvent
+	if err := c.ShouldBindJSON(&event); err != nil {
+		ih.logger.Error(err)
+		c.JSON(400, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	if err := ih.service.ApplyIndexEvent(&event); err != nil {
+		ih.logger.Error(err)
+		c.JSON(500, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(200, gin.H{
+		"message": "event received",
+	})
+}

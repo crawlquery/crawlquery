@@ -39,5 +39,7 @@ func NewRouter(
 	}))
 	router.GET("/search", indexHandler.Search)
 	router.POST("/crawl", crawlHandler.Crawl)
+
+	router.POST("/event", indexHandler.Event)
 	return router
 }

@@ -11,6 +11,8 @@ import (
 	keywordRepo "crawlquery/node/keyword/repository/mem"
 	keywordService "crawlquery/node/keyword/service"
 
+	peerService "crawlquery/node/peer/service"
+
 	indexService "crawlquery/node/index/service"
 
 	"crawlquery/pkg/testutil"
@@ -29,7 +31,9 @@ func TestCrawl(t *testing.T) {
 		keywordRepo := keywordRepo.NewRepository()
 		keywordService := keywordService.NewService(keywordRepo)
 
-		indexService := indexService.NewService(pageService, htmlService, keywordService, testutil.NewTestLogger())
+		peerService := peerService.NewService(keywordService, pageService, testutil.NewTestLogger())
+
+		indexService := indexService.NewService(pageService, htmlService, keywordService, peerService, testutil.NewTestLogger())
 
 		service := service.NewService(htmlService, pageService, indexService, testutil.NewTestLogger())
 

@@ -17,6 +17,7 @@ type Service struct {
 	pageService    domain.PageService
 	htmlService    domain.HTMLService
 	keywordService domain.KeywordService
+	peerService    domain.PeerService
 	logger         *zap.SugaredLogger
 }
 
@@ -24,12 +25,14 @@ func NewService(
 	pageService domain.PageService,
 	htmlService domain.HTMLService,
 	keywordService domain.KeywordService,
+	peerService domain.PeerService,
 	logger *zap.SugaredLogger,
 ) *Service {
 	return &Service{
 		pageService:    pageService,
 		htmlService:    htmlService,
 		keywordService: keywordService,
+		peerService:    peerService,
 		logger:         logger,
 	}
 }
@@ -95,6 +98,11 @@ func (s *Service) Index(pageID string) error {
 		s.logger.Errorw("Error saving page", "error", err, "pageID", pageID)
 		return err
 	}
+
+	go s.peerService.BroadcastIndexEvent(&domain.IndexEvent{
+		Page:     page,
+		Keywords: postings,
+	})
 
 	return nil
 }
@@ -166,4 +174,43 @@ func (s *Service) Search(query string) ([]sharedDomain.Result, error) {
 	}
 
 	return sortedResults, nil
+}
+
+func (s *Service) ApplyIndexEvent(event *domain.IndexEvent) error {
+	page, _ := s.pageService.Get(event.Page.ID)
+	var err error
+	if page == nil {
+		page, err = s.pageService.Create(event.Page.ID, event.Page.URL)
+
+		if err != nil {
+			s.logger.Errorf("Error creating page: %v", err)
+			return err
+		}
+	}
+
+	// add the title and meta description
+	err = s.pageService.Update(event.Page)
+
+	if err != nil {
+		s.logger.Errorf("Error updating page: %v", err)
+		return err
+	}
+
+	// remove old postings
+	err = s.keywordService.RemovePostingsByPageID(page.ID)
+
+	if err != nil {
+		s.logger.Errorf("Error removing postings: %v", err)
+		return err
+	}
+
+	// add new postings
+	err = s.keywordService.SavePostings(event.Keywords)
+
+	if err != nil {
+		s.logger.Errorf("Error saving postings: %v", err)
+		return err
+	}
+
+	return nil
 }

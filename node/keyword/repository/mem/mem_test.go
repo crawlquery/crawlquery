@@ -51,3 +51,33 @@ func TestFuzzySearch(t *testing.T) {
 		t.Fatalf("expected second result to be 'tom', got '%s'", results[1])
 	}
 }
+
+func TestRemovePostingsByPageID(t *testing.T) {
+	r := NewRepository()
+	err := r.SavePosting("token", &domain.Posting{PageID: "page1", Frequency: 1})
+	if err != nil {
+		t.Fatalf("error saving posting: %v", err)
+	}
+	err = r.SavePosting("tom", &domain.Posting{PageID: "page2", Frequency: 2})
+	if err != nil {
+		t.Fatalf("error saving posting: %v", err)
+	}
+	err = r.SavePosting("token", &domain.Posting{PageID: "page3", Frequency: 3})
+	if err != nil {
+		t.Fatalf("error saving posting: %v", err)
+	}
+	err = r.RemovePostingsByPageID("page1")
+	if err != nil {
+		t.Fatalf("error removing postings: %v", err)
+	}
+	postings, err := r.GetPostings("token")
+	if err != nil {
+		t.Fatalf("error getting postings: %v", err)
+	}
+	if len(postings) != 1 {
+		t.Fatalf("expected 1 posting, got %d", len(postings))
+	}
+	if postings[0].PageID != "page3" {
+		t.Fatalf("expected posting to have pageID 'page3', got '%s'", postings[0].PageID)
+	}
+}

@@ -77,3 +77,44 @@ func TestFuzzySearch(t *testing.T) {
 		t.Fatalf("expected result to be 'keyword', got '%s'", results[0])
 	}
 }
+
+func TestRemovePostingsByPageID(t *testing.T) {
+	r, err := bolt.NewRepository("/tmp/inverted_remove_test.db")
+	defer os.Remove("/tmp/inverted_remove_test.db")
+
+	if err != nil {
+		t.Fatalf("error creating repository: %v", err)
+	}
+
+	err = r.SavePosting("keyword", &domain.Posting{PageID: "page1", Frequency: 1})
+
+	if err != nil {
+		t.Fatalf("error saving page: %v", err)
+	}
+
+	err = r.SavePosting("keyword", &domain.Posting{PageID: "page2", Frequency: 1})
+
+	if err != nil {
+		t.Fatalf("error saving page: %v", err)
+	}
+
+	err = r.RemovePostingsByPageID("page1")
+
+	if err != nil {
+		t.Fatalf("error removing page: %v", err)
+	}
+
+	postings, err := r.GetPostings("keyword")
+
+	if err != nil {
+		t.Fatalf("error getting page: %v", err)
+	}
+
+	if len(postings) != 1 {
+		t.Fatalf("expected 0 postings, got %d", len(postings))
+	}
+
+	if postings[0].PageID != "page2" {
+		t.Fatalf("expected page id to be page2, got %s", postings[0].PageID)
+	}
+}
