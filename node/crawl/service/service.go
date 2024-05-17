@@ -51,7 +51,7 @@ func (cs *CrawlService) Crawl(pageID, url string) error {
 			return
 		}
 		page, err := cs.pageService.Get(pageID)
-		if err != nil && page.ID != pageID {
+		if err != nil && page != nil && page.ID != pageID {
 			cs.logger.Info("Existing page found", "pageID", pageID)
 		} else {
 			page, err = cs.pageService.Create(pageID, url)
