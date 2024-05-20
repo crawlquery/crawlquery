@@ -31,7 +31,7 @@ func TestCrawl(t *testing.T) {
 		keywordRepo := keywordRepo.NewRepository()
 		keywordService := keywordService.NewService(keywordRepo)
 
-		peerService := peerService.NewService(keywordService, pageService, testutil.NewTestLogger())
+		peerService := peerService.NewService(keywordService, pageService, nil, testutil.NewTestLogger())
 
 		indexService := indexService.NewService(pageService, htmlService, keywordService, peerService, testutil.NewTestLogger())
 

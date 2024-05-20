@@ -64,3 +64,17 @@ func (ih *IndexHandler) Event(c *gin.Context) {
 		"message": "event received",
 	})
 }
+
+func (ih *IndexHandler) Hash(c *gin.Context) {
+	hash, err := ih.service.Hash()
+	if err != nil {
+		ih.logger.Error(err)
+		c.JSON(500, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+	c.JSON(200, gin.H{
+		"hash": hash,
+	})
+}

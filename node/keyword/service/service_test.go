@@ -87,6 +87,16 @@ func TestService(t *testing.T) {
 	if postings[1].Frequency != 1 {
 		t.Fatalf("Expected frequency to be 1, got %d", postings[1].Frequency)
 	}
+
+	hash, err := repo.GetHash("test1")
+
+	if err != nil {
+		t.Fatalf("Error getting hash: %v", err)
+	}
+
+	if hash == "" {
+		t.Fatalf("Expected hash to not be empty")
+	}
 }
 
 func TestFuzzySearch(t *testing.T) {
@@ -202,5 +212,70 @@ func TestRemovePostingsByPageID(t *testing.T) {
 
 	if len(postings) != 1 {
 		t.Fatalf("Expected 1 posting, got %d", len(postings))
+	}
+}
+
+func TestHash(t *testing.T) {
+	keywordPostings := map[string]*domain.Posting{
+		"test1": {
+			PageID:    "page1",
+			Frequency: 1,
+			Positions: []int{0},
+		},
+		"test2": {
+			PageID:    "page1",
+			Frequency: 2,
+			Positions: []int{1, 2},
+		},
+	}
+
+	repo := keywordRepo.NewRepository()
+
+	s := service.NewService(repo)
+
+	err := s.SavePostings(keywordPostings)
+
+	if err != nil {
+		t.Fatalf("Error saving postings: %v", err)
+	}
+
+	hash, err := repo.GetHash("test1")
+
+	if err != nil {
+		t.Fatalf("Error getting hash: %v", err)
+	}
+
+	if hash == "" {
+		t.Fatalf("Expected hash to not be empty")
+	}
+
+	err = s.RemovePostingsByPageID("page1")
+
+	if err != nil {
+		t.Fatalf("Error removing postings: %v", err)
+	}
+
+	hash, err = repo.GetHash("test1")
+
+	if err != nil {
+		t.Fatalf("Error getting hash: %v", err)
+	}
+
+	if hash == "" {
+		t.Fatalf("Expected hash to not be empty")
+	}
+
+	indexHash, err := s.Hash()
+
+	if err != nil {
+		t.Fatalf("Error getting hash: %v", err)
+	}
+
+	if indexHash == "" {
+		t.Fatalf("Expected index hash to not be empty")
+	}
+
+	if indexHash != "5acde2e2a40a78df4966a33de326ea739a356045ae243ed4af4096830a1cd00b" {
+		t.Fatalf("Expected hash to be 5acde2e2a40a78df4966a33de326ea739a356045ae243ed4af4096830a1cd00b, got %s", indexHash)
 	}
 }

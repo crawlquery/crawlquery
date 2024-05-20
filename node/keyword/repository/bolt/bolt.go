@@ -22,6 +22,13 @@ func NewRepository(dbPath string) (*Repository, error) {
 	// Ensure the bucket exists
 	err = db.Update(func(tx *bolt.Tx) error {
 		_, err := tx.CreateBucketIfNotExists([]byte("InvertedIndex"))
+
+		if err != nil {
+			return err
+		}
+
+		_, err = tx.CreateBucketIfNotExists([]byte("KeywordHashes"))
+
 		return err
 	})
 	if err != nil {
@@ -53,8 +60,10 @@ func (repo *Repository) SavePosting(keyword string, posting *domain.Posting) err
 		if err != nil {
 			return err
 		}
+
 		return b.Put([]byte(keyword), encoded)
 	})
+
 	return err
 }
 
@@ -123,6 +132,47 @@ func (repo *Repository) RemovePostingsByPageID(pageID string) error {
 		return nil
 	})
 	return err
+}
+
+func (repo *Repository) UpdateHash(token string, hash string) error {
+	err := repo.db.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte("KeywordHashes"))
+		return b.Put([]byte(token), []byte(hash))
+	})
+	return err
+}
+
+func (repo *Repository) GetHash(token string) (string, error) {
+	var hash string
+	err := repo.db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte("KeywordHashes"))
+		v := b.Get([]byte(token))
+		if v == nil {
+			return nil // Not found
+		}
+		hash = string(v)
+		return nil
+	})
+	if err != nil {
+		return "", err
+	}
+	return hash, nil
+}
+
+func (repo *Repository) GetHashes() (map[string]string, error) {
+	hashes := make(map[string]string)
+	err := repo.db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte("KeywordHashes"))
+		c := b.Cursor()
+		for k, v := c.First(); k != nil; k, v = c.Next() {
+			hashes[string(k)] = string(v)
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return hashes, nil
 }
 
 func (repo *Repository) Close() error {

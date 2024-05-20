@@ -40,7 +40,7 @@ func TestSearch(t *testing.T) {
 		keywordRepo := keywordRepo.NewRepository()
 		keywordService := keywordService.NewService(keywordRepo)
 
-		peerService := peerService.NewService(keywordService, pageService, testutil.NewTestLogger())
+		peerService := peerService.NewService(keywordService, pageService, nil, testutil.NewTestLogger())
 
 		indexService := indexService.NewService(
 			pageService,
@@ -120,7 +120,7 @@ func TestSearch(t *testing.T) {
 		keywordRepo := keywordRepo.NewRepository()
 		keywordService := keywordService.NewService(keywordRepo)
 
-		peerService := peerService.NewService(keywordService, pageService, testutil.NewTestLogger())
+		peerService := peerService.NewService(keywordService, pageService, nil, testutil.NewTestLogger())
 
 		indexService := indexService.NewService(
 			pageService,
@@ -156,7 +156,7 @@ func TestEvent(t *testing.T) {
 		keywordRepo := keywordRepo.NewRepository()
 		keywordService := keywordService.NewService(keywordRepo)
 
-		peerService := peerService.NewService(keywordService, pageService, testutil.NewTestLogger())
+		peerService := peerService.NewService(keywordService, pageService, nil, testutil.NewTestLogger())
 
 		indexService := indexService.NewService(
 			pageService,
@@ -239,6 +239,50 @@ func TestEvent(t *testing.T) {
 
 		if postings[0].Frequency != 1 {
 			t.Fatalf("expected frequency to be 1, got %d", postings[0].Frequency)
+		}
+	})
+}
+
+func TestHash(t *testing.T) {
+	t.Run("returns hash", func(t *testing.T) {
+		keywordRepo := keywordRepo.NewRepository()
+		keywordService := keywordService.NewService(keywordRepo)
+
+		indexService := indexService.NewService(nil, nil, keywordService, nil, testutil.NewTestLogger())
+
+		postings := map[string]*domain.Posting{
+			"token": {
+				PageID:    "page1",
+				Frequency: 1,
+				Positions: []int{1},
+			},
+		}
+
+		keywordService.SavePostings(postings)
+
+		indexHandler := indexHandler.NewHandler(indexService, testutil.NewTestLogger())
+
+		w := httptest.NewRecorder()
+		ctx, _ := gin.CreateTestContext(w)
+
+		ctx.Request, _ = http.NewRequest(http.MethodGet, "/hash", nil)
+
+		indexHandler.Hash(ctx)
+
+		if w.Code != http.StatusOK {
+			t.Errorf("expected status OK; got %v", w.Code)
+		}
+
+		var response map[string]string
+
+		err := json.Unmarshal(w.Body.Bytes(), &response)
+
+		if err != nil {
+			t.Fatalf("error decoding response: %v", err)
+		}
+
+		if response["hash"] == "" {
+			t.Fatalf("expected hash to not be empty")
 		}
 	})
 }

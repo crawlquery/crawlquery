@@ -41,5 +41,6 @@ func NewRouter(
 	router.POST("/crawl", crawlHandler.Crawl)
 
 	router.POST("/event", indexHandler.Event)
+	router.GET("/index/hash", indexHandler.Hash)
 	return router
 }

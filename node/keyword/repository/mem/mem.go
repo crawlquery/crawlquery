@@ -7,11 +7,13 @@ import (
 
 type Repository struct {
 	keywordPostings map[string][]*domain.Posting
+	keywordHashes   map[string]string
 }
 
 func NewRepository() *Repository {
 	return &Repository{
 		keywordPostings: make(map[string][]*domain.Posting),
+		keywordHashes:   make(map[string]string),
 	}
 }
 
@@ -55,4 +57,21 @@ func (r *Repository) RemovePostingsByPageID(pageID string) error {
 		}
 	}
 	return nil
+}
+
+func (r *Repository) UpdateHash(token string, hash string) error {
+	r.keywordHashes[token] = hash
+	return nil
+}
+
+func (r *Repository) GetHash(token string) (string, error) {
+	hash, ok := r.keywordHashes[token]
+	if !ok {
+		return "", nil
+	}
+	return hash, nil
+}
+
+func (r *Repository) GetHashes() (map[string]string, error) {
+	return r.keywordHashes, nil
 }

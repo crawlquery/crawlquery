@@ -214,3 +214,7 @@ func (s *Service) ApplyIndexEvent(event *domain.IndexEvent) error {
 
 	return nil
 }
+
+func (s *Service) Hash() (string, error) {
+	return s.keywordService.Hash()
+}

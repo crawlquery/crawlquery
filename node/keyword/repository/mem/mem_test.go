@@ -81,3 +81,43 @@ func TestRemovePostingsByPageID(t *testing.T) {
 		t.Fatalf("expected posting to have pageID 'page3', got '%s'", postings[0].PageID)
 	}
 }
+
+func TestUpdateHash(t *testing.T) {
+	r := NewRepository()
+	err := r.UpdateHash("token", "hash")
+	if err != nil {
+		t.Fatalf("error updating keyword hash: %v", err)
+	}
+	hash, err := r.GetHash("token")
+	if err != nil {
+		t.Fatalf("error getting keyword hash: %v", err)
+	}
+	if hash != "hash" {
+		t.Fatalf("expected hash to be 'hash', got '%s'", hash)
+	}
+}
+
+func TestGetHashes(t *testing.T) {
+	r := NewRepository()
+	err := r.UpdateHash("token", "hash")
+	if err != nil {
+		t.Fatalf("error updating keyword hash: %v", err)
+	}
+	hash, err := r.GetHash("token")
+	if err != nil {
+		t.Fatalf("error getting keyword hash: %v", err)
+	}
+	if hash != "hash" {
+		t.Fatalf("expected hash to be 'hash', got '%s'", hash)
+	}
+
+	hashes, err := r.GetHashes()
+
+	if err != nil {
+		t.Fatalf("error getting keyword hashes: %v", err)
+	}
+
+	if len(hashes) != 1 {
+		t.Fatalf("expected 1 hash, got %d", len(hashes))
+	}
+}

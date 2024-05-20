@@ -3,6 +3,7 @@ package main
 import (
 	crawlHandler "crawlquery/node/crawl/handler"
 	crawlService "crawlquery/node/crawl/service"
+	"crawlquery/node/domain"
 	htmlRepo "crawlquery/node/html/repository/disk"
 	htmlService "crawlquery/node/html/service"
 
@@ -11,6 +12,8 @@ import (
 
 	keywordRepo "crawlquery/node/keyword/repository/bolt"
 	keywordService "crawlquery/node/keyword/service"
+
+	peerService "crawlquery/node/peer/service"
 
 	indexHandler "crawlquery/node/index/handler"
 	indexService "crawlquery/node/index/service"
@@ -26,6 +29,16 @@ func main() {
 	logger, _ := zap.NewProduction()
 	defer logger.Sync()
 	sugar := logger.Sugar()
+
+	var id string
+	var hostname string
+	var port uint
+	var key string
+
+	flag.StringVar(&id, "id", "node1", "node id")
+	flag.StringVar(&hostname, "hostname", "localhost", "node hostname")
+	flag.UintVar(&port, "port", 8080, "node port")
+	flag.StringVar(&key, "key", "secret", "")
 
 	var portFlag string
 	var htmlStoragePath string
@@ -59,7 +72,12 @@ func main() {
 	htmlService := htmlService.NewService(htmlRepo)
 	pageService := pageService.NewService(pageRepo)
 	keywordService := keywordService.NewService(keywordRepo)
-	indexService := indexService.NewService(pageService, htmlService, keywordService, sugar)
+	peerService := peerService.NewService(keywordService, pageService, &domain.Peer{
+		ID:       id,
+		Hostname: hostname,
+		Port:     port,
+	}, sugar)
+	indexService := indexService.NewService(pageService, htmlService, keywordService, peerService, sugar)
 	crawlService := crawlService.NewService(htmlService, pageService, indexService, sugar)
 
 	// Create handlers
