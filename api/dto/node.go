@@ -25,6 +25,13 @@ type Node struct {
 	CreatedAt time.Time `json:"created_at"`
 }
 
+type PublicNode struct {
+	ID       string `json:"id"`
+	Hostname string `json:"hostname"`
+	Port     uint   `json:"port"`
+	ShardID  uint   `json:"shard_id"`
+}
+
 type CreateNodeResponse struct {
 	Node *Node `json:"node"`
 }
@@ -92,6 +99,25 @@ func NewAuthenticateNodeResponse(n *domain.Node) *AuthenticateNodeResponse {
 			ShardID:   n.ShardID,
 			CreatedAt: n.CreatedAt,
 		},
+	}
+
+	return res
+}
+
+type ListNodesByShardResponse struct {
+	Nodes []*PublicNode `json:"nodes"`
+}
+
+func NewListNodesByShardResponse(nodes []*domain.Node) *ListNodesByShardResponse {
+	res := &ListNodesByShardResponse{}
+
+	for _, n := range nodes {
+		res.Nodes = append(res.Nodes, &PublicNode{
+			ID:       n.ID,
+			Hostname: n.Hostname,
+			Port:     n.Port,
+			ShardID:  n.ShardID,
+		})
 	}
 
 	return res

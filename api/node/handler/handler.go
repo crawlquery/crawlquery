@@ -5,6 +5,7 @@ import (
 	"crawlquery/api/dto"
 	"crawlquery/api/errorutil"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -36,6 +37,26 @@ func (h *NodeHandler) Create(c *gin.Context) {
 	}
 
 	c.JSON(201, dto.NewCreateNodeResponse(node))
+}
+
+func (h *NodeHandler) ListByShardID(c *gin.Context) {
+
+	shardID := c.Param("shardID")
+	shardIdUint, err := strconv.ParseUint(shardID, 10, 64)
+
+	if err != nil {
+		errorutil.HandleGinError(c, err, http.StatusBadRequest)
+		return
+	}
+
+	nodes, err := h.nodeService.ListByShardID(uint(shardIdUint))
+
+	if err != nil {
+		errorutil.HandleGinError(c, err, http.StatusBadRequest)
+		return
+	}
+
+	c.JSON(200, dto.NewListNodesByShardResponse(nodes))
 }
 
 func (h *NodeHandler) ListByAccountID(c *gin.Context) {

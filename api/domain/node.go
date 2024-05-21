@@ -46,6 +46,7 @@ type NodeService interface {
 type NodeHandler interface {
 	Create(c *gin.Context)
 	ListByAccountID(c *gin.Context)
+	ListByShardID(c *gin.Context)
 	Auth(c *gin.Context)
 }
 

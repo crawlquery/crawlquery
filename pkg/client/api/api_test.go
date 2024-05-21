@@ -91,3 +91,69 @@ func TestAuthenticateNode(t *testing.T) {
 		}
 	})
 }
+
+func TestListNodesByShardID(t *testing.T) {
+	t.Run("should return nodes by shard ID", func(t *testing.T) {
+		mockRes := &dto.ListNodesResponse{
+			Nodes: []*dto.Node{
+				{
+					ID:        "123",
+					Key:       "123",
+					AccountID: "123",
+					Hostname:  "localhost",
+					Port:      8080,
+					ShardID:   1,
+					CreatedAt: time.Now(),
+				},
+				{
+					ID:        "456",
+					Key:       "456",
+					AccountID: "456",
+					Hostname:  "localhost",
+					Port:      8080,
+					ShardID:   1,
+					CreatedAt: time.Now(),
+				},
+			},
+		}
+
+		defer gock.Off()
+
+		gock.New("http://localhost:8080").
+			Get("shards/1/nodes").
+			Reply(200).
+			JSON(mockRes)
+
+		client := api.NewClient("http://localhost:8080", testutil.NewTestLogger())
+
+		resNodes, err := client.ListNodesByShardID(1)
+
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+
+		if len(resNodes) != len(mockRes.Nodes) {
+			t.Errorf("expected %d nodes, got %d", len(mockRes.Nodes), len(resNodes))
+		}
+
+		for i, resNode := range resNodes {
+			mockNode := mockRes.Nodes[i]
+
+			if resNode.ID != mockNode.ID {
+				t.Errorf("expected node ID: %s, got: %s", mockNode.ID, resNode.ID)
+			}
+
+			if resNode.Hostname != mockNode.Hostname {
+				t.Errorf("expected node hostname: %s, got: %s", mockNode.Hostname, resNode.Hostname)
+			}
+
+			if resNode.Port != mockNode.Port {
+				t.Errorf("expected node port: %d, got: %d", mockNode.Port, resNode.Port)
+			}
+
+			if resNode.ShardID != mockNode.ShardID {
+				t.Errorf("expected node shard ID: %d, got: %d", mockNode.ShardID, resNode.ShardID)
+			}
+		}
+	})
+}

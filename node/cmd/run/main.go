@@ -93,6 +93,23 @@ func main() {
 	indexHandler := indexHandler.NewHandler(indexService, sugar)
 	crawlHandler := crawlHandler.NewHandler(crawlService, sugar)
 
+	nodesInShard, err := api.ListNodesByShardID(node.ShardID)
+
+	if err != nil {
+		sugar.Fatalf("Error listing nodes by shard ID: %v", err)
+	}
+
+	for _, n := range nodesInShard {
+		if n.ID == node.ID {
+			continue
+		}
+		peerService.AddPeer(&domain.Peer{
+			ID:       n.ID,
+			Hostname: n.Hostname,
+			Port:     n.Port,
+		})
+	}
+
 	r := router.NewRouter(indexHandler, crawlHandler)
 
 	r.Run(fmt.Sprintf(":%d", node.Port))

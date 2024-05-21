@@ -247,3 +247,70 @@ func TestAuth(t *testing.T) {
 		}
 	})
 }
+
+func TestListByShard(t *testing.T) {
+	t.Run("should return nodes by shard", func(t *testing.T) {
+
+		account := &domain.Account{
+			ID: util.UUID(),
+		}
+		accSvc, _ := factory.AccountServiceWithAccount(account)
+
+		shardRepo := shardRepo.NewRepository()
+		shardRepo.Create(&domain.Shard{
+			ID: 0,
+		})
+		shardSvc := shardSvc.NewService(shardRepo, testutil.NewTestLogger())
+
+		repo := mem.NewRepository()
+		svc := service.NewService(repo, accSvc, shardSvc, testutil.NewTestLogger())
+		handler := handler.NewHandler(svc)
+
+		node1 := &domain.Node{
+			ID:        util.UUID(),
+			Key:       "123",
+			AccountID: account.ID,
+			Hostname:  "localhost",
+			Port:      8080,
+			ShardID:   0,
+		}
+
+		node2 := &domain.Node{
+			ID:        util.UUID(),
+			Key:       "123",
+			AccountID: account.ID,
+			Hostname:  "localhost",
+			Port:      8080,
+			ShardID:   0,
+		}
+
+		repo.Create(node1)
+		repo.Create(node2)
+
+		responseWriter := httptest.NewRecorder()
+		ctx, _ := gin.CreateTestContext(responseWriter)
+		ctx.Params = []gin.Param{
+			{
+				Key:   "shardID",
+				Value: "0",
+			},
+		}
+
+		handler.ListByShardID(ctx)
+
+		if ctx.Writer.Status() != http.StatusOK {
+			t.Errorf("Expected status to be 200, got %d", ctx.Writer.Status())
+		}
+
+		var res dto.ListNodesByShardResponse
+		err := json.NewDecoder(responseWriter.Body).Decode(&res)
+
+		if err != nil {
+			t.Fatalf("Error decoding response: %v", err)
+		}
+
+		if len(res.Nodes) != 2 {
+			t.Errorf("Expected 2 nodes, got %d", len(res.Nodes))
+		}
+	})
+}
