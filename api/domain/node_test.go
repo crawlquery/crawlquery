@@ -12,6 +12,68 @@ func TestNodeValidate(t *testing.T) {
 	t.Run("valid", func(t *testing.T) {
 		node := &domain.Node{
 			ID:        util.UUID(),
+			Key:       util.UUID(),
+			AccountID: util.UUID(),
+			Hostname:  "testnode",
+			Port:      8080,
+			ShardID:   1,
+			CreatedAt: time.Now(),
+		}
+
+		err := node.Validate()
+
+		if err != nil {
+			t.Errorf("Expected node to be valid, got error: %v", err)
+		}
+	})
+
+	t.Run("key is required", func(t *testing.T) {
+		node := &domain.Node{
+			ID:        util.UUID(),
+			AccountID: util.UUID(),
+			Hostname:  "testnode",
+			Port:      8080,
+			ShardID:   1,
+			CreatedAt: time.Now(),
+		}
+
+		err := node.Validate()
+
+		if err == nil {
+			t.Errorf("Expected node to be invalid, got nil")
+		}
+
+		if !strings.Contains(err.Error(), "Node.Key") {
+			t.Errorf("Expected error to contain 'Node.Key', got %v", err)
+		}
+	})
+
+	t.Run("key is uuid", func(t *testing.T) {
+		node := &domain.Node{
+			ID:        util.UUID(),
+			Key:       "fails",
+			AccountID: util.UUID(),
+			Hostname:  "testnode",
+			Port:      8080,
+			ShardID:   1,
+			CreatedAt: time.Now(),
+		}
+
+		err := node.Validate()
+
+		if err == nil {
+			t.Errorf("Expected node to be invalid, got nil")
+		}
+
+		if !strings.Contains(err.Error(), "Node.Key") {
+			t.Errorf("Expected error to contain 'Node.Key', got %v", err)
+		}
+	})
+
+	t.Run("key is valid", func(t *testing.T) {
+		node := &domain.Node{
+			ID:        util.UUID(),
+			Key:       util.UUID(),
 			AccountID: util.UUID(),
 			Hostname:  "testnode",
 			Port:      8080,

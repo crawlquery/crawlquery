@@ -58,6 +58,10 @@ func TestCreate(t *testing.T) {
 			t.Errorf("Expected Port to be 8080, got %d", node.Port)
 		}
 
+		if node.Key == "" {
+			t.Errorf("Expected Key to be set")
+		}
+
 		list, err := nodeRepo.List()
 
 		if err != nil {

@@ -137,3 +137,113 @@ func TestCreate(t *testing.T) {
 		}
 	})
 }
+
+func TestAuth(t *testing.T) {
+	t.Run("should return 401 if no account", func(t *testing.T) {
+
+		repo := mem.NewRepository()
+		svc := service.NewService(repo, nil, nil, testutil.NewTestLogger())
+		handler := handler.NewHandler(svc)
+
+		responseWriter := httptest.NewRecorder()
+		ctx, _ := gin.CreateTestContext(responseWriter)
+		body := `{"key":"123"}`
+		ctx.Request = httptest.NewRequest("POST", "/auth/node", bytes.NewBuffer([]byte(body)))
+
+		handler.Auth(ctx)
+
+		if ctx.Writer.Status() != http.StatusUnauthorized {
+			t.Errorf("Expected status to be 401, got %d", ctx.Writer.Status())
+		}
+	})
+
+	t.Run("should return 400 if no key set", func(t *testing.T) {
+
+		account := &domain.Account{
+			ID: util.UUID(),
+		}
+		accSvc, _ := factory.AccountServiceWithAccount(account)
+
+		repo := mem.NewRepository()
+		svc := service.NewService(repo, accSvc, nil, testutil.NewTestLogger())
+		handler := handler.NewHandler(svc)
+
+		responseWriter := httptest.NewRecorder()
+		ctx, _ := gin.CreateTestContext(responseWriter)
+		ctx.Set("account", account)
+		body := `{}`
+		ctx.Request = httptest.NewRequest("POST", "/auth/node", bytes.NewBuffer([]byte(body)))
+
+		handler.Auth(ctx)
+
+		if ctx.Writer.Status() != http.StatusBadRequest {
+			t.Errorf("Expected status to be 400, got %d", ctx.Writer.Status())
+		}
+	})
+
+	t.Run("should return node if key is correct", func(t *testing.T) {
+
+		account := &domain.Account{
+			ID: util.UUID(),
+		}
+		accSvc, _ := factory.AccountServiceWithAccount(account)
+
+		repo := mem.NewRepository()
+		svc := service.NewService(repo, accSvc, nil, testutil.NewTestLogger())
+		handler := handler.NewHandler(svc)
+
+		node := &domain.Node{
+			ID:        util.UUID(),
+			Key:       "123",
+			AccountID: account.ID,
+			Hostname:  "localhost",
+			Port:      8080,
+			ShardID:   1,
+		}
+
+		repo.Create(node)
+
+		responseWriter := httptest.NewRecorder()
+		ctx, _ := gin.CreateTestContext(responseWriter)
+		ctx.Set("account", account)
+		body := `{"key":"123"}`
+		ctx.Request = httptest.NewRequest("POST", "/auth/node", bytes.NewBuffer([]byte(body)))
+
+		handler.Auth(ctx)
+
+		if ctx.Writer.Status() != http.StatusOK {
+			t.Errorf("Expected status to be 200, got %d", ctx.Writer.Status())
+		}
+
+		var res dto.AuthenticateNodeResponse
+		err := json.NewDecoder(responseWriter.Body).Decode(&res)
+
+		if err != nil {
+			t.Fatalf("Error decoding response: %v", err)
+		}
+
+		if res.Node.ID != node.ID {
+			t.Errorf("Expected ID to be %s, got %s", node.ID, res.Node.ID)
+		}
+
+		if res.Node.Key != node.Key {
+			t.Errorf("Expected Key to be %s, got %s", node.Key, res.Node.Key)
+		}
+
+		if res.Node.AccountID != node.AccountID {
+			t.Errorf("Expected AccountID to be %s, got %s", node.AccountID, res.Node.AccountID)
+		}
+
+		if res.Node.Hostname != node.Hostname {
+			t.Errorf("Expected Hostname to be %s, got %s", node.Hostname, res.Node.Hostname)
+		}
+
+		if res.Node.Port != node.Port {
+			t.Errorf("Expected Port to be %d, got %d", node.Port, res.Node.Port)
+		}
+
+		if res.Node.ShardID != node.ShardID {
+			t.Errorf("Expected ShardID to be %d, got %d", node.ShardID, res.Node.ShardID)
+		}
+	})
+}

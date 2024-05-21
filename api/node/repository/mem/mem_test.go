@@ -145,3 +145,71 @@ func TestListByAccountID(t *testing.T) {
 		}
 	})
 }
+
+func TestGetNodeByKey(t *testing.T) {
+	t.Run("can get node by key", func(t *testing.T) {
+		repo := NewRepository()
+
+		node := &domain.Node{
+			ID:        util.UUID(),
+			AccountID: util.UUID(),
+			Hostname:  "testnode",
+			Port:      8080,
+			ShardID:   1,
+			CreatedAt: time.Now(),
+		}
+
+		repo.nodes[node.ID] = node
+
+		check, err := repo.GetNodeByKey(node.Key)
+
+		if err != nil {
+			t.Fatalf("Error getting node: %v", err)
+		}
+
+		if check.ID != node.ID {
+			t.Errorf("Expected ID to be %s, got %s", node.ID, check.ID)
+		}
+
+		if check.AccountID != node.AccountID {
+			t.Errorf("Expected AccountID to be %s, got %s", node.AccountID, check.AccountID)
+		}
+
+		if check.Hostname != node.Hostname {
+			t.Errorf("Expected Hostname to be %s, got %s", node.Hostname, check.Hostname)
+		}
+
+		if check.Port != node.Port {
+			t.Errorf("Expected Port to be %d, got %d", node.Port, check.Port)
+		}
+
+		if check.ShardID != node.ShardID {
+			t.Errorf("Expected ShardID to be %d, got %d", node.ShardID, check.ShardID)
+		}
+
+		if check.CreatedAt != node.CreatedAt {
+			t.Errorf("Expected CreatedAt to be %v, got %v", node.CreatedAt, check.CreatedAt)
+		}
+	})
+
+	t.Run("should return an error if the key is incorrect", func(t *testing.T) {
+		repo := NewRepository()
+
+		node := &domain.Node{
+			ID:        util.UUID(),
+			AccountID: util.UUID(),
+			Hostname:  "testnode",
+			Port:      8080,
+			ShardID:   1,
+			CreatedAt: time.Now(),
+		}
+
+		repo.nodes[node.ID] = node
+
+		_, err := repo.GetNodeByKey("incorrect")
+
+		if err != domain.ErrNodeNotFound {
+			t.Fatalf("Expected error to be ErrNodeNotFound, got %v", err)
+		}
+	})
+}

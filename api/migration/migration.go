@@ -25,6 +25,7 @@ var migrations = []Migration{
 		SQL: `CREATE TABLE nodes (
 		id VARCHAR(36) PRIMARY KEY,
 		account_id VARCHAR(36) NOT NULL,
+		` + "`key`" + ` VARCHAR(36) NOT NULL UNIQUE,
 		hostname VARCHAR(255) NOT NULL,
 		port INT UNSIGNED NOT NULL,
 		shard_id INT UNSIGNED NOT NULL,

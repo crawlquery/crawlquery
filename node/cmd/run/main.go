@@ -6,6 +6,8 @@ import (
 	"crawlquery/node/domain"
 	htmlRepo "crawlquery/node/html/repository/disk"
 	htmlService "crawlquery/node/html/service"
+	"crawlquery/pkg/client/api"
+	"fmt"
 
 	pageRepo "crawlquery/node/page/repository/bolt"
 	pageService "crawlquery/node/page/service"
@@ -30,22 +32,16 @@ func main() {
 	defer logger.Sync()
 	sugar := logger.Sugar()
 
-	var id string
-	var hostname string
-	var port uint
 	var key string
+	var apiURL string
 
-	flag.StringVar(&id, "id", "node1", "node id")
-	flag.StringVar(&hostname, "hostname", "localhost", "node hostname")
-	flag.UintVar(&port, "port", 8080, "node port")
 	flag.StringVar(&key, "key", "secret", "")
+	flag.StringVar(&apiURL, "api", "http://localhost:8080", "API BaseURL")
 
-	var portFlag string
 	var htmlStoragePath string
 	var pageDBPath string
 	var keywordDBPath string
 
-	flag.StringVar(&portFlag, "port", "9090", "port to run the server on")
 	flag.StringVar(&htmlStoragePath, "htmlstorage", "/tmp/htmlstorage", "path to the html storage")
 	flag.StringVar(&pageDBPath, "pagedb", "/tmp/pagedb.bolt", "path to the pagedb")
 	flag.StringVar(&keywordDBPath, "keyworddb", "/tmp/keyworddb.bolt", "path to the keyworddb")
@@ -68,14 +64,23 @@ func main() {
 		sugar.Fatalf("Error creating keyword repository: %v", err)
 	}
 
+	api := api.NewClient(apiURL, sugar)
+
+	// Authenticate with the API
+	node, err := api.AuthenticateNode(key)
+
+	if err != nil {
+		sugar.Fatalf("Error authenticating node: %v", err)
+	}
+
 	// Create services
 	htmlService := htmlService.NewService(htmlRepo)
 	pageService := pageService.NewService(pageRepo)
 	keywordService := keywordService.NewService(keywordRepo)
 	peerService := peerService.NewService(keywordService, pageService, &domain.Peer{
-		ID:       id,
-		Hostname: hostname,
-		Port:     port,
+		ID:       node.ID,
+		Hostname: node.Hostname,
+		Port:     node.Port,
 	}, sugar)
 	indexService := indexService.NewService(pageService, htmlService, keywordService, peerService, sugar)
 	crawlService := crawlService.NewService(htmlService, pageService, indexService, sugar)
@@ -86,5 +91,5 @@ func main() {
 
 	r := router.NewRouter(indexHandler, crawlHandler)
 
-	r.Run(":" + portFlag)
+	r.Run(fmt.Sprintf(":%d", node.Port))
 }

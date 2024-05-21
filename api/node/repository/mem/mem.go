@@ -53,3 +53,13 @@ func (r *Repository) ListByAccountID(accountID string) ([]*domain.Node, error) {
 
 	return nodes, nil
 }
+
+func (r *Repository) GetNodeByKey(key string) (*domain.Node, error) {
+	for _, n := range r.nodes {
+		if n.Key == key {
+			return n, nil
+		}
+	}
+
+	return nil, domain.ErrNodeNotFound
+}

@@ -9,9 +9,11 @@ import (
 
 var ErrInvalidAccountID = errors.New("invalid account id")
 var ErrNodeAlreadyExists = errors.New("node already exists")
+var ErrNodeNotFound = errors.New("node not found")
 
 type Node struct {
 	ID        string    `validate:"required,uuid"`
+	Key       string    `validate:"required,uuid"`
 	AccountID string    `validate:"required,uuid"`
 	Hostname  string    `validate:"required,hostname"`
 	Port      uint      `validate:"min=0,max=65535"`
@@ -27,6 +29,7 @@ type NodeRepository interface {
 	Create(*Node) error
 	List() ([]*Node, error)
 	ListByAccountID(accountID string) ([]*Node, error)
+	GetNodeByKey(key string) (*Node, error)
 }
 
 type NodeService interface {
@@ -37,11 +40,13 @@ type NodeService interface {
 	ListByAccountID(accountID string) ([]*Node, error)
 	ListByShardID(shardID uint) ([]*Node, error)
 	SendCrawlJob(node *Node, crawlJob *CrawlJob) error
+	Auth(key string) (*Node, error)
 }
 
 type NodeHandler interface {
 	Create(c *gin.Context)
 	ListByAccountID(c *gin.Context)
+	Auth(c *gin.Context)
 }
 
 type AllocationService interface {

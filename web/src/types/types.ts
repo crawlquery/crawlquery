@@ -15,6 +15,7 @@ export interface Result {
 
 export interface Node {
     id: string;
+    key: string;
     hostname: string;
     port: number;
     shard_id: number;

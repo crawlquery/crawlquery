@@ -31,6 +31,7 @@ func TestNewCreateNodeResponse(t *testing.T) {
 	t.Run("should return correct CreateNodeResponse from Node", func(t *testing.T) {
 		node := &domain.Node{
 			ID:        util.UUID(),
+			Key:       util.UUID(),
 			AccountID: util.UUID(),
 			Hostname:  "localhost",
 			Port:      8080,
@@ -41,6 +42,10 @@ func TestNewCreateNodeResponse(t *testing.T) {
 
 		if resp.Node.ID != node.ID {
 			t.Errorf("expected: %s, got: %s", node.ID, resp.Node.ID)
+		}
+
+		if resp.Node.Key != node.Key {
+			t.Errorf("expected: %s, got: %s", node.Key, resp.Node.Key)
 		}
 
 		if resp.Node.AccountID != node.AccountID {
@@ -67,6 +72,7 @@ func TestNewListNodesResponse(t *testing.T) {
 		nodes := []*domain.Node{
 			{
 				ID:        util.UUID(),
+				Key:       util.UUID(),
 				AccountID: util.UUID(),
 				Hostname:  "localhost",
 				Port:      8080,
@@ -74,6 +80,7 @@ func TestNewListNodesResponse(t *testing.T) {
 			},
 			{
 				ID:        util.UUID(),
+				Key:       util.UUID(),
 				AccountID: util.UUID(),
 				Hostname:  "localhost",
 				Port:      8080,
@@ -92,6 +99,10 @@ func TestNewListNodesResponse(t *testing.T) {
 				t.Errorf("expected: %s, got: %s", n.ID, resp.Nodes[i].ID)
 			}
 
+			if resp.Nodes[i].Key != n.Key {
+				t.Errorf("expected: %s, got: %s", n.Key, resp.Nodes[i].Key)
+			}
+
 			if resp.Nodes[i].AccountID != n.AccountID {
 				t.Errorf("expected: %s, got: %s", n.AccountID, resp.Nodes[i].AccountID)
 			}
@@ -107,6 +118,56 @@ func TestNewListNodesResponse(t *testing.T) {
 			if resp.Nodes[i].ShardID != n.ShardID {
 				t.Errorf("expected: %d, got: %d", n.ShardID, resp.Nodes[i].ShardID)
 			}
+		}
+	})
+}
+
+func TestNewAuthenticateNodeRequest(t *testing.T) {
+	t.Run("should return correct AuthenticateNodeRequest", func(t *testing.T) {
+		key := util.UUID()
+		req := dto.NewAuthenticateNodeRequest(key)
+
+		if req.Key != key {
+			t.Errorf("expected: %s, got: %s", key, req.Key)
+		}
+	})
+}
+
+func TestNewAuthenticateNodeResponse(t *testing.T) {
+	t.Run("should return correct AuthenticateNodeResponse from Node", func(t *testing.T) {
+		node := &domain.Node{
+			ID:        util.UUID(),
+			Key:       util.UUID(),
+			AccountID: util.UUID(),
+			Hostname:  "localhost",
+			Port:      8080,
+			ShardID:   1,
+		}
+
+		resp := dto.NewAuthenticateNodeResponse(node)
+
+		if resp.Node.ID != node.ID {
+			t.Errorf("expected: %s, got: %s", node.ID, resp.Node.ID)
+		}
+
+		if resp.Node.Key != node.Key {
+			t.Errorf("expected: %s, got: %s", node.Key, resp.Node.Key)
+		}
+
+		if resp.Node.AccountID != node.AccountID {
+			t.Errorf("expected: %s, got: %s", node.AccountID, resp.Node.AccountID)
+		}
+
+		if resp.Node.Hostname != node.Hostname {
+			t.Errorf("expected: %s, got: %s", node.Hostname, resp.Node.Hostname)
+		}
+
+		if resp.Node.Port != node.Port {
+			t.Errorf("expected: %d, got: %d", node.Port, resp.Node.Port)
+		}
+
+		if resp.Node.ShardID != node.ShardID {
+			t.Errorf("expected: %d, got: %d", node.ShardID, resp.Node.ShardID)
 		}
 	})
 }

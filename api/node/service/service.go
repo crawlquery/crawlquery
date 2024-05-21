@@ -62,6 +62,7 @@ func (cs *Service) Create(accountID, hostname string, port uint) (*domain.Node, 
 	node := &domain.Node{
 		ID:        util.UUID(),
 		AccountID: accountID,
+		Key:       util.UUID(),
 		Hostname:  hostname,
 		Port:      port,
 		CreatedAt: time.Now(),
@@ -236,4 +237,14 @@ func (s *Service) SendCrawlJob(node *domain.Node, job *domain.CrawlJob) error {
 	}
 
 	return nil
+}
+
+func (s *Service) Auth(key string) (*domain.Node, error) {
+	node, err := s.repo.GetNodeByKey(key)
+
+	if err != nil {
+		return nil, domain.ErrNodeNotFound
+	}
+
+	return node, nil
 }

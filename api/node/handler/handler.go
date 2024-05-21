@@ -49,3 +49,21 @@ func (h *NodeHandler) ListByAccountID(c *gin.Context) {
 
 	c.JSON(200, dto.NewListNodesResponse(nodes))
 }
+
+func (h *NodeHandler) Auth(c *gin.Context) {
+	var req dto.AuthenticateNodeRequest
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		errorutil.HandleGinError(c, err, http.StatusBadRequest)
+		return
+	}
+
+	node, err := h.nodeService.Auth(req.Key)
+
+	if err != nil {
+		errorutil.HandleGinError(c, err, http.StatusUnauthorized)
+		return
+	}
+
+	c.JSON(200, dto.NewAuthenticateNodeResponse(node))
+}

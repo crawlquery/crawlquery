@@ -60,6 +60,11 @@ func (m *MockNodeHandler) ListByAccountID(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Nodes listed"})
 }
 
+func (m *MockNodeHandler) Auth(c *gin.Context) {
+	m.Called(c)
+	c.JSON(http.StatusOK, gin.H{"message": "Node authenticated"})
+}
+
 type MockSearchHandler struct {
 	mock.Mock
 }
@@ -84,6 +89,7 @@ func setupRouterWithMocks() map[string]interface{} {
 	mockNodeHandler := new(MockNodeHandler)
 	mockNodeHandler.On("Create", mock.Anything).Return()
 	mockNodeHandler.On("ListByAccountID", mock.Anything).Return()
+	mockNodeHandler.On("Auth", mock.Anything).Return()
 
 	mockSearchHandler := new(MockSearchHandler)
 	mockSearchHandler.On("Search", mock.Anything).Return()
@@ -259,4 +265,19 @@ func TestNodeListByAccountIDEndpoint(t *testing.T) {
 	assert.Equal(t, http.StatusOK, w.Code)
 
 	assert.Contains(t, w.Body.String(), "Nodes listed")
+}
+
+func TestNodeAuthEndpoint(t *testing.T) {
+	// Set the router to test mode
+	ifs := setupRouterWithMocks()
+
+	testRouter := ifs["testRouter"].(*gin.Engine)
+
+	w := httptest.NewRecorder()
+
+	req, _ := http.NewRequest("POST", "/auth/node", nil)
+
+	testRouter.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
 }

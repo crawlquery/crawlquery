@@ -15,21 +15,25 @@ func (r *CreateNodeRequest) ToJSON() ([]byte, error) {
 	return json.Marshal(r)
 }
 
+type Node struct {
+	ID        string    `json:"id"`
+	Key       string    `json:"key"`
+	AccountID string    `json:"account_id"`
+	Hostname  string    `json:"hostname"`
+	Port      uint      `json:"port"`
+	ShardID   uint      `json:"shard_id"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
 type CreateNodeResponse struct {
-	Node struct {
-		ID        string    `json:"id"`
-		AccountID string    `json:"account_id"`
-		Hostname  string    `json:"hostname"`
-		Port      uint      `json:"port"`
-		ShardID   uint      `json:"shard_id"`
-		CreatedAt time.Time `json:"created_at"`
-	} `json:"node"`
+	Node *Node `json:"node"`
 }
 
 func NewCreateNodeResponse(n *domain.Node) *CreateNodeResponse {
 	res := &CreateNodeResponse{}
 
 	res.Node.ID = n.ID
+	res.Node.Key = n.Key
 	res.Node.AccountID = n.AccountID
 	res.Node.Hostname = n.Hostname
 	res.Node.Port = n.Port
@@ -40,35 +44,52 @@ func NewCreateNodeResponse(n *domain.Node) *CreateNodeResponse {
 }
 
 type ListNodesResponse struct {
-	Nodes []*struct {
-		ID        string    `json:"id"`
-		AccountID string    `json:"account_id"`
-		Hostname  string    `json:"hostname"`
-		Port      uint      `json:"port"`
-		ShardID   uint      `json:"shard_id"`
-		CreatedAt time.Time `json:"created_at"`
-	} `json:"nodes"`
+	Nodes []*Node `json:"nodes"`
 }
 
 func NewListNodesResponse(nodes []*domain.Node) *ListNodesResponse {
 	res := &ListNodesResponse{}
 
 	for _, n := range nodes {
-		res.Nodes = append(res.Nodes, &struct {
-			ID        string    `json:"id"`
-			AccountID string    `json:"account_id"`
-			Hostname  string    `json:"hostname"`
-			Port      uint      `json:"port"`
-			ShardID   uint      `json:"shard_id"`
-			CreatedAt time.Time `json:"created_at"`
-		}{
+		res.Nodes = append(res.Nodes, &Node{
 			ID:        n.ID,
+			Key:       n.Key,
 			AccountID: n.AccountID,
 			Hostname:  n.Hostname,
 			Port:      n.Port,
 			ShardID:   n.ShardID,
 			CreatedAt: n.CreatedAt,
 		})
+	}
+
+	return res
+}
+
+type AuthenticateNodeRequest struct {
+	Key string `json:"key" binding:"required"`
+}
+
+func NewAuthenticateNodeRequest(key string) *AuthenticateNodeRequest {
+	return &AuthenticateNodeRequest{
+		Key: key,
+	}
+}
+
+type AuthenticateNodeResponse struct {
+	Node *Node `json:"node"`
+}
+
+func NewAuthenticateNodeResponse(n *domain.Node) *AuthenticateNodeResponse {
+	res := &AuthenticateNodeResponse{
+		Node: &Node{
+			ID:        n.ID,
+			Key:       n.Key,
+			AccountID: n.AccountID,
+			Hostname:  n.Hostname,
+			Port:      n.Port,
+			ShardID:   n.ShardID,
+			CreatedAt: n.CreatedAt,
+		},
 	}
 
 	return res

@@ -22,6 +22,7 @@ func TestCreate(t *testing.T) {
 		repo := mysql.NewRepository(db)
 		node := &domain.Node{
 			ID:        util.UUID(),
+			Key:       util.UUID(),
 			AccountID: util.UUID(),
 			Hostname:  "testnode",
 		}
@@ -34,8 +35,9 @@ func TestCreate(t *testing.T) {
 		}
 
 		var check domain.Node
-		err = db.QueryRow("SELECT id, account_id, hostname, port, shard_id, created_at FROM nodes WHERE id = ?", node.ID).Scan(
+		err = db.QueryRow("SELECT id, `key`, account_id, hostname, port, shard_id, created_at FROM nodes WHERE id = ?", node.ID).Scan(
 			&check.ID,
+			&check.Key,
 			&check.AccountID,
 			&check.Hostname,
 			&check.Port,
@@ -45,6 +47,18 @@ func TestCreate(t *testing.T) {
 
 		if err != nil {
 			t.Fatalf("Error getting node: %v", err)
+		}
+
+		if check.ID != node.ID {
+			t.Errorf("Expected ID to be %s, got %s", node.ID, check.ID)
+		}
+
+		if check.AccountID != node.AccountID {
+			t.Errorf("Expected AccountID to be %s, got %s", node.AccountID, check.AccountID)
+		}
+
+		if check.Key != node.Key {
+			t.Errorf("Expected Key to be %s, got %s", node.Key, check.Key)
 		}
 
 		if check.Hostname != node.Hostname {
@@ -202,6 +216,65 @@ func TestListByAccounID(t *testing.T) {
 
 		if nodes[0].Port != node.Port {
 			t.Errorf("Expected port to be %d, got %d", node.Port, nodes[0].Port)
+		}
+	})
+}
+
+func TestGetNodeByKey(t *testing.T) {
+	t.Run("can get node by key", func(t *testing.T) {
+		db := testutil.CreateTestMysqlDB()
+		defer db.Close()
+		migration.Up(db)
+
+		repo := mysql.NewRepository(db)
+		node := &domain.Node{
+			ID:        util.UUID(),
+			AccountID: "account1",
+			Hostname:  "testnode",
+			Port:      8080,
+			ShardID:   1,
+		}
+
+		defer db.Exec("DELETE FROM nodes WHERE id = ?", node.ID)
+
+		err := repo.Create(node)
+
+		if err != nil {
+			t.Fatalf("Error creating node: %v", err)
+		}
+
+		check, err := repo.GetNodeByKey(node.Key)
+
+		if err != nil {
+			t.Fatalf("Error getting node: %v", err)
+		}
+
+		if check.ID != node.ID {
+			t.Errorf("Expected ID to be %s, got %s", node.ID, check.ID)
+		}
+
+		if check.AccountID != node.AccountID {
+			t.Errorf("Expected AccountID to be %s, got %s", node.AccountID, check.AccountID)
+		}
+
+		if check.Key != node.Key {
+			t.Errorf("Expected Key to be %s, got %s", node.Key, check.Key)
+		}
+
+		if check.Hostname != node.Hostname {
+			t.Errorf("Expected Name to be %s, got %s", node.Hostname, check.Hostname)
+		}
+
+		if check.Port != node.Port {
+			t.Errorf("Expected Port to be %d, got %d", node.Port, check.Port)
+		}
+
+		if check.ShardID != node.ShardID {
+			t.Errorf("Expected ShardID to be %d, got %d", node.ShardID, check.ShardID)
+		}
+
+		if check.CreatedAt.IsZero() {
+			t.Errorf("Expected CreatedAt to be set, got zero value")
 		}
 	})
 }
