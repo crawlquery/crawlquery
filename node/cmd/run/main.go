@@ -8,6 +8,7 @@ import (
 	htmlService "crawlquery/node/html/service"
 	"crawlquery/pkg/client/api"
 	"fmt"
+	"time"
 
 	pageRepo "crawlquery/node/page/repository/bolt"
 	pageService "crawlquery/node/page/service"
@@ -81,7 +82,7 @@ func main() {
 	htmlService := htmlService.NewService(htmlRepo)
 	pageService := pageService.NewService(pageRepo)
 	keywordService := keywordService.NewService(keywordRepo)
-	peerService := peerService.NewService(keywordService, pageService, &domain.Peer{
+	peerService := peerService.NewService(api, keywordService, pageService, &domain.Peer{
 		ID:       node.ID,
 		Hostname: node.Hostname,
 		Port:     node.Port,
@@ -93,22 +94,8 @@ func main() {
 	indexHandler := indexHandler.NewHandler(indexService, sugar)
 	crawlHandler := crawlHandler.NewHandler(crawlService, sugar)
 
-	nodesInShard, err := api.ListNodesByShardID(node.ShardID)
-
-	if err != nil {
-		sugar.Fatalf("Error listing nodes by shard ID: %v", err)
-	}
-
-	for _, n := range nodesInShard {
-		if n.ID == node.ID {
-			continue
-		}
-		peerService.AddPeer(&domain.Peer{
-			ID:       n.ID,
-			Hostname: n.Hostname,
-			Port:     n.Port,
-		})
-	}
+	peerService.SyncPeerList()
+	go peerService.SyncPeerListEvery(30 * time.Second)
 
 	r := router.NewRouter(indexHandler, crawlHandler)
 

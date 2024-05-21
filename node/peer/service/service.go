@@ -3,34 +3,41 @@ package service
 import (
 	"bytes"
 	"crawlquery/node/domain"
+	"crawlquery/pkg/client/api"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"sync"
+	"time"
 
 	"go.uber.org/zap"
 )
 
 type Service struct {
+	api            *api.Client
 	keywordService domain.KeywordService
 	pageService    domain.PageService
 	peers          []*domain.Peer
 	logger         *zap.SugaredLogger
 	host           *domain.Peer
+	lock           sync.Mutex
 }
 
 func NewService(
+	api *api.Client,
 	keywordService domain.KeywordService,
 	pageService domain.PageService,
 	host *domain.Peer,
 	logger *zap.SugaredLogger,
 ) *Service {
 	return &Service{
+		api:            api,
 		keywordService: keywordService,
 		pageService:    pageService,
 		host:           host,
 		logger:         logger,
+		lock:           sync.Mutex{},
 	}
 }
 
@@ -60,6 +67,10 @@ func (s *Service) GetPeer(id string) *domain.Peer {
 	}
 
 	return nil
+}
+
+func (s *Service) RemoveAllPeers() {
+	s.peers = []*domain.Peer{}
 }
 
 func (s *Service) RemovePeer(id string) {
@@ -110,7 +121,8 @@ func (s *Service) SendIndexEvent(peer *domain.Peer, event *domain.IndexEvent) er
 }
 
 func (s *Service) BroadcastIndexEvent(event *domain.IndexEvent) error {
-
+	s.lock.Lock()
+	defer s.lock.Unlock()
 	var wg sync.WaitGroup
 	results := make(chan error, len(s.peers))
 	semaphore := make(chan struct{}, 10) // Limit to 10 concurrent requests
@@ -138,55 +150,37 @@ func (s *Service) BroadcastIndexEvent(event *domain.IndexEvent) error {
 	return nil
 }
 
-func (s *Service) DiscoverPeers() {
-
-	encoded, err := json.Marshal(s.host)
+func (s *Service) SyncPeerList() error {
+	nodesInShard, err := s.api.ListNodesByShardID(s.host.ShardID)
 
 	if err != nil {
-		log.Printf("Error encoding host: %v", err)
-		return
+		s.logger.Fatalf("Error listing nodes by shard ID: %v", err)
 	}
 
-	for _, peer := range s.peers {
+	s.lock.Lock()
+	defer s.lock.Unlock()
 
-		endpoint := fmt.Sprintf("http://%s:%d/peers", peer.Hostname, peer.Port)
-		fmt.Printf("endpoint: %s\n", endpoint)
-		fmt.Printf("encoded: %s\n", encoded)
-		req, err := http.NewRequest("POST", endpoint, bytes.NewBuffer(encoded))
+	s.RemoveAllPeers()
 
-		if err != nil {
-			log.Printf("Error creating request: %v", err)
-			return
+	for _, n := range nodesInShard {
+		if n.ID == s.host.ID {
+			continue
 		}
+		s.AddPeer(&domain.Peer{
+			ID:       n.ID,
+			Hostname: n.Hostname,
+			Port:     n.Port,
+		})
+	}
 
-		client := &http.Client{}
-		req.Header.Set("Content-Type", "application/json")
+	s.logger.Infof("Synced peer list: %d peers", len(s.peers))
+	return nil
+}
 
-		resp, err := client.Do(req)
+func (s *Service) SyncPeerListEvery(interval time.Duration) {
+	ticker := time.NewTicker(interval)
 
-		if err != nil {
-			s.logger.Errorf("Error discovering peers: %v", err)
-			return
-		}
-
-		defer resp.Body.Close()
-
-		if resp.StatusCode != http.StatusOK {
-			s.logger.Errorf("Error discovering peers: %s", resp.Status)
-			return
-		}
-
-		var peers []*domain.Peer
-
-		err = json.NewDecoder(resp.Body).Decode(&peers)
-
-		if err != nil {
-			s.logger.Errorf("Error decoding peers: %v", err)
-			return
-		}
-
-		for _, p := range peers {
-			s.AddPeer(p)
-		}
+	for range ticker.C {
+		s.SyncPeerList()
 	}
 }

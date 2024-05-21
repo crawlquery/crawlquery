@@ -39,6 +39,7 @@ type NodeService interface {
 	ListGroupByShard() (map[uint][]*Node, error)
 	ListByAccountID(accountID string) ([]*Node, error)
 	ListByShardID(shardID uint) ([]*Node, error)
+	Randomize(nodes []*Node) []*Node
 	SendCrawlJob(node *Node, crawlJob *CrawlJob) error
 	Auth(key string) (*Node, error)
 }

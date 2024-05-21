@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"sort"
 	"sync"
 	"time"
 
@@ -106,6 +107,10 @@ func (s *Service) Search(term string) ([]sharedDomain.Result, error) {
 	for _, res := range uniqueResults {
 		results = append(results, res)
 	}
+
+	sort.Slice(results, func(i, j int) bool {
+		return results[i].Score > results[j].Score
+	})
 
 	return results, nil
 }

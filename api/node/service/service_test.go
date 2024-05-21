@@ -771,3 +771,32 @@ func TestSendCrawlJob(t *testing.T) {
 		}
 	})
 }
+
+func TestRandomize(t *testing.T) {
+	t.Run("can randomize a list of nodes", func(t *testing.T) {
+		nodeRepo := nodeRepo.NewRepository()
+		nodeService := service.NewService(nodeRepo, nil, nil, testutil.NewTestLogger())
+
+		nodes := []*domain.Node{
+			{ID: "1"},
+			{ID: "2"},
+			{ID: "3"},
+			{ID: "4"},
+			{ID: "5"},
+		}
+
+		for _, n := range nodes {
+			nodeRepo.Create(n)
+		}
+
+		randomized := nodeService.Randomize(nodes)
+
+		if len(randomized) != 5 {
+			t.Fatalf("Expected 5 nodes, got %d", len(randomized))
+		}
+
+		if randomized[0].ID == "1" && randomized[1].ID == "2" && randomized[2].ID == "3" && randomized[3].ID == "4" && randomized[4].ID == "5" {
+			t.Fatalf("Expected nodes to be randomized")
+		}
+	})
+}

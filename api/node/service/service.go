@@ -190,6 +190,14 @@ func (s *Service) ListByAccountID(accountID string) ([]*domain.Node, error) {
 	return s.repo.ListByAccountID(accountID)
 }
 
+func (s *Service) Randomize(nodes []*domain.Node) []*domain.Node {
+	rand.Shuffle(len(nodes), func(i, j int) {
+		nodes[i], nodes[j] = nodes[j], nodes[i]
+	})
+
+	return nodes
+}
+
 func (s *Service) ListByShardID(shardID uint) ([]*domain.Node, error) {
 	nodes, err := s.List()
 	if err != nil {

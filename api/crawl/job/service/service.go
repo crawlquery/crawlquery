@@ -119,6 +119,8 @@ func (cs *Service) processJob(job *domain.CrawlJob) error {
 		return err
 	}
 
+	nodes = cs.nodeService.Randomize(nodes)
+
 	cs.logger.Infow("Crawl.Service.ProcessCrawlJobs: nodes", "nodes", nodes)
 
 	for _, node := range nodes {

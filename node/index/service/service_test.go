@@ -81,7 +81,7 @@ func TestIndex(t *testing.T) {
 	keywordRepo := keywordRepo.NewRepository()
 	keywordService := keywordService.NewService(keywordRepo)
 
-	peerService := peerService.NewService(keywordService, pageService, nil, testutil.NewTestLogger())
+	peerService := peerService.NewService(nil, keywordService, pageService, nil, testutil.NewTestLogger())
 
 	logger := testutil.NewTestLogger()
 
@@ -141,7 +141,7 @@ func TestSearch(t *testing.T) {
 	keywordRepo := keywordRepo.NewRepository()
 	keywordService := keywordService.NewService(keywordRepo)
 
-	peerService := peerService.NewService(keywordService, pageService, nil, testutil.NewTestLogger())
+	peerService := peerService.NewService(nil, keywordService, pageService, nil, testutil.NewTestLogger())
 
 	logger := testutil.NewTestLogger()
 
@@ -196,7 +196,7 @@ func TestApplyIndexEvent(t *testing.T) {
 		htmlRepo := htmlRepo.NewRepository()
 		htmlService := htmlService.NewService(htmlRepo)
 
-		peerService := peerService.NewService(keywordService, pageService, nil, testutil.NewTestLogger())
+		peerService := peerService.NewService(nil, keywordService, pageService, nil, testutil.NewTestLogger())
 
 		service := service.NewService(pageService, htmlService, keywordService, peerService, testutil.NewTestLogger())
 
@@ -275,7 +275,7 @@ func TestApplyIndexEvent(t *testing.T) {
 		htmlRepo := htmlRepo.NewRepository()
 		htmlService := htmlService.NewService(htmlRepo)
 
-		peerService := peerService.NewService(keywordService, pageService, nil, testutil.NewTestLogger())
+		peerService := peerService.NewService(nil, keywordService, pageService, nil, testutil.NewTestLogger())
 
 		service := service.NewService(pageService, htmlService, keywordService, peerService, testutil.NewTestLogger())
 
