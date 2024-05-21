@@ -25,11 +25,11 @@ func main() {
 			bytes.NewBuffer([]byte(fmt.Sprintf(`{"url": "https://%s"}`, domain))))
 
 		if err != nil {
-			panic(err)
+			continue
 		}
 
 		if res.StatusCode != http.StatusCreated {
-			panic(fmt.Errorf("unexpected status code: %d", res.StatusCode))
+			fmt.Printf("Failed to crawl %s got unexpected status code: %d", domain, res.StatusCode)
 		}
 
 		fmt.Printf("Crawling %s\n", domain)

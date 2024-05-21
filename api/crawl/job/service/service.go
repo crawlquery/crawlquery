@@ -46,7 +46,7 @@ func (cs *Service) Create(url string) (*domain.CrawlJob, error) {
 	// Save the job in the repository
 	if err := cs.repo.Create(job); err != nil {
 		cs.logger.Errorw("Crawl.Service.AddJob: error creating job", "error", err)
-		return nil, domain.ErrInternalError
+		return nil, err
 	}
 	return job, nil
 }
