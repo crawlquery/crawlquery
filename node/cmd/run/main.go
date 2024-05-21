@@ -42,9 +42,9 @@ func main() {
 	var pageDBPath string
 	var keywordDBPath string
 
-	flag.StringVar(&htmlStoragePath, "htmlstorage", "/tmp/htmlstorage", "path to the html storage")
-	flag.StringVar(&pageDBPath, "pagedb", "/tmp/pagedb.bolt", "path to the pagedb")
-	flag.StringVar(&keywordDBPath, "keyworddb", "/tmp/keyworddb.bolt", "path to the keyworddb")
+	flag.StringVar(&htmlStoragePath, "html", "/tmp/htmlstorage", "path to the html storage")
+	flag.StringVar(&pageDBPath, "pdb", "/tmp/pagedb.bolt", "path to the pagedb")
+	flag.StringVar(&keywordDBPath, "kdb", "/tmp/keyworddb.bolt", "path to the keyworddb")
 
 	flag.Parse()
 
@@ -72,6 +72,10 @@ func main() {
 	if err != nil {
 		sugar.Fatalf("Error authenticating node: %v", err)
 	}
+
+	fmt.Printf("Node ID: %s\n", node.ID)
+	fmt.Printf("Node Hostname: %s\n", node.Hostname)
+	fmt.Printf("Node Port: %d\n", node.Port)
 
 	// Create services
 	htmlService := htmlService.NewService(htmlRepo)

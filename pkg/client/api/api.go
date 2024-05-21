@@ -55,11 +55,15 @@ func (c *Client) AuthenticateNode(key string) (*dto.Node, error) {
 		return nil, errors.New("could not authenticate node")
 	}
 
-	var node dto.Node
-	if err := json.NewDecoder(resp.Body).Decode(&node); err != nil {
+	var authRes dto.AuthenticateNodeResponse
+	if err := json.NewDecoder(resp.Body).Decode(&authRes); err != nil {
 		c.logger.Errorf("error decoding response: %v", err)
 		return nil, err
 	}
 
-	return &node, nil
+	if authRes.Node.ID == "" {
+		return nil, errors.New("could not authenticate node")
+	}
+
+	return authRes.Node, nil
 }

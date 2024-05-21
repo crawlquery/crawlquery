@@ -30,15 +30,17 @@ type CreateNodeResponse struct {
 }
 
 func NewCreateNodeResponse(n *domain.Node) *CreateNodeResponse {
-	res := &CreateNodeResponse{}
-
-	res.Node.ID = n.ID
-	res.Node.Key = n.Key
-	res.Node.AccountID = n.AccountID
-	res.Node.Hostname = n.Hostname
-	res.Node.Port = n.Port
-	res.Node.ShardID = n.ShardID
-	res.Node.CreatedAt = n.CreatedAt
+	res := &CreateNodeResponse{
+		Node: &Node{
+			ID:        n.ID,
+			Key:       n.Key,
+			AccountID: n.AccountID,
+			Hostname:  n.Hostname,
+			Port:      n.Port,
+			ShardID:   n.ShardID,
+			CreatedAt: n.CreatedAt,
+		},
+	}
 
 	return res
 }
