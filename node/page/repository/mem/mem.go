@@ -35,6 +35,10 @@ func (r *Repository) Get(pageID string) (*sharedDomain.Page, error) {
 	return page, nil
 }
 
+func (r *Repository) GetAll() (map[string]*sharedDomain.Page, error) {
+	return r.pages, nil
+}
+
 func (r *Repository) UpdateHash(pageID string, hash string) error {
 	r.pageHashes[pageID] = hash
 	return nil

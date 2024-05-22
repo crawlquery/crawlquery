@@ -11,5 +11,5 @@ type Page struct {
 	ID              string `json:"id"`
 	URL             string `json:"url"`
 	Title           string `json:"title"`
-	MetaDescription string `json:"description"`
+	MetaDescription string `json:"meta_description"`
 }

@@ -200,3 +200,32 @@ func TestHash(t *testing.T) {
 		}
 	})
 }
+
+func TestJSON(t *testing.T) {
+	repo := pageRepo.NewRepository()
+	s := service.NewService(repo)
+	_, err := s.Create("page1", "http://example.com")
+
+	if err != nil {
+		t.Fatalf("Error saving page: %v", err)
+	}
+
+	_, err = s.Create("page2", "http://example2.com")
+
+	if err != nil {
+		t.Fatalf("Error saving page: %v", err)
+	}
+
+	json, err := s.JSON()
+
+	if err != nil {
+		t.Fatalf("Error getting json: %v", err)
+	}
+
+	expected := `{"page1":{"id":"page1","url":"http://example.com","title":"","meta_description":""},"page2":{"id":"page2","url":"http://example2.com","title":"","meta_description":""}}`
+
+	if string(json) != expected {
+		t.Fatalf("Expected json to be %s, got %s", expected, json)
+	}
+
+}

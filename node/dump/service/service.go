@@ -17,10 +17,10 @@ func NewService(
 	}
 }
 
-func (s *Service) PageDump() ([]byte, error) {
+func (s *Service) Page() ([]byte, error) {
 	return s.pageService.JSON()
 }
 
-func (s *Service) KeywordDump() ([]byte, error) {
+func (s *Service) Keyword() ([]byte, error) {
 	return s.keywordService.JSON()
 }

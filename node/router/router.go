@@ -27,6 +27,7 @@ func CORSMiddleware() gin.HandlerFunc {
 func NewRouter(
 	indexHandler domain.IndexHandler,
 	crawlHandler domain.CrawlHandler,
+	dumpHandler domain.DumpHandler,
 ) *gin.Engine {
 	router := gin.Default()
 	router.Use(cors.New(cors.Config{
@@ -42,5 +43,8 @@ func NewRouter(
 
 	router.POST("/event", indexHandler.Event)
 	router.GET("/index/hash", indexHandler.Hash)
+
+	router.GET("/dump/page", dumpHandler.Page)
+	router.GET("/dump/keyword", dumpHandler.Keyword)
 	return router
 }

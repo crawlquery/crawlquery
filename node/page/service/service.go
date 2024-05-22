@@ -101,3 +101,13 @@ func (s *Service) Hash() (string, error) {
 	globalHash := sha256.Sum256([]byte(concatenatedHashes))
 	return hex.EncodeToString(globalHash[:]), nil
 }
+
+func (s *Service) JSON() ([]byte, error) {
+	pages, err := s.pageRepo.GetAll()
+
+	if err != nil {
+		return nil, err
+	}
+
+	return json.Marshal(pages)
+}

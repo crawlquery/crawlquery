@@ -422,11 +422,11 @@ func TestHash(t *testing.T) {
 		t.Fatalf("Expected page hash to be e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855, got %s", pageHash)
 	}
 
-	if keywordHash != "ee39e266c3ed88a122d41ec182d5aaf206d20dd5db91b27ffba4d0893c8e16fc" {
-		t.Fatalf("Expected keyword hash to be ee39e266c3ed88a122d41ec182d5aaf206d20dd5db91b27ffba4d0893c8e16fc, got %s", keywordHash)
+	if keywordHash != "4c48d485a9b023aebea3feaeed20156aeb8e90c57727377df46377ba820e65b9" {
+		t.Fatalf("Expected keyword hash to be 4c48d485a9b023aebea3feaeed20156aeb8e90c57727377df46377ba820e65b9, got %s", keywordHash)
 	}
 
-	if combinedHash != "922ffc6f07eb2bab44239b8bebce271cb982c3720ff6cd31d679e2c2c20768b5" {
-		t.Fatalf("Expected combined hash to be 922ffc6f07eb2bab44239b8bebce271cb982c3720ff6cd31d679e2c2c20768b5, got %s", combinedHash)
+	if combinedHash != "39ebf0fdf87f70a7ec7efc04bee8b8b740e0bc886fe91e0e85796c0a49e73de9" {
+		t.Fatalf("Expected combined hash to be 39ebf0fdf87f70a7ec7efc04bee8b8b740e0bc886fe91e0e85796c0a49e73de9, got %s", combinedHash)
 	}
 }

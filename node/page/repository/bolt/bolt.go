@@ -72,6 +72,26 @@ func (repo *Repository) Get(pageID string) (*domain.Page, error) {
 	return page, nil
 }
 
+func (repo *Repository) GetAll() (map[string]*domain.Page, error) {
+	pages := make(map[string]*domain.Page)
+	err := repo.db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte("Pages"))
+		return b.ForEach(func(k, v []byte) error {
+			page := &domain.Page{}
+			err := json.Unmarshal(v, page)
+			if err != nil {
+				return err
+			}
+			pages[string(k)] = page
+			return nil
+		})
+	})
+	if err != nil {
+		return nil, err
+	}
+	return pages, nil
+}
+
 func (repo *Repository) UpdateHash(pageID string, hash string) error {
 	return repo.db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte("Hashes"))

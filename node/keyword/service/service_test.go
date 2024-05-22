@@ -4,7 +4,6 @@ import (
 	"crawlquery/node/domain"
 	keywordRepo "crawlquery/node/keyword/repository/mem"
 	"crawlquery/node/keyword/service"
-	"fmt"
 	"testing"
 )
 
@@ -129,8 +128,6 @@ func TestFuzzySearch(t *testing.T) {
 	}
 
 	results, err := s.FuzzySearch("te")
-
-	fmt.Println(results)
 
 	if err != nil {
 		t.Fatalf("Error fuzzy searching: %v", err)
@@ -275,8 +272,8 @@ func TestHash(t *testing.T) {
 		t.Fatalf("Expected index hash to not be empty")
 	}
 
-	if indexHash != "5acde2e2a40a78df4966a33de326ea739a356045ae243ed4af4096830a1cd00b" {
-		t.Fatalf("Expected hash to be 5acde2e2a40a78df4966a33de326ea739a356045ae243ed4af4096830a1cd00b, got %s", indexHash)
+	if indexHash != "998b02e885b75a8b874fd86c2bd8caf539590e65444569f0598997ff0fccf4f9" {
+		t.Fatalf("Expected hash to be 998b02e885b75a8b874fd86c2bd8caf539590e65444569f0598997ff0fccf4f9, got %s", indexHash)
 	}
 }
 

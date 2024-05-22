@@ -48,6 +48,53 @@ func TestRepo(t *testing.T) {
 	}
 }
 
+func TestGetAll(t *testing.T) {
+	r, err := bolt.NewRepository("/tmp/inverted_get_all_test.db")
+	defer os.Remove("/tmp/inverted_get_all_test.db")
+
+	if err != nil {
+		t.Fatalf("error creating repository: %v", err)
+	}
+
+	err = r.Save("page1", &domain.Page{
+		ID:    "page1",
+		URL:   "http://google.com",
+		Title: "Google",
+	})
+
+	if err != nil {
+		t.Fatalf("error saving page: %v", err)
+	}
+
+	err = r.Save("page2", &domain.Page{
+		ID:    "page2",
+		URL:   "http://yahoo.com",
+		Title: "Yahoo",
+	})
+
+	if err != nil {
+		t.Fatalf("error saving page: %v", err)
+	}
+
+	pages, err := r.GetAll()
+
+	if err != nil {
+		t.Fatalf("error getting all pages: %v", err)
+	}
+
+	if len(pages) != 2 {
+		t.Fatalf("expected 2 pages, got %d", len(pages))
+	}
+
+	if pages["page1"].ID != "page1" {
+		t.Fatalf("expected page1, got %s", pages["page1"].ID)
+	}
+
+	if pages["page2"].ID != "page2" {
+		t.Fatalf("expected page2, got %s", pages["page2"].ID)
+	}
+}
+
 func TestDelete(t *testing.T) {
 	r, err := bolt.NewRepository("/tmp/inverted_remove_test.db")
 	defer os.Remove("/tmp/inverted_remove_test.db")

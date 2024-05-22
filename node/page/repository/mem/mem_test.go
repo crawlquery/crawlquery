@@ -40,6 +40,34 @@ func TestPageRepo(t *testing.T) {
 	}
 }
 
+func TestGetAll(t *testing.T) {
+	r := NewRepository()
+	r.Save("page1", &sharedDomain.Page{
+		ID: "page1",
+	})
+
+	r.Save("page2", &sharedDomain.Page{
+		ID: "page2",
+	})
+
+	pages, err := r.GetAll()
+	if err != nil {
+		t.Fatalf("error getting all pages: %v", err)
+	}
+
+	if len(pages) != 2 {
+		t.Fatalf("expected 2 pages, got %d", len(pages))
+	}
+
+	if pages["page1"].ID != "page1" {
+		t.Fatalf("expected page1, got %s", pages["page1"].ID)
+	}
+
+	if pages["page2"].ID != "page2" {
+		t.Fatalf("expected page2, got %s", pages["page2"].ID)
+	}
+}
+
 func TestDelete(t *testing.T) {
 	r := NewRepository()
 
