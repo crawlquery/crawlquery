@@ -6,6 +6,8 @@ github.com/PuerkitoBio/goquery v1.4.1/go.mod h1:T9ezsOHcCrDCgA8aF1Cqr3sSYbO/xgdy
 github.com/PuerkitoBio/goquery v1.5.1/go.mod h1:GsLWisAFVj4WgDibEWF4pvYnkVQBpKBKeU+7zCJoLcc=
 github.com/PuerkitoBio/goquery v1.9.2 h1:4/wZksC3KgkQw7SQgkKotmKljk0M6V8TUvA8Wb4yPeE=
 github.com/PuerkitoBio/goquery v1.9.2/go.mod h1:GHPCaP0ODyyxqcNoFGYlAprUFH81NuRPd0GX3Zu2Mvk=
+github.com/TwiN/go-away v1.6.13 h1:aB6l/FPXmA5ds+V7I9zdhxzpsLLUvVtEuS++iU/ZmgE=
+github.com/TwiN/go-away v1.6.13/go.mod h1:MpvIC9Li3minq+CGgbgUDvQ9tDaeW35k5IXZrF9MVas=
 github.com/advancedlogic/GoOse v0.0.0-20231203033844-ae6b36caf275 h1:Kuhf+w+ilOGoXaR4O4nZ6Dp+ZS83LdANUjwyMXsPGX4=
 github.com/advancedlogic/GoOse v0.0.0-20231203033844-ae6b36caf275/go.mod h1:98NztIIMIntZGtQVIs8H85Q5b88fTbwWFbLz/lM9/xU=
 github.com/afjoseph/RAKE.Go v0.0.0-20191109090147-068a9e43b194 h1:OMSVCpHU6LWeMZ0XpsSjVO2RpteALyxq30lCjJpjkKQ=

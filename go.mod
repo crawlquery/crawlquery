@@ -11,6 +11,7 @@ require (
 
 require (
 	filippo.io/edwards25519 v1.1.0 // indirect
+	github.com/TwiN/go-away v1.6.13 // indirect
 	github.com/advancedlogic/GoOse v0.0.0-20231203033844-ae6b36caf275 // indirect
 	github.com/afjoseph/RAKE.Go v0.0.0-20191109090147-068a9e43b194 // indirect
 	github.com/andybalholm/cascadia v1.3.2 // indirect

@@ -81,6 +81,7 @@ func main() {
 	fmt.Printf("Node ID: %s\n", node.ID)
 	fmt.Printf("Node Hostname: %s\n", node.Hostname)
 	fmt.Printf("Node Port: %d\n", node.Port)
+	fmt.Printf("Node Shard ID: %d\n", node.ShardID)
 
 	// Create services
 	htmlService := htmlService.NewService(htmlRepo)
@@ -90,6 +91,7 @@ func main() {
 		ID:       node.ID,
 		Hostname: node.Hostname,
 		Port:     node.Port,
+		ShardID:  node.ShardID,
 	}, sugar)
 	indexService := indexService.NewService(pageService, htmlService, keywordService, peerService, sugar)
 	crawlService := crawlService.NewService(htmlService, pageService, indexService, sugar)

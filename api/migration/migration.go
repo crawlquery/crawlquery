@@ -52,6 +52,13 @@ var migrations = []Migration{
 		id INT PRIMARY KEY,
 		created_at TIMESTAMP NOT NULL)`,
 	},
+	{
+		Name: "create_domain_locks_table",
+		SQL: `CREATE TABLE domain_locks (
+		domain VARCHAR(255) NOT NULL PRIMARY KEY,
+		` + "`key`" + ` VARCHAR(36) NOT NULL,
+		locked_at TIMESTAMP)`,
+	},
 }
 
 var migrationTable = `CREATE TABLE IF NOT EXISTS migrations (
