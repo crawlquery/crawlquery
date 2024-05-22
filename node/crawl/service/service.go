@@ -2,6 +2,7 @@ package service
 
 import (
 	"crawlquery/node/domain"
+	"crawlquery/pkg/client/api"
 
 	"github.com/gocolly/colly/v2"
 	"go.uber.org/zap"
@@ -11,6 +12,7 @@ type CrawlService struct {
 	htmlService  domain.HTMLService
 	pageService  domain.PageService
 	indexService domain.IndexService
+	api          *api.Client
 	logger       *zap.SugaredLogger
 }
 
@@ -18,12 +20,14 @@ func NewService(
 	htmlService domain.HTMLService,
 	pageService domain.PageService,
 	indexService domain.IndexService,
+	api *api.Client,
 	logger *zap.SugaredLogger,
 ) *CrawlService {
 	return &CrawlService{
 		htmlService:  htmlService,
 		pageService:  pageService,
 		indexService: indexService,
+		api:          api,
 		logger:       logger,
 	}
 }
@@ -36,7 +40,6 @@ func (cs *CrawlService) Crawl(pageID, url string) error {
 	var failedErr error
 
 	c.OnResponse(func(r *colly.Response) {
-
 		if r.StatusCode != 200 {
 			cs.logger.Errorw("Error fetching page", "status", r.StatusCode, "pageID", pageID)
 
@@ -69,6 +72,13 @@ func (cs *CrawlService) Crawl(pageID, url string) error {
 		}
 
 		cs.logger.Infow("Page indexed", "pageID", page.ID)
+	})
+
+	c.OnHTML("a[href]", func(e *colly.HTMLElement) {
+		link := e.Attr("href")
+		if _, err := cs.api.CreateCrawlJob(link); err != nil {
+			cs.logger.Errorw("Error crawling link", "error", err, "link", link)
+		}
 	})
 
 	c.OnError(func(r *colly.Response, e error) {

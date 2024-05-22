@@ -44,7 +44,7 @@ func TestCrawl(t *testing.T) {
 
 		indexService := indexService.NewService(pageService, htmlService, keywordService, peerService, testutil.NewTestLogger())
 
-		crawlService := crawlService.NewService(htmlService, pageService, indexService, testutil.NewTestLogger())
+		crawlService := crawlService.NewService(htmlService, pageService, indexService, nil, testutil.NewTestLogger())
 
 		defer gock.Off()
 
@@ -118,7 +118,7 @@ func TestCrawl(t *testing.T) {
 		pageRepo := pageRepo.NewRepository()
 		pageService := pageService.NewService(pageRepo)
 
-		crawlService := crawlService.NewService(htmlService, pageService, nil, testutil.NewTestLogger())
+		crawlService := crawlService.NewService(htmlService, pageService, nil, nil, testutil.NewTestLogger())
 
 		defer gock.Off()
 

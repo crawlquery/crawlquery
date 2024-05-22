@@ -14,12 +14,14 @@ func (r *CreateCrawlJobRequest) ToJSON() ([]byte, error) {
 	return json.Marshal(r)
 }
 
+type CrawlJob struct {
+	ID        string    `json:"id"`
+	URL       string    `json:"url"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
 type CreateCrawlJobResponse struct {
-	CrawlJob struct {
-		ID        string    `json:"id"`
-		URL       string    `json:"url"`
-		CreatedAt time.Time `json:"created_at"`
-	} `json:"crawl_job"`
+	CrawlJob CrawlJob `json:"crawl_job"`
 }
 
 func NewCreateCrawlJobResponse(j *domain.CrawlJob) *CreateCrawlJobResponse {

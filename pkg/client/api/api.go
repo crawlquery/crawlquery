@@ -98,3 +98,45 @@ func (c *Client) AuthenticateNode(key string) (*dto.Node, error) {
 
 	return authRes.Node, nil
 }
+
+func (c *Client) CreateCrawlJob(url string) (*dto.CrawlJob, error) {
+
+	crawlRequest := &dto.CreateCrawlJobRequest{
+		URL: url,
+	}
+
+	encoded, err := json.Marshal(crawlRequest)
+
+	if err != nil {
+		c.logger.Errorf("error encoding request: %v", err)
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", c.BaseURL+"/crawl-jobs", bytes.NewBuffer(encoded))
+	if err != nil {
+		c.logger.Errorf("error creating request: %v", err)
+		return nil, err
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		c.logger.Errorf("error sending request: %v", err)
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		c.logger.Errorf("error response: %v", resp.Status)
+		return nil, errors.New("could not request crawl")
+	}
+
+	var crawlRes dto.CreateCrawlJobResponse
+	if err := json.NewDecoder(resp.Body).Decode(&crawlRes); err != nil {
+		c.logger.Errorf("error decoding response: %v", err)
+		return nil, err
+	}
+
+	return &crawlRes.CrawlJob, nil
+}

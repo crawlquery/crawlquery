@@ -94,7 +94,7 @@ func main() {
 		ShardID:  node.ShardID,
 	}, sugar)
 	indexService := indexService.NewService(pageService, htmlService, keywordService, peerService, sugar)
-	crawlService := crawlService.NewService(htmlService, pageService, indexService, sugar)
+	crawlService := crawlService.NewService(htmlService, pageService, indexService, api, sugar)
 	dumpService := dumpService.NewService(pageService, keywordService)
 
 	// Create handlers

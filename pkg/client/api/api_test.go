@@ -157,3 +157,43 @@ func TestListNodesByShardID(t *testing.T) {
 		}
 	})
 }
+
+func TestCreateCrawlJobRequest(t *testing.T) {
+	t.Run("should create a crawl job request", func(t *testing.T) {
+		mockRes := &dto.CreateCrawlJobResponse{
+			CrawlJob: dto.CrawlJob{
+				ID:        "123",
+				URL:       "http://example.com/about",
+				CreatedAt: time.Now(),
+			},
+		}
+
+		defer gock.Off()
+
+		gock.New("http://localhost:8080").
+			Post("crawl-jobs").
+			JSON(`{"url":"http://example.com"}`).
+			Reply(200).
+			JSON(mockRes)
+
+		client := api.NewClient("http://localhost:8080", testutil.NewTestLogger())
+
+		resJob, err := client.CreateCrawlJob("http://example.com")
+
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+
+		if resJob.ID != mockRes.CrawlJob.ID {
+			t.Errorf("expected job ID: %s, got: %s", mockRes.CrawlJob.ID, resJob.ID)
+		}
+
+		if resJob.URL != mockRes.CrawlJob.URL {
+			t.Errorf("expected job URL: %s, got: %s", mockRes.CrawlJob.URL, resJob.URL)
+		}
+
+		if resJob.CreatedAt.IsZero() {
+			t.Errorf("expected job created at to be set, got zero value")
+		}
+	})
+}
