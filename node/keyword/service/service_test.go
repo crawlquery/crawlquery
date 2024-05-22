@@ -279,3 +279,40 @@ func TestHash(t *testing.T) {
 		t.Fatalf("Expected hash to be 5acde2e2a40a78df4966a33de326ea739a356045ae243ed4af4096830a1cd00b, got %s", indexHash)
 	}
 }
+
+func TestJSON(t *testing.T) {
+	keywordPostings := map[string]*domain.Posting{
+		"test1": {
+			PageID:    "page1",
+			Frequency: 1,
+			Positions: []int{0},
+		},
+		"test2": {
+			PageID:    "page1",
+			Frequency: 2,
+			Positions: []int{1, 2},
+		},
+	}
+
+	repo := keywordRepo.NewRepository()
+
+	s := service.NewService(repo)
+
+	err := s.SavePostings(keywordPostings)
+
+	if err != nil {
+		t.Fatalf("Error saving postings: %v", err)
+	}
+
+	json, err := s.JSON()
+
+	if err != nil {
+		t.Fatalf("Error getting json: %v", err)
+	}
+
+	expected := `{"test1":[{"page_id":"page1","frequency":1,"positions":[0]}],"test2":[{"page_id":"page1","frequency":2,"positions":[1,2]}]}`
+
+	if string(json) != expected {
+		t.Fatalf("Expected json to be %s, got %s", expected, json)
+	}
+}

@@ -13,6 +13,25 @@ func TestSave(t *testing.T) {
 	}
 }
 
+func TestGetAll(t *testing.T) {
+	r := NewRepository()
+	err := r.SavePosting("token", &domain.Posting{})
+	if err != nil {
+		t.Fatalf("error saving posting: %v", err)
+	}
+	err = r.SavePosting("tom", &domain.Posting{})
+	if err != nil {
+		t.Fatalf("error saving posting: %v", err)
+	}
+	keywords, err := r.GetAll()
+	if err != nil {
+		t.Fatalf("error getting posting: %v", err)
+	}
+	if len(keywords) != 2 {
+		t.Fatalf("expected 2 posting, got %d", len(keywords))
+	}
+}
+
 func TestGet(t *testing.T) {
 	r := NewRepository()
 	err := r.SavePosting("token", &domain.Posting{})

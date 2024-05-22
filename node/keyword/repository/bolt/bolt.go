@@ -67,6 +67,27 @@ func (repo *Repository) SavePosting(keyword string, posting *domain.Posting) err
 	return err
 }
 
+func (repo *Repository) GetAll() (map[string][]*domain.Posting, error) {
+	all := make(map[string][]*domain.Posting)
+	err := repo.db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte("InvertedIndex"))
+		c := b.Cursor()
+		for k, v := c.First(); k != nil; k, v = c.Next() {
+			var postings []*domain.Posting
+			err := json.Unmarshal(v, &postings)
+			if err != nil {
+				return err
+			}
+			all[string(k)] = postings
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return all, nil
+}
+
 func (repo *Repository) GetPostings(keyword string) ([]*domain.Posting, error) {
 	var postings []*domain.Posting
 	err := repo.db.View(func(tx *bolt.Tx) error {

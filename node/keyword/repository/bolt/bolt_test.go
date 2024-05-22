@@ -39,6 +39,39 @@ func TestGet(t *testing.T) {
 	}
 }
 
+func TestGetAll(t *testing.T) {
+	r, err := bolt.NewRepository("/tmp/inverted_get_all_test.db")
+	defer os.Remove("/tmp/inverted_get_all_test.db")
+
+	if err != nil {
+		t.Fatalf("error creating repository: %v", err)
+	}
+
+	err = r.SavePosting("keyword1", &domain.Posting{PageID: "page1", Frequency: 1})
+
+	if err != nil {
+		t.Fatalf("error saving page: %v", err)
+	}
+	err = r.SavePosting("keyword2", &domain.Posting{PageID: "page2", Frequency: 2})
+
+	if err != nil {
+		t.Fatalf("error saving page: %v", err)
+	}
+
+	keywords, err := r.GetAll()
+	if err != nil {
+		t.Fatalf("error getting page: %v", err)
+	}
+
+	if keywords == nil {
+		t.Fatalf("expected postings to be found")
+	}
+
+	if len(keywords) != 2 {
+		t.Fatalf("expected 2 postings, got %d", len(keywords))
+	}
+}
+
 func TestSave(t *testing.T) {
 	r, err := bolt.NewRepository("/tmp/inverted_save_test.db")
 	defer os.Remove("/tmp/inverted_save_test.db")

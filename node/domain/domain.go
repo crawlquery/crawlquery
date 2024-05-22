@@ -8,9 +8,9 @@ import (
 
 // Posting lists entry
 type Posting struct {
-	PageID    string
-	Frequency int
-	Positions []int // Optional, depending on whether you need positional index
+	PageID    string `json:"page_id"`
+	Frequency int    `json:"frequency"`
+	Positions []int  `json:"positions"` // Optional, depending on whether you need positional index
 }
 
 // InvertedIndex maps keywords to page lists
@@ -55,6 +55,7 @@ type PageService interface {
 	Create(pageID, url string) (*domain.Page, error)
 	Update(page *domain.Page) error
 	Hash() (string, error)
+	JSON() ([]byte, error)
 }
 
 type HTMLService interface {
@@ -75,6 +76,7 @@ type KeywordRepository interface {
 	UpdateHash(keyword, hash string) error
 	GetHashes() (map[string]string, error)
 	GetHash(token string) (string, error)
+	GetAll() (map[string][]*Posting, error)
 }
 
 type KeywordService interface {
@@ -83,6 +85,7 @@ type KeywordService interface {
 	FuzzySearch(token string) ([]string, error)
 	RemovePostingsByPageID(pageID string) error
 	Hash() (string, error)
+	JSON() ([]byte, error)
 }
 
 type IndexService interface {

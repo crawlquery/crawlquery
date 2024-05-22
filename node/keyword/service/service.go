@@ -124,3 +124,19 @@ func (s *Service) Hash() (string, error) {
 	globalHash := sha256.Sum256([]byte(concatenatedHashes))
 	return hex.EncodeToString(globalHash[:]), nil
 }
+
+func (s *Service) JSON() ([]byte, error) {
+	keywords, err := s.repo.GetAll()
+
+	if err != nil {
+		return nil, err
+	}
+
+	serializedKeywords, err := json.Marshal(keywords)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return serializedKeywords, nil
+}
