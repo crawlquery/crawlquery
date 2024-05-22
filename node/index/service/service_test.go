@@ -113,18 +113,19 @@ func TestIndex(t *testing.T) {
 }
 
 func TestSearch(t *testing.T) {
-	pageRepo := pageRepo.NewRepository()
-	pageService := pageService.NewService(pageRepo)
+	t.Run("can search for keyword", func(t *testing.T) {
+		pageRepo := pageRepo.NewRepository()
+		pageService := pageService.NewService(pageRepo)
 
-	pageRepo.Save("page1", &sharedDomain.Page{
-		ID:  "page1",
-		URL: "http://example.com",
-	})
+		pageRepo.Save("page1", &sharedDomain.Page{
+			ID:  "page1",
+			URL: "http://example.com",
+		})
 
-	htmlRepo := htmlRepo.NewRepository()
-	htmlService := htmlService.NewService(htmlRepo)
+		htmlRepo := htmlRepo.NewRepository()
+		htmlService := htmlService.NewService(htmlRepo)
 
-	htmlRepo.Save("page1", []byte(`
+		htmlRepo.Save("page1", []byte(`
 		<html>
 			<head>
 				<title>Test Page</title>
@@ -138,50 +139,108 @@ func TestSearch(t *testing.T) {
 		</html>
 	`))
 
-	keywordRepo := keywordRepo.NewRepository()
-	keywordService := keywordService.NewService(keywordRepo)
+		keywordRepo := keywordRepo.NewRepository()
+		keywordService := keywordService.NewService(keywordRepo)
 
-	peerService := peerService.NewService(nil, keywordService, pageService, nil, testutil.NewTestLogger())
+		peerService := peerService.NewService(nil, keywordService, pageService, nil, testutil.NewTestLogger())
 
-	logger := testutil.NewTestLogger()
+		logger := testutil.NewTestLogger()
 
-	s := service.NewService(pageService, htmlService, keywordService, peerService, logger)
+		s := service.NewService(pageService, htmlService, keywordService, peerService, logger)
 
-	err := s.Index("page1")
+		err := s.Index("page1")
 
-	if err != nil {
-		t.Fatalf("Expected no error, got %v", err)
-	}
+		if err != nil {
+			t.Fatalf("Expected no error, got %v", err)
+		}
 
-	results, err := s.Search("test page")
+		results, err := s.Search("test page")
 
-	if err != nil {
-		t.Fatalf("Expected no error, got %v", err)
-	}
+		if err != nil {
+			t.Fatalf("Expected no error, got %v", err)
+		}
 
-	if len(results) != 1 {
-		t.Fatalf("Expected 1 result, got %d", len(results))
-	}
+		if len(results) != 1 {
+			t.Fatalf("Expected 1 result, got %d", len(results))
+		}
 
-	if results[0].PageID != "page1" {
-		t.Fatalf("Expected page ID to be page1, got %s", results[0].PageID)
-	}
+		if results[0].PageID != "page1" {
+			t.Fatalf("Expected page ID to be page1, got %s", results[0].PageID)
+		}
 
-	if results[0].Score != 4 {
-		t.Fatalf("Expected score to be 4, got %f", results[0].Score)
-	}
+		if results[0].Score != 40 {
+			t.Fatalf("Expected score to be 40, got %f", results[0].Score)
+		}
 
-	if results[0].Page.URL != "http://example.com" {
-		t.Fatalf("Expected URL to be http://example.com, got %s", results[0].Page.URL)
-	}
+		if results[0].Page.URL != "http://example.com" {
+			t.Fatalf("Expected URL to be http://example.com, got %s", results[0].Page.URL)
+		}
 
-	if results[0].Page.Title != "Test Page" {
-		t.Fatalf("Expected title to be Test Page, got %s", results[0].Page.Title)
-	}
+		if results[0].Page.Title != "Test Page" {
+			t.Fatalf("Expected title to be Test Page, got %s", results[0].Page.Title)
+		}
 
-	if results[0].Page.MetaDescription != "This is a test page" {
-		t.Fatalf("Expected meta description to be This is a test page, got %s", results[0].Page.MetaDescription)
-	}
+		if results[0].Page.MetaDescription != "This is a test page" {
+			t.Fatalf("Expected meta description to be This is a test page, got %s", results[0].Page.MetaDescription)
+		}
+	})
+
+	t.Run("applies domain name signal", func(t *testing.T) {
+		pageRepo := pageRepo.NewRepository()
+		pageService := pageService.NewService(pageRepo)
+
+		pageRepo.Save("page1", &sharedDomain.Page{
+			ID:  "page1",
+			URL: "https://youtube.com",
+		})
+
+		htmlRepo := htmlRepo.NewRepository()
+		htmlService := htmlService.NewService(htmlRepo)
+
+		htmlRepo.Save("page1", []byte(`
+		<html>
+			<head>
+				<title>Test Page</title>
+				<meta name="description" content="This is a test page">
+			</head>
+
+			<body>
+				<h1>Test Page</h1>
+				<p>This is a test page</p>
+			</body>
+		</html>
+	`))
+
+		keywordRepo := keywordRepo.NewRepository()
+		keywordService := keywordService.NewService(keywordRepo)
+
+		peerService := peerService.NewService(nil, keywordService, pageService, nil, testutil.NewTestLogger())
+
+		logger := testutil.NewTestLogger()
+
+		s := service.NewService(pageService, htmlService, keywordService, peerService, logger)
+
+		err := s.Index("page1")
+
+		if err != nil {
+			t.Fatalf("Expected no error, got %v", err)
+		}
+
+		results, err := s.Search("youtube.com")
+
+		if err != nil {
+			t.Fatalf("Expected no error, got %v", err)
+		}
+
+		if len(results) != 1 {
+			t.Fatalf("Expected 1 result, got %d", len(results))
+		}
+
+		if results[0].Score != 1000 {
+			t.Fatalf("Expected score to be 1000, got %f", results[0].Score)
+		}
+
+	})
 }
 
 func TestApplyIndexEvent(t *testing.T) {

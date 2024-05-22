@@ -1,18 +1,24 @@
 package domain
 
+import sharedDomain "crawlquery/pkg/domain"
+
+type Signal interface {
+	Level(page *sharedDomain.Page, term []string) SignalLevel
+}
+
 type SignalLevel float64
 
 const (
-	SignalLevelNone       SignalLevel = 0.0
-	SignalLevelVeryLow    SignalLevel = 0.1
-	SignalLevelLow        SignalLevel = 0.2
-	SignalLevelModerate   SignalLevel = 0.3
-	SignalLevelMedium     SignalLevel = 0.4
-	SignalLevelHigh       SignalLevel = 0.5
-	SignalLevelVeryHigh   SignalLevel = 0.6
-	SignalLevelStrong     SignalLevel = 0.7
-	SignalLevelVeryStrong SignalLevel = 0.8
-	SignalLevelMax        SignalLevel = 1.0
+	SignalLevelNone       SignalLevel = 0
+	SignalLevelVeryLow    SignalLevel = 1
+	SignalLevelLow        SignalLevel = 3
+	SignalLevelModerate   SignalLevel = 10
+	SignalLevelMedium     SignalLevel = 20
+	SignalLevelHigh       SignalLevel = 30
+	SignalLevelVeryHigh   SignalLevel = 40
+	SignalLevelStrong     SignalLevel = 90
+	SignalLevelVeryStrong SignalLevel = 150
+	SignalLevelMax        SignalLevel = 1000
 )
 
 func (s SignalLevel) String() string {

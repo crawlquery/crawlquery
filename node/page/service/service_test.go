@@ -65,6 +65,33 @@ func TestGet(t *testing.T) {
 	}
 }
 
+func TestGetAll(t *testing.T) {
+	pageRepo := pageRepo.NewRepository()
+	service := service.NewService(pageRepo)
+
+	_, err := service.Create("1", "http://example.com")
+
+	if err != nil {
+		t.Fatalf("Error saving page: %v", err)
+	}
+
+	_, err = service.Create("2", "http://example2.com")
+
+	if err != nil {
+		t.Fatalf("Error saving page: %v", err)
+	}
+
+	pages, err := service.GetAll()
+
+	if err != nil {
+		t.Fatalf("Error getting pages: %v", err)
+	}
+
+	if len(pages) != 2 {
+		t.Fatalf("Expected 2 pages, got %d", len(pages))
+	}
+}
+
 func TestUpdate(t *testing.T) {
 	pageRepo := pageRepo.NewRepository()
 	service := service.NewService(pageRepo)

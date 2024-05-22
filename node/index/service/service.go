@@ -4,10 +4,12 @@ import (
 	"bytes"
 	"crawlquery/node/domain"
 	"crawlquery/node/parse"
+	"crawlquery/node/signal"
 	"crawlquery/node/token"
 	"crypto/sha256"
 	"encoding/hex"
 	"sort"
+	"strings"
 
 	sharedDomain "crawlquery/pkg/domain"
 
@@ -110,72 +112,46 @@ func (s *Service) Index(pageID string) error {
 }
 
 func (s *Service) Search(query string) ([]sharedDomain.Result, error) {
-	// Tokenize the query the same way as the index was tokenized
-	queryTokens := token.TokenizeTerm(query)
-	results := make(map[string]float64) // map[PageID]relevanceScore
 
-	// use full token search first
-	for _, term := range queryTokens {
-		postings, err := s.keywordService.GetPostings(term)
+	term := strings.Split(query, " ")
+	// Get all pages
+	// Apply signal level to each page
+	// Sort by signal level
 
-		if err != nil {
-			s.logger.Errorf("Error getting postings: %v", err)
-			continue
-		}
+	pages, err := s.pageService.GetAll()
 
-		for _, posting := range postings {
-			results[posting.PageID] += float64(posting.Frequency)
-		}
-
+	if err != nil {
+		s.logger.Errorw("Error getting pages", "error", err)
+		return nil, err
 	}
 
-	if len(results) == 0 {
-		for _, term := range queryTokens {
-			fuzzyTokens, err := s.keywordService.FuzzySearch(term)
-			if err != nil {
-				s.logger.Errorf("Error getting fuzzy search results: %v", err)
-				continue
-			}
+	results := make([]sharedDomain.Result, 0)
 
-			for _, token := range fuzzyTokens {
-				postings, err := s.keywordService.GetPostings(token)
-				if err != nil {
-					s.logger.Errorf("Error getting postings: %v", err)
-					continue
-				}
-				for _, posting := range postings {
-					results[posting.PageID] += float64(posting.Frequency)
-				}
-			}
+	signals := []domain.Signal{
+		&signal.Domain{},
+		&signal.Title{},
+	}
+
+	for _, page := range pages {
+		score := 0.0
+		for _, signal := range signals {
+			score += float64(signal.Level(page, term))
+		}
+
+		if score > 1 {
+			results = append(results, sharedDomain.Result{
+				PageID: page.ID,
+				Page:   page,
+				Score:  score,
+			})
 		}
 	}
 
-	// Convert the results map to a slice and sort by relevance score
-	var sortedResults []sharedDomain.Result
-	for docID, score := range results {
-		sortedResults = append(sortedResults, sharedDomain.Result{PageID: docID, Score: score})
-	}
-
-	sort.Slice(sortedResults, func(i, j int) bool {
-		return sortedResults[i].Score > sortedResults[j].Score
+	sort.Slice(results, func(i, j int) bool {
+		return results[i].Score > results[j].Score
 	})
 
-	// Add the page metadata to the results
-	for i, result := range sortedResults {
-		page, err := s.pageService.Get(result.PageID)
-
-		if err != nil {
-			s.logger.Errorf("Index.Search: Error getting page metadata: %v", err)
-			continue
-		}
-		sortedResults[i].Page = page
-	}
-
-	if len(sortedResults) >= 10 {
-		sortedResults = sortedResults[:10]
-	}
-
-	return sortedResults, nil
+	return results, nil
 }
 
 func (s *Service) ApplyIndexEvent(event *domain.IndexEvent) error {

@@ -21,6 +21,7 @@ type PageRepository interface {
 
 type PageService interface {
 	Get(pageID string) (*domain.Page, error)
+	GetAll() (map[string]*domain.Page, error)
 	Create(pageID, url string) (*domain.Page, error)
 	Update(page *domain.Page) error
 	Hash() (string, error)

@@ -58,6 +58,10 @@ func (s *Service) Create(pageID string, url string) (*sharedDomain.Page, error) 
 	return page, nil
 }
 
+func (s *Service) GetAll() (map[string]*sharedDomain.Page, error) {
+	return s.pageRepo.GetAll()
+}
+
 func (s *Service) Delete(pageID string) error {
 	err := s.pageRepo.Delete(pageID)
 

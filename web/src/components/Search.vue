@@ -40,7 +40,7 @@ const search = _.debounce(() => {
                         </h2>
 
                         <div class="mt-4 flex content-center">
-                            <div class="w-full">{{ result.page.description }}</div>
+                            <div class="w-full">{{ result.page.meta_description }}</div>
                             <div class="text-gray-300 w-16">✨ {{ result.score }}</div>
                         </div>
                     </div>

@@ -103,7 +103,6 @@ func (cs *Service) ProcessCrawlJobs() {
 
 		if restricted {
 			cs.pushBack(job, *until, fmt.Sprintf("domain is restricted until %v", until))
-			time.Sleep(1 * time.Second)
 			continue
 		}
 
