@@ -53,11 +53,10 @@ var migrations = []Migration{
 		created_at TIMESTAMP NOT NULL)`,
 	},
 	{
-		Name: "create_domain_locks_table",
-		SQL: `CREATE TABLE domain_locks (
+		Name: "create_crawl_restrictions_table",
+		SQL: `CREATE TABLE crawl_restrictions (
 		domain VARCHAR(255) NOT NULL PRIMARY KEY,
-		` + "`key`" + ` VARCHAR(36) NOT NULL,
-		locked_at TIMESTAMP)`,
+		until TIMESTAMP)`,
 	},
 }
 

@@ -8,7 +8,15 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// Crawl job errors
 var ErrCrawlJobNotFound = errors.New("crawl job not found")
+
+// Lock errors
+var ErrInvalidLockKey = errors.New("invalid lock key")
+var ErrDomainLocked = errors.New("domain is locked")
+var ErrDomainNotLocked = errors.New("domain is not locked")
+var ErrCrawlRestrictionNotFound = errors.New("crawl restriction not found")
+var ErrCrawlRestrictionAlreadyExists = errors.New("crawl restriction already exists")
 
 type CrawlJob struct {
 	ID            string         `validate:"required,uuid"`
@@ -40,4 +48,19 @@ type CrawlJobService interface {
 
 type CrawlJobHandler interface {
 	Create(c *gin.Context)
+}
+
+type CrawlRestriction struct {
+	Domain string
+	Until  sql.NullTime
+}
+
+type CrawlRestrictionRepository interface {
+	Get(domain string) (*CrawlRestriction, error)
+	Set(res *CrawlRestriction) error
+}
+
+type CrawlRestrictionService interface {
+	HasRestriction(domain string) bool
+	Restrict(domain string) error
 }
