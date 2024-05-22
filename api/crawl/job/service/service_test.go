@@ -84,7 +84,7 @@ func TestCreate(t *testing.T) {
 		job, err := svc.Create("http://example.com")
 
 		// Assert
-		if err != domain.ErrInternalError {
+		if err == nil {
 			t.Errorf("Expected error, got nil")
 		}
 

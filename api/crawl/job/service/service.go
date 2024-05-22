@@ -152,23 +152,23 @@ func (cs *Service) processJob(job *domain.CrawlJob) error {
 
 	nodes = cs.nodeService.Randomize(nodes)
 
-	cs.logger.Infow("Crawl.Service.ProcessCrawlJobs: nodes", "nodes", nodes)
+	cs.logger.Infow("Crawl.Service.ProcessCrawlJobs: nodes", "nodes len", len(nodes))
 
-	for _, node := range nodes {
-		cs.logger.Infow("Crawl.Service.ProcessCrawlJobs: processing node", "node", node)
-
-		// Send the job to the node
-		err := cs.nodeService.SendCrawlJob(node, job)
-
-		if err != nil {
-			cs.logger.Errorw("Crawl.Service.ProcessCrawlJobs: error sending job to node", "error", err)
-			continue
-		}
-
-		cs.logger.Infow("Crawl.Service.ProcessCrawlJobs: job sent to node", "node", node)
-
-		return nil
+	if len(nodes) == 0 {
+		cs.logger.Errorw("Crawl.Service.ProcessCrawlJobs: no nodes available", "nodes", nodes)
+		return errors.New("no nodes available")
 	}
 
-	return errors.New("no nodes available")
+	cs.logger.Infow("Crawl.Service.ProcessCrawlJobs: processing node", "node", nodes[0])
+
+	// Send the job to the node
+	err = cs.nodeService.SendCrawlJob(nodes[0], job)
+
+	if err != nil {
+		cs.logger.Errorw("Crawl.Service.ProcessCrawlJobs: error sending job to node", "error", err)
+		return err
+	}
+
+	cs.logger.Infow("Crawl.Service.ProcessCrawlJobs: job sent to node", "node", nodes[0])
+	return nil
 }

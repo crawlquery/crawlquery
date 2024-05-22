@@ -73,7 +73,7 @@ func (cs *CrawlService) Crawl(pageID, url string) error {
 
 	c.OnError(func(r *colly.Response, e error) {
 		cs.logger.Errorw("Error crawling page", "error", e, "pageID", pageID)
-		failedErr = domain.ErrCrawlFailedToFetchHtml
+		failedErr = e
 	})
 
 	c.Visit(url)
