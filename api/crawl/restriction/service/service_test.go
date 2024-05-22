@@ -9,18 +9,26 @@ import (
 	"time"
 )
 
-func TestHasRestriction(t *testing.T) {
+func TestGetRestriction(t *testing.T) {
 	t.Run("returns true if there is a restriction", func(t *testing.T) {
 		resRepo := resRepo.NewRepository()
 		service := service.NewService(resRepo)
-
-		resRepo.Set(&domain.CrawlRestriction{
+		res := &domain.CrawlRestriction{
 			Domain: "http://example.com",
 			Until:  sql.NullTime{Valid: true, Time: time.Now().Add(time.Hour)},
-		})
+		}
+		resRepo.Set(res)
+		restricted, until := service.GetRestriction("http://example.com")
+		if !restricted {
+			t.Errorf("expected GetRestriction to return true, got false")
+		}
 
-		if !service.HasRestriction("http://example.com") {
-			t.Errorf("expected HasRestriction to return true, got false")
+		if until == nil {
+			t.Errorf("expected until to be non-nil, got nil")
+		}
+
+		if *until != res.Until.Time {
+			t.Errorf("expected until to be %v, got %v", res.Until.Time, until)
 		}
 	})
 
@@ -28,8 +36,8 @@ func TestHasRestriction(t *testing.T) {
 		resRepo := resRepo.NewRepository()
 		service := service.NewService(resRepo)
 
-		if service.HasRestriction("http://example.com") {
-			t.Errorf("expected HasRestriction to return false, got true")
+		if restricted, _ := service.GetRestriction("http://example.com"); restricted {
+			t.Errorf("expected GetRestriction to return false, got true")
 		}
 	})
 }
@@ -61,8 +69,18 @@ func TestRestrict(t *testing.T) {
 			t.Errorf("expected no error, got %v", err)
 		}
 
-		if !service.HasRestriction("http://example.com") {
-			t.Errorf("expected HasRestriction to return true, got false")
+		res, err := resRepo.Get("http://example.com")
+
+		if err != nil {
+			t.Errorf("expected no error, got %v", err)
+		}
+
+		if res.Domain != "http://example.com" {
+			t.Errorf("expected domain to be 'http://example.com', got %v", res.Domain)
+		}
+
+		if time.Until(res.Until.Time).Round(time.Minute) != time.Minute*5 {
+			t.Errorf("expected until to be 5 minutes from now, got %v", time.Until(res.Until.Time))
 		}
 	})
 }

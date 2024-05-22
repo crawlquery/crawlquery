@@ -5,29 +5,34 @@ import (
 	"crawlquery/pkg/util"
 	"database/sql"
 	"errors"
+	"fmt"
+	"net/url"
 	"time"
 
 	"go.uber.org/zap"
 )
 
 type Service struct {
-	repo         domain.CrawlJobRepository
-	shardService domain.ShardService
-	nodeService  domain.NodeService
-	logger       *zap.SugaredLogger
+	repo               domain.CrawlJobRepository
+	shardService       domain.ShardService
+	nodeService        domain.NodeService
+	restrictionService domain.CrawlRestrictionService
+	logger             *zap.SugaredLogger
 }
 
 func NewService(
 	repo domain.CrawlJobRepository,
 	shardService domain.ShardService,
 	nodeService domain.NodeService,
+	restrictionService domain.CrawlRestrictionService,
 	logger *zap.SugaredLogger,
 ) *Service {
 	return &Service{
-		repo:         repo,
-		shardService: shardService,
-		nodeService:  nodeService,
-		logger:       logger,
+		repo:               repo,
+		shardService:       shardService,
+		nodeService:        nodeService,
+		restrictionService: restrictionService,
+		logger:             logger,
 	}
 }
 
@@ -51,6 +56,25 @@ func (cs *Service) Create(url string) (*domain.CrawlJob, error) {
 	return job, nil
 }
 
+func (cs *Service) pushBack(job *domain.CrawlJob, until time.Time, reason string) error {
+	cs.logger.Errorw("Crawl.Service.ProcessCrawlJobs: error processing job", "error", reason, "job", job)
+	job.BackoffUntil = sql.NullTime{
+		Time:  until,
+		Valid: true,
+	}
+	job.FailedReason = sql.NullString{
+		String: reason,
+		Valid:  true,
+	}
+
+	if err := cs.repo.Update(job); err != nil {
+		cs.logger.Errorw("Crawl.Service.pushBack: error updating job", "error", reason)
+		return err
+	}
+
+	return nil
+}
+
 func (cs *Service) ProcessCrawlJobs() {
 	for {
 		// Get the first job
@@ -66,23 +90,28 @@ func (cs *Service) ProcessCrawlJobs() {
 			continue
 		}
 
+		pasedURL, err := url.Parse(job.URL)
+
+		if err != nil {
+			cs.pushBack(job, time.Now().Add(time.Hour), err.Error())
+			time.Sleep(1 * time.Second)
+			continue
+		}
+
+		// Check if the domain is restricted
+		restricted, until := cs.restrictionService.GetRestriction(pasedURL.Hostname())
+
+		if restricted {
+			cs.pushBack(job, *until, fmt.Sprintf("domain is restricted until %v", until))
+			time.Sleep(1 * time.Second)
+			continue
+		}
+
 		// Process the job
 		err = cs.processJob(job)
 
 		if err != nil {
-			cs.logger.Errorw("Crawl.Service.ProcessCrawlJobs: error processing job", "error", err, "job", job)
-			job.BackoffUntil = sql.NullTime{
-				Time:  time.Now().Add(1 * time.Hour),
-				Valid: true,
-			}
-			job.FailedReason = sql.NullString{
-				String: err.Error(),
-				Valid:  true,
-			}
-
-			if err := cs.repo.Update(job); err != nil {
-				cs.logger.Errorw("Crawl.Service.ProcessCrawlJobs: error updating job", "error", err, "job", job)
-			}
+			cs.pushBack(job, time.Now().Add(time.Hour), err.Error())
 			time.Sleep(1 * time.Second)
 			continue
 		}
@@ -96,6 +125,8 @@ func (cs *Service) ProcessCrawlJobs() {
 			cs.logger.Errorw("Crawl.Service.ProcessCrawlJobs: error updating job", "error", err)
 			time.Sleep(5 * time.Second)
 		}
+
+		cs.restrictionService.Restrict(pasedURL.Hostname())
 	}
 }
 

@@ -6,7 +6,9 @@ import (
 	"crawlquery/api/domain"
 	"crawlquery/pkg/testutil"
 	"crawlquery/pkg/util"
+	"database/sql"
 	"fmt"
+	"strings"
 	"time"
 
 	nodeRepo "crawlquery/api/node/repository/mem"
@@ -14,6 +16,9 @@ import (
 
 	shardRepo "crawlquery/api/shard/repository/mem"
 	shardService "crawlquery/api/shard/service"
+
+	resRepo "crawlquery/api/crawl/restriction/repository/mem"
+	resService "crawlquery/api/crawl/restriction/service"
 
 	"errors"
 	"testing"
@@ -25,7 +30,7 @@ func TestCreate(t *testing.T) {
 	t.Run("can create a job", func(t *testing.T) {
 		// Arrange
 		repo := mem.NewRepository()
-		svc := service.NewService(repo, nil, nil, testutil.NewTestLogger())
+		svc := service.NewService(repo, nil, nil, nil, testutil.NewTestLogger())
 		url := "http://example.com"
 
 		// Act
@@ -52,7 +57,7 @@ func TestCreate(t *testing.T) {
 	t.Run("validates url", func(t *testing.T) {
 		// Arrange
 		repo := mem.NewRepository()
-		svc := service.NewService(repo, nil, nil, testutil.NewTestLogger())
+		svc := service.NewService(repo, nil, nil, nil, testutil.NewTestLogger())
 		url := "x123!"
 
 		// Act
@@ -71,7 +76,7 @@ func TestCreate(t *testing.T) {
 	t.Run("handles repository error", func(t *testing.T) {
 		// Arrange
 		repo := mem.NewRepository()
-		svc := service.NewService(repo, nil, nil, testutil.NewTestLogger())
+		svc := service.NewService(repo, nil, nil, nil, testutil.NewTestLogger())
 		expectErr := errors.New("db locked")
 		repo.ForceError(expectErr)
 
@@ -135,9 +140,12 @@ func TestProcessCrawlJobs(t *testing.T) {
 			JSON(responseJson).
 			Reply(200)
 
+		resRepo := resRepo.NewRepository()
+		resService := resService.NewService(resRepo)
+
 		// Arrange
 		repo := mem.NewRepository()
-		svc := service.NewService(repo, shardService, nodeService, testutil.NewTestLogger())
+		svc := service.NewService(repo, shardService, nodeService, resService, testutil.NewTestLogger())
 		job, _ := svc.Create(url)
 
 		// Act
@@ -168,12 +176,72 @@ func TestProcessCrawlJobs(t *testing.T) {
 		if !job.BackoffUntil.Time.IsZero() {
 			t.Errorf("Expected BackoffUntil to be empty")
 		}
+
+		res, err := resRepo.Get("example.com")
+
+		if err != nil {
+			t.Errorf("Error getting restriction: %v", err)
+		}
+
+		if res == nil {
+			t.Fatalf("Expected restriction to be set")
+		}
+
+		if !res.Until.Valid {
+			t.Errorf("Expected restriction until to be set")
+		}
+
+		// Assert that the restriction is for 5 minutes
+		if res.Until.Time.Round(time.Minute) != time.Now().Add(5*time.Minute).Round(time.Minute) {
+			t.Errorf("Expected restriction until to be 5 minutes from now")
+		}
+	})
+
+	t.Run("cannot process crawl job if restriction exists", func(t *testing.T) {
+		resRepo := resRepo.NewRepository()
+		resService := resService.NewService(resRepo)
+
+		resRepo.Set(&domain.CrawlRestriction{
+			Domain: "example.com",
+			Until:  sql.NullTime{Valid: true, Time: time.Now().Add(time.Hour)},
+		})
+
+		url := "http://example.com/homepage"
+		// Arrange
+		repo := mem.NewRepository()
+		svc := service.NewService(repo, nil, nil, resService, testutil.NewTestLogger())
+		job, _ := svc.Create(url)
+
+		// Act
+		go svc.ProcessCrawlJobs()
+
+		// Wait for the job to be processed
+		time.Sleep(100 * time.Millisecond)
+
+		// Assert
+		job, err := repo.Get(job.ID)
+
+		if err != nil {
+			t.Errorf("Error getting job: %v", err)
+		}
+
+		if job == nil {
+			t.Fatalf("Expected job to be set")
+		}
+
+		if !job.LastCrawledAt.Time.IsZero() {
+			t.Errorf("Expected LastCrawledAt to be empty")
+		}
+
+		if !strings.Contains(job.FailedReason.String, "domain is restricted until") {
+			t.Errorf("Expected FailedReason to be set, got %s", job.FailedReason.String)
+		}
 	})
 
 	t.Run("handles repository error", func(t *testing.T) {
 		// Arrange
 		repo := mem.NewRepository()
-		svc := service.NewService(repo, nil, nil, testutil.NewTestLogger())
+		svc := service.NewService(repo, nil, nil, nil, testutil.NewTestLogger())
 		expectErr := errors.New("db locked")
 		repo.ForceError(expectErr)
 

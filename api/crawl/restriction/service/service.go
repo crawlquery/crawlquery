@@ -16,26 +16,26 @@ func NewService(resRepo apiDomain.CrawlRestrictionRepository) *Service {
 	}
 }
 
-func (s *Service) HasRestriction(domain string) bool {
+func (s *Service) GetRestriction(domain string) (bool, *time.Time) {
 	found, err := s.resRepo.Get(domain)
 
 	if err == apiDomain.ErrCrawlRestrictionNotFound {
-		return false
+		return false, nil
 	}
 
 	if found == nil {
-		return false
+		return false, nil
 	}
 
 	if found.Until.Time.After(time.Now()) {
-		return true
+		return true, &found.Until.Time
 	}
 
-	return false
+	return false, nil
 }
 
 func (s *Service) Restrict(domain string) error {
-	if s.HasRestriction(domain) {
+	if restricted, _ := s.GetRestriction(domain); restricted {
 		return apiDomain.ErrCrawlRestrictionAlreadyExists
 	}
 
@@ -43,7 +43,7 @@ func (s *Service) Restrict(domain string) error {
 		Domain: domain,
 		Until: sql.NullTime{
 			Valid: true,
-			Time:  time.Now().Add(time.Hour),
+			Time:  time.Now().Add(time.Minute * 5),
 		},
 	}
 

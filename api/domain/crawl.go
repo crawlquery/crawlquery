@@ -61,6 +61,6 @@ type CrawlRestrictionRepository interface {
 }
 
 type CrawlRestrictionService interface {
-	HasRestriction(domain string) bool
+	GetRestriction(domain string) (bool, *time.Time)
 	Restrict(domain string) error
 }
