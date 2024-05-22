@@ -14,6 +14,9 @@ import (
 	accountMysqlRepo "crawlquery/api/account/repository/mysql"
 	accountService "crawlquery/api/account/service"
 
+	crawlRestrictionMysqlRepo "crawlquery/api/crawl/restriction/repository/mysql"
+	crawlRestrictionService "crawlquery/api/crawl/restriction/service"
+
 	crawlHandler "crawlquery/api/crawl/job/handler"
 	crawlJobMysqlRepo "crawlquery/api/crawl/job/repository/mysql"
 	crawlJobService "crawlquery/api/crawl/job/service"
@@ -72,8 +75,11 @@ func main() {
 	searchService := searchService.NewService(nodeService, sugar)
 	searchHandler := searchHandler.NewHandler(searchService)
 
+	crawlRestrictionRepo := crawlRestrictionMysqlRepo.NewRepository(db)
+	crawlRestrictionService := crawlRestrictionService.NewService(crawlRestrictionRepo, sugar)
+
 	crawlJobRepo := crawlJobMysqlRepo.NewRepository(db)
-	crawlJobService := crawlJobService.NewService(crawlJobRepo, shardService, nodeService, sugar)
+	crawlJobService := crawlJobService.NewService(crawlJobRepo, shardService, nodeService, crawlRestrictionService, sugar)
 	crawlJobHandler := crawlHandler.NewHandler(crawlJobService)
 
 	go crawlJobService.ProcessCrawlJobs()

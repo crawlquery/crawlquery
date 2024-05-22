@@ -141,7 +141,7 @@ func TestProcessCrawlJobs(t *testing.T) {
 			Reply(200)
 
 		resRepo := resRepo.NewRepository()
-		resService := resService.NewService(resRepo)
+		resService := resService.NewService(resRepo, testutil.NewTestLogger())
 
 		// Arrange
 		repo := mem.NewRepository()
@@ -199,7 +199,7 @@ func TestProcessCrawlJobs(t *testing.T) {
 
 	t.Run("cannot process crawl job if restriction exists", func(t *testing.T) {
 		resRepo := resRepo.NewRepository()
-		resService := resService.NewService(resRepo)
+		resService := resService.NewService(resRepo, testutil.NewTestLogger())
 
 		resRepo.Set(&domain.CrawlRestriction{
 			Domain: "example.com",

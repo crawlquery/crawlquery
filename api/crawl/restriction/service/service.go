@@ -4,15 +4,22 @@ import (
 	apiDomain "crawlquery/api/domain"
 	"database/sql"
 	"time"
+
+	"go.uber.org/zap"
 )
 
 type Service struct {
 	resRepo apiDomain.CrawlRestrictionRepository
+	logger  *zap.SugaredLogger
 }
 
-func NewService(resRepo apiDomain.CrawlRestrictionRepository) *Service {
+func NewService(
+	resRepo apiDomain.CrawlRestrictionRepository,
+	logger *zap.SugaredLogger,
+) *Service {
 	return &Service{
 		resRepo: resRepo,
+		logger:  logger,
 	}
 }
 
@@ -46,6 +53,8 @@ func (s *Service) Restrict(domain string) error {
 			Time:  time.Now().Add(time.Minute * 5),
 		},
 	}
+
+	s.logger.Infow("CrawlRestrictionService.Restrict: setting restriction", "restriction", restriction)
 
 	return s.resRepo.Set(restriction)
 }
