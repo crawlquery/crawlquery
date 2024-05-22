@@ -43,12 +43,18 @@ type CrawlService interface {
 type PageRepository interface {
 	Get(pageID string) (*domain.Page, error)
 	Save(pageID string, page *domain.Page) error
+	Delete(pageID string) error
+	GetHashes() (map[string]string, error)
+	UpdateHash(pageID, hash string) error
+	DeleteHash(pageID string) error
+	GetHash(pageID string) (string, error)
 }
 
 type PageService interface {
 	Get(pageID string) (*domain.Page, error)
 	Create(pageID, url string) (*domain.Page, error)
 	Update(page *domain.Page) error
+	Hash() (string, error)
 }
 
 type HTMLService interface {
@@ -81,7 +87,7 @@ type KeywordService interface {
 
 type IndexService interface {
 	Search(query string) ([]domain.Result, error)
-	Hash() (string, error)
+	Hash() (string, string, string, error)
 	Index(pageID string) error
 	ApplyIndexEvent(event *IndexEvent) error
 }

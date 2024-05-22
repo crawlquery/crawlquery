@@ -7,6 +7,8 @@ import (
 	sharedDomain "crawlquery/pkg/domain"
 	"crawlquery/pkg/factory"
 	"crawlquery/pkg/testutil"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -245,10 +247,14 @@ func TestEvent(t *testing.T) {
 
 func TestHash(t *testing.T) {
 	t.Run("returns hash", func(t *testing.T) {
+
+		pageRepo := pageRepo.NewRepository()
+		pageService := pageService.NewService(pageRepo)
+
 		keywordRepo := keywordRepo.NewRepository()
 		keywordService := keywordService.NewService(keywordRepo)
 
-		indexService := indexService.NewService(nil, nil, keywordService, nil, testutil.NewTestLogger())
+		indexService := indexService.NewService(pageService, nil, keywordService, nil, testutil.NewTestLogger())
 
 		postings := map[string]*domain.Posting{
 			"token": {
@@ -281,8 +287,34 @@ func TestHash(t *testing.T) {
 			t.Fatalf("error decoding response: %v", err)
 		}
 
-		if response["hash"] == "" {
-			t.Fatalf("expected hash to not be empty")
+		expectedKeywordHash, err := keywordService.Hash()
+
+		if err != nil {
+			t.Fatalf("error getting keyword hash: %v", err)
 		}
+
+		if response["keyword"] != expectedKeywordHash {
+			t.Fatalf("expected hash %s; got %s", expectedKeywordHash, response["keyword"])
+		}
+
+		expectedPageHash, err := pageService.Hash()
+
+		if err != nil {
+			t.Fatalf("error getting page hash: %v", err)
+		}
+
+		if response["page"] != expectedPageHash {
+			t.Fatalf("expected hash %s; got %s", expectedPageHash, response["page"])
+		}
+
+		combined := expectedPageHash + expectedKeywordHash
+
+		hash := sha256.Sum256([]byte(combined))
+		expectedCombined := hex.EncodeToString(hash[:])
+
+		if response["combined"] != expectedCombined {
+			t.Fatalf("expected hash %s; got %s", expectedCombined, response["combined"])
+		}
+
 	})
 }

@@ -47,3 +47,119 @@ func TestRepo(t *testing.T) {
 		t.Fatalf("expected title to be Google, got %s", page.Title)
 	}
 }
+
+func TestDelete(t *testing.T) {
+	r, err := bolt.NewRepository("/tmp/inverted_remove_test.db")
+	defer os.Remove("/tmp/inverted_remove_test.db")
+
+	if err != nil {
+		t.Fatalf("error creating repository: %v", err)
+	}
+
+	err = r.Save("page1", &domain.Page{
+		ID:    "page1",
+		URL:   "http://google.com",
+		Title: "Google",
+	})
+
+	if err != nil {
+		t.Fatalf("error saving page: %v", err)
+	}
+
+	err = r.Delete("page1")
+
+	if err != nil {
+		t.Fatalf("error removing page: %v", err)
+	}
+
+	page, err := r.Get("page1")
+
+	if err == nil {
+		t.Fatalf("expected error getting page1, got nil")
+	}
+
+	if page != nil {
+		t.Fatalf("expected page to be nil, got %v", page)
+	}
+}
+
+func TestGetUpdateAndGetHash(t *testing.T) {
+	r, err := bolt.NewRepository("/tmp/inverted_get_update_hash_test.db")
+	defer os.Remove("/tmp/inverted_get_update_hash_test.db")
+
+	if err != nil {
+		t.Fatalf("error creating repository: %v", err)
+	}
+
+	err = r.UpdateHash("page1", "hash1")
+
+	if err != nil {
+		t.Fatalf("error updating hash: %v", err)
+	}
+
+	hash, err := r.GetHash("page1")
+
+	if err != nil {
+		t.Fatalf("error getting hash: %v", err)
+	}
+
+	if hash != "hash1" {
+		t.Fatalf("expected hash1, got %s", hash)
+	}
+}
+
+func TestGetHashes(t *testing.T) {
+	r, err := bolt.NewRepository("/tmp/inverted_get_hashes_test.db")
+	defer os.Remove("/tmp/inverted_get_hashes_test.db")
+
+	if err != nil {
+		t.Fatalf("error creating repository: %v", err)
+	}
+
+	err = r.UpdateHash("page1", "hash1")
+
+	if err != nil {
+		t.Fatalf("error updating hash: %v", err)
+	}
+
+	hashes, err := r.GetHashes()
+
+	if err != nil {
+		t.Fatalf("error getting hashes: %v", err)
+	}
+
+	if len(hashes) != 1 {
+		t.Fatalf("expected 1 hash, got %d", len(hashes))
+	}
+
+	if hashes["page1"] != "hash1" {
+		t.Fatalf("expected hash1, got %s", hashes["page1"])
+	}
+}
+
+func TestDeleteHash(t *testing.T) {
+	r, err := bolt.NewRepository("/tmp/inverted_delete_hash_test.db")
+	defer os.Remove("/tmp/inverted_delete_hash_test.db")
+
+	if err != nil {
+		t.Fatalf("error creating repository: %v", err)
+	}
+
+	err = r.UpdateHash("page1", "hash1")
+
+	if err != nil {
+		t.Fatalf("error updating hash: %v", err)
+	}
+
+	err = r.DeleteHash("page1")
+
+	if err != nil {
+		t.Fatalf("error deleting hash: %v", err)
+	}
+
+	_, err = r.GetHash("page1")
+
+	if err == nil {
+		t.Fatalf("expected error getting hash, got nil")
+	}
+}

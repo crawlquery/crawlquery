@@ -371,3 +371,62 @@ func TestApplyIndexEvent(t *testing.T) {
 		}
 	})
 }
+
+func TestHash(t *testing.T) {
+	pageRepo := pageRepo.NewRepository()
+	pageService := pageService.NewService(pageRepo)
+
+	pageRepo.Save("page1", &sharedDomain.Page{
+		ID:  "page1",
+		URL: "http://example.com",
+	})
+
+	htmlRepo := htmlRepo.NewRepository()
+	htmlService := htmlService.NewService(htmlRepo)
+
+	htmlRepo.Save("page1", []byte(`
+		<html>
+			<head>
+				<title>Test Page</title>
+			</head>
+
+			<body>
+				<h1>Test Page</h1>
+				<p>This is a test page</p>
+			</body>
+		</html>
+	`))
+
+	keywordRepo := keywordRepo.NewRepository()
+	keywordService := keywordService.NewService(keywordRepo)
+
+	peerService := peerService.NewService(nil, keywordService, pageService, nil, testutil.NewTestLogger())
+
+	logger := testutil.NewTestLogger()
+
+	s := service.NewService(pageService, htmlService, keywordService, peerService, logger)
+
+	err := s.Index("page1")
+
+	if err != nil {
+		t.Fatalf("Expected no error, got %v", err)
+	}
+
+	pageHash, keywordHash, combinedHash, err := s.Hash()
+
+	if err != nil {
+		t.Fatalf("Expected no error, got %v", err)
+	}
+
+	if pageHash != "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855" {
+		t.Fatalf("Expected page hash to be e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855, got %s", pageHash)
+	}
+
+	if keywordHash != "ee39e266c3ed88a122d41ec182d5aaf206d20dd5db91b27ffba4d0893c8e16fc" {
+		t.Fatalf("Expected keyword hash to be ee39e266c3ed88a122d41ec182d5aaf206d20dd5db91b27ffba4d0893c8e16fc, got %s", keywordHash)
+	}
+
+	if combinedHash != "922ffc6f07eb2bab44239b8bebce271cb982c3720ff6cd31d679e2c2c20768b5" {
+		t.Fatalf("Expected combined hash to be 922ffc6f07eb2bab44239b8bebce271cb982c3720ff6cd31d679e2c2c20768b5, got %s", combinedHash)
+	}
+}

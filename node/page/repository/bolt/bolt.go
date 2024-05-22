@@ -20,9 +20,17 @@ func NewRepository(dbPath string) (*Repository, error) {
 	}
 	// Ensure the bucket exists
 	err = db.Update(func(tx *bolt.Tx) error {
-		_, err := tx.CreateBucketIfNotExists([]byte("ForwardIndex"))
+		_, err := tx.CreateBucketIfNotExists([]byte("Pages"))
+
+		if err != nil {
+			return err
+		}
+
+		_, err = tx.CreateBucketIfNotExists([]byte("Hashes"))
+
 		return err
 	})
+
 	if err != nil {
 		db.Close()
 		return nil, fmt.Errorf("could not set up buckets, %v", err)
@@ -32,7 +40,7 @@ func NewRepository(dbPath string) (*Repository, error) {
 
 func (repo *Repository) Save(pageID string, page *domain.Page) error {
 	return repo.db.Update(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte("ForwardIndex"))
+		b := tx.Bucket([]byte("Pages"))
 		encoded, err := json.Marshal(page)
 		if err != nil {
 			return err
@@ -41,10 +49,17 @@ func (repo *Repository) Save(pageID string, page *domain.Page) error {
 	})
 }
 
+func (repo *Repository) Delete(pageID string) error {
+	return repo.db.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte("Pages"))
+		return b.Delete([]byte(pageID))
+	})
+}
+
 func (repo *Repository) Get(pageID string) (*domain.Page, error) {
 	var page *domain.Page
 	err := repo.db.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte("ForwardIndex"))
+		b := tx.Bucket([]byte("Pages"))
 		v := b.Get([]byte(pageID))
 		if v == nil {
 			return fmt.Errorf("page not found")
@@ -55,6 +70,52 @@ func (repo *Repository) Get(pageID string) (*domain.Page, error) {
 		return nil, err
 	}
 	return page, nil
+}
+
+func (repo *Repository) UpdateHash(pageID string, hash string) error {
+	return repo.db.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte("Hashes"))
+		return b.Put([]byte(pageID), []byte(hash))
+	})
+}
+
+func (repo *Repository) DeleteHash(pageID string) error {
+	return repo.db.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte("Hashes"))
+		return b.Delete([]byte(pageID))
+	})
+}
+
+func (repo *Repository) GetHash(pageID string) (string, error) {
+	var hash string
+	err := repo.db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte("Hashes"))
+		v := b.Get([]byte(pageID))
+		if v == nil {
+			return fmt.Errorf("hash not found")
+		}
+		hash = string(v)
+		return nil
+	})
+	if err != nil {
+		return "", err
+	}
+	return hash, nil
+}
+
+func (repo *Repository) GetHashes() (map[string]string, error) {
+	hashes := make(map[string]string)
+	err := repo.db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte("Hashes"))
+		return b.ForEach(func(k, v []byte) error {
+			hashes[string(k)] = string(v)
+			return nil
+		})
+	})
+	if err != nil {
+		return nil, err
+	}
+	return hashes, nil
 }
 
 func (repo *Repository) Close() error {

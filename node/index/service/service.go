@@ -5,6 +5,8 @@ import (
 	"crawlquery/node/domain"
 	"crawlquery/node/parse"
 	"crawlquery/node/token"
+	"crypto/sha256"
+	"encoding/hex"
 	"sort"
 
 	sharedDomain "crawlquery/pkg/domain"
@@ -215,6 +217,23 @@ func (s *Service) ApplyIndexEvent(event *domain.IndexEvent) error {
 	return nil
 }
 
-func (s *Service) Hash() (string, error) {
-	return s.keywordService.Hash()
+func computeHash(data []byte) string {
+	hash := sha256.Sum256(data)
+	return hex.EncodeToString(hash[:])
+}
+
+func (s *Service) Hash() (string, string, string, error) {
+	pageHash, err := s.pageService.Hash()
+
+	if err != nil {
+		return "", "", "", err
+	}
+
+	keywordHash, err := s.keywordService.Hash()
+
+	if err != nil {
+		return "", "", "", err
+	}
+
+	return pageHash, keywordHash, computeHash([]byte(pageHash + keywordHash)), nil
 }
