@@ -192,7 +192,7 @@ func TestProcessCrawlJobs(t *testing.T) {
 		}
 
 		// Assert that the restriction is for 5 minutes
-		if res.Until.Time.Round(time.Minute) != time.Now().Add(5*time.Minute).Round(time.Minute) {
+		if time.Until(res.Until.Time).Round(time.Minute) != time.Minute*5 {
 			t.Errorf("Expected restriction until to be 5 minutes from now")
 		}
 	})
