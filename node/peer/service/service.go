@@ -154,7 +154,8 @@ func (s *Service) SyncPeerList() error {
 	nodesInShard, err := s.api.ListNodesByShardID(s.host.ShardID)
 
 	if err != nil {
-		s.logger.Fatalf("Error listing nodes by shard ID: %v", err)
+		s.logger.Errorf("Error listing nodes by shard ID: %v", err)
+		return err
 	}
 
 	s.lock.Lock()

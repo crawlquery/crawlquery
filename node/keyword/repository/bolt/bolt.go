@@ -21,13 +21,13 @@ func NewRepository(dbPath string) (*Repository, error) {
 	}
 	// Ensure the bucket exists
 	err = db.Update(func(tx *bolt.Tx) error {
-		_, err := tx.CreateBucketIfNotExists([]byte("InvertedIndex"))
+		_, err := tx.CreateBucketIfNotExists([]byte("Keywords"))
 
 		if err != nil {
 			return err
 		}
 
-		_, err = tx.CreateBucketIfNotExists([]byte("KeywordHashes"))
+		_, err = tx.CreateBucketIfNotExists([]byte("Hashes"))
 
 		return err
 	})
@@ -40,7 +40,7 @@ func NewRepository(dbPath string) (*Repository, error) {
 
 func (repo *Repository) SavePosting(keyword string, posting *domain.Posting) error {
 	err := repo.db.Update(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte("InvertedIndex"))
+		b := tx.Bucket([]byte("Keywords"))
 		v := b.Get([]byte(keyword))
 		if v == nil {
 			postings := []*domain.Posting{posting}
@@ -70,7 +70,7 @@ func (repo *Repository) SavePosting(keyword string, posting *domain.Posting) err
 func (repo *Repository) GetAll() (map[string][]*domain.Posting, error) {
 	all := make(map[string][]*domain.Posting)
 	err := repo.db.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte("InvertedIndex"))
+		b := tx.Bucket([]byte("Keywords"))
 		c := b.Cursor()
 		for k, v := c.First(); k != nil; k, v = c.Next() {
 			var postings []*domain.Posting
@@ -91,7 +91,7 @@ func (repo *Repository) GetAll() (map[string][]*domain.Posting, error) {
 func (repo *Repository) GetPostings(keyword string) ([]*domain.Posting, error) {
 	var postings []*domain.Posting
 	err := repo.db.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte("InvertedIndex"))
+		b := tx.Bucket([]byte("Keywords"))
 		v := b.Get([]byte(keyword))
 		if v == nil {
 			return nil // Not found
@@ -108,7 +108,7 @@ func (repo *Repository) FuzzySearch(token string) []string {
 	results := []string{}
 
 	err := repo.db.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte("InvertedIndex"))
+		b := tx.Bucket([]byte("Keywords"))
 		c := b.Cursor()
 
 		for k, _ := c.First(); k != nil; k, _ = c.Next() {
@@ -127,7 +127,7 @@ func (repo *Repository) FuzzySearch(token string) []string {
 
 func (repo *Repository) RemovePostingsByPageID(pageID string) error {
 	err := repo.db.Update(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte("InvertedIndex"))
+		b := tx.Bucket([]byte("Keywords"))
 		c := b.Cursor()
 
 		for k, v := c.First(); k != nil; k, v = c.Next() {
@@ -157,7 +157,7 @@ func (repo *Repository) RemovePostingsByPageID(pageID string) error {
 
 func (repo *Repository) UpdateHash(token string, hash string) error {
 	err := repo.db.Update(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte("KeywordHashes"))
+		b := tx.Bucket([]byte("Hashes"))
 		return b.Put([]byte(token), []byte(hash))
 	})
 	return err
@@ -166,7 +166,7 @@ func (repo *Repository) UpdateHash(token string, hash string) error {
 func (repo *Repository) GetHash(token string) (string, error) {
 	var hash string
 	err := repo.db.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte("KeywordHashes"))
+		b := tx.Bucket([]byte("Hashes"))
 		v := b.Get([]byte(token))
 		if v == nil {
 			return nil // Not found
@@ -183,7 +183,7 @@ func (repo *Repository) GetHash(token string) (string, error) {
 func (repo *Repository) GetHashes() (map[string]string, error) {
 	hashes := make(map[string]string)
 	err := repo.db.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte("KeywordHashes"))
+		b := tx.Bucket([]byte("Hashes"))
 		c := b.Cursor()
 		for k, v := c.First(); k != nil; k, v = c.Next() {
 			hashes[string(k)] = string(v)
