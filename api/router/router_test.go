@@ -79,6 +79,15 @@ func (m *MockSearchHandler) Search(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Search successful"})
 }
 
+type MockLinkHandler struct {
+	mock.Mock
+}
+
+func (m *MockLinkHandler) Create(c *gin.Context) {
+	m.Called(c)
+	c.JSON(http.StatusCreated, gin.H{"message": "Link created"})
+}
+
 func setupRouterWithMocks() map[string]interface{} {
 	gin.SetMode(gin.TestMode)
 
@@ -100,6 +109,9 @@ func setupRouterWithMocks() map[string]interface{} {
 	mockSearchHandler := new(MockSearchHandler)
 	mockSearchHandler.On("Search", mock.Anything).Return()
 
+	MockLinkHandler := new(MockLinkHandler)
+	MockLinkHandler.On("Create", mock.Anything).Return()
+
 	accountService, accountRepo := factory.AccountServiceWithAccount(&domain.Account{})
 
 	// Setup the router with the mock handler
@@ -110,6 +122,7 @@ func setupRouterWithMocks() map[string]interface{} {
 		mockCrawlJobHandler,
 		mockNodeHandler,
 		mockSearchHandler,
+		MockLinkHandler,
 	)
 
 	return map[string]interface{}{
@@ -118,6 +131,7 @@ func setupRouterWithMocks() map[string]interface{} {
 		"mockCrawlJobHandler": mockCrawlJobHandler,
 		"mockNodeHandler":     mockNodeHandler,
 		"mockSearchHandler":   mockSearchHandler,
+		"mockLinkHandler":     MockLinkHandler,
 		"accountService":      accountService,
 		"accountRepo":         accountRepo,
 	}
@@ -302,4 +316,24 @@ func TestNodeListByShardIDEndpoint(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, w.Code)
 	assert.Contains(t, w.Body.String(), "Nodes listed")
+}
+
+func TestLinkCreationEndpoint(t *testing.T) {
+	// Set the router to test mode
+	ifs := setupRouterWithMocks()
+
+	testRouter := ifs["testRouter"].(*gin.Engine)
+	mockLinkHandler := ifs["mockLinkHandler"].(*MockLinkHandler)
+
+	w := httptest.NewRecorder()
+
+	req, _ := http.NewRequest("POST", "/links", bytes.NewBufferString(`{"src":"http://example.com","dst":"http://example.com/about"}`))
+	req.Header.Set("Content-Type", "application/json")
+
+	testRouter.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusCreated, w.Code)
+	assert.Contains(t, w.Body.String(), "Link created")
+
+	mockLinkHandler.AssertExpectations(t)
 }

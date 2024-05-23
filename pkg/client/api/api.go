@@ -140,3 +140,40 @@ func (c *Client) CreateCrawlJob(url string) (*dto.CrawlJob, error) {
 
 	return &crawlRes.CrawlJob, nil
 }
+
+func (c *Client) CreateLink(src, dst string) error {
+
+	linkRequest := &dto.CreateLinkRequest{
+		Src: src,
+		Dst: dst,
+	}
+
+	encoded, err := json.Marshal(linkRequest)
+
+	if err != nil {
+		c.logger.Errorf("error encoding request: %v", err)
+		return err
+	}
+
+	req, err := http.NewRequest("POST", c.BaseURL+"/links", bytes.NewBuffer(encoded))
+	if err != nil {
+		c.logger.Errorf("error creating request: %v", err)
+		return err
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		c.logger.Errorf("error sending request: %v", err)
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusCreated {
+		c.logger.Errorf("error response: %v", resp.Status)
+		return errors.New("could not create link")
+	}
+
+	return nil
+}

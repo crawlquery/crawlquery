@@ -112,8 +112,8 @@ func TestCrawl(t *testing.T) {
 			SetHeader("Content-Type", "text/html")
 
 		gock.New("http://localhost:8080").
-			Post("/crawl-jobs").
-			JSON(`{"url":"http://example.com/about"}`).
+			Post("/links").
+			JSON(`{"src":"http://example.com","dst":"http://example.com/about"}`).
 			Reply(200)
 
 		err := service.Crawl("test1", "http://example.com")

@@ -7,7 +7,7 @@ import (
 )
 
 type CreateCrawlJobRequest struct {
-	URL string `json:"url"`
+	URL string `json:"url" binding:"required,url"`
 }
 
 func (r *CreateCrawlJobRequest) ToJSON() ([]byte, error) {

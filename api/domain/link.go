@@ -3,6 +3,8 @@ package domain
 import (
 	"errors"
 	"time"
+
+	"github.com/gin-gonic/gin"
 )
 
 var ErrLinkAlreadyExists = errors.New("link already exists")
@@ -19,4 +21,8 @@ type LinkRepository interface {
 
 type LinkService interface {
 	Create(srcID, dstID string) (*Link, error)
+}
+
+type LinkHandler interface {
+	Create(c *gin.Context)
 }

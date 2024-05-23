@@ -197,3 +197,23 @@ func TestCreateCrawlJobRequest(t *testing.T) {
 		}
 	})
 }
+
+func TestCreateLink(t *testing.T) {
+	t.Run("should create a link", func(t *testing.T) {
+
+		defer gock.Off()
+
+		gock.New("http://localhost:8080").
+			Post("links").
+			JSON(`{"src":"http://example.com","dst":"http://example.com/about"}`).
+			Reply(201)
+
+		client := api.NewClient("http://localhost:8080", testutil.NewTestLogger())
+
+		err := client.CreateLink("http://example.com", "http://example.com/about")
+
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+	})
+}

@@ -31,6 +31,10 @@ import (
 	searchHandler "crawlquery/api/search/handler"
 	searchService "crawlquery/api/search/service"
 
+	linkHandler "crawlquery/api/link/handler"
+	linkMySQLRepo "crawlquery/api/link/repository/mysql"
+	linkService "crawlquery/api/link/service"
+
 	_ "github.com/go-sql-driver/mysql"
 	"go.uber.org/zap"
 )
@@ -82,6 +86,10 @@ func main() {
 	crawlJobService := crawlJobService.NewService(crawlJobRepo, shardService, nodeService, crawlRestrictionService, sugar)
 	crawlJobHandler := crawlHandler.NewHandler(crawlJobService)
 
+	linkRepo := linkMySQLRepo.NewRepository(db)
+	linkService := linkService.NewService(linkRepo, crawlJobService, sugar)
+	linkHandler := linkHandler.NewHandler(linkService, sugar)
+
 	go crawlJobService.ProcessCrawlJobs()
 
 	r := router.NewRouter(
@@ -91,6 +99,7 @@ func main() {
 		crawlJobHandler,
 		nodeHandler,
 		searchHandler,
+		linkHandler,
 	)
 
 	r.Run(":8080")

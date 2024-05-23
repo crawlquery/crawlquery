@@ -76,8 +76,8 @@ func (cs *CrawlService) Crawl(pageID, url string) error {
 
 	c.OnHTML("a[href]", func(e *colly.HTMLElement) {
 		link := e.Attr("href")
-		if _, err := cs.api.CreateCrawlJob(link); err != nil {
-			cs.logger.Errorw("Error crawling link", "error", err, "link", link)
+		if err := cs.api.CreateLink(url, link); err != nil {
+			cs.logger.Errorw("Error creating link", "error", err, "link", link)
 		}
 	})
 
