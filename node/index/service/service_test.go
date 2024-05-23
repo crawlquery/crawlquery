@@ -138,8 +138,8 @@ func TestSearch(t *testing.T) {
 			t.Fatalf("Expected page ID to be page1, got %s", results[0].PageID)
 		}
 
-		if results[0].Score != 1040 {
-			t.Fatalf("Expected score to be 1040, got %f", results[0].Score)
+		if results[0].Score != 1052 {
+			t.Fatalf("Expected score to be 1052, got %f", results[0].Score)
 		}
 
 		if results[0].Page.URL != "http://example.com" {

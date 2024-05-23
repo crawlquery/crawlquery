@@ -2,10 +2,18 @@ package signal
 
 import "crawlquery/node/domain"
 
-type KeywordSignal struct {
-	keywordService domain.KeywordService
-}
+type Keyword struct{}
 
-func (ks *KeywordSignal) Level(page string, keywords []string) domain.SignalLevel {
-	return domain.SignalLevelNone
+func (ks *Keyword) Level(page *domain.Page, terms []string) domain.SignalLevel {
+	baseLevel := domain.SignalLevelNone
+
+	for _, term := range terms {
+		for _, kw := range page.Keywords {
+			if kw == term {
+				baseLevel += domain.SignalLevelLow
+			}
+		}
+	}
+
+	return baseLevel
 }

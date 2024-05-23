@@ -97,6 +97,7 @@ func (s *Service) Search(query string) ([]sharedDomain.Result, error) {
 	signals := []domain.Signal{
 		&signal.Domain{},
 		&signal.Title{},
+		&signal.Keyword{},
 	}
 
 	for _, page := range pages {

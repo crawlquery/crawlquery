@@ -42,11 +42,9 @@ func main() {
 
 	var htmlStoragePath string
 	var pageDBPath string
-	var keywordDBPath string
 
 	flag.StringVar(&htmlStoragePath, "html", "/tmp/htmlstorage", "path to the html storage")
 	flag.StringVar(&pageDBPath, "pdb", "/tmp/pagedb.bolt", "path to the pagedb")
-	flag.StringVar(&keywordDBPath, "kdb", "/tmp/keyworddb.bolt", "path to the keyworddb")
 
 	flag.Parse()
 
