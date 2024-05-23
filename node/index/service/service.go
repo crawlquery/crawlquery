@@ -124,6 +124,10 @@ func (s *Service) Search(query string) ([]sharedDomain.Result, error) {
 		return results[i].Score > results[j].Score
 	})
 
+	if len(results) > 10 {
+		results = results[:10]
+	}
+
 	return results, nil
 }
 

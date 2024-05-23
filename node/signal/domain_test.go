@@ -1,60 +1,79 @@
-package signal_test
+package signal
 
 import (
 	"crawlquery/node/domain"
-	"crawlquery/node/signal"
+	"net/url"
 	"testing"
 )
 
-func TestDomain(t *testing.T) {
-	t.Run("fuzzySearch", func(t *testing.T) {
-		// Arrange
-		ds := &signal.Domain{}
-		terms := []string{"example"}
+func TestDomainFullDomainMatch(t *testing.T) {
+	t.Run("adds a max signal level for a full domain match", func(t *testing.T) {
+		cases := []struct {
+			name  string
+			url   *url.URL
+			terms []string
+			want  domain.SignalLevel
+		}{
+			{
+				name:  "single term match",
+				url:   &url.URL{Host: "example.com"},
+				terms: []string{"example.com"},
+				want:  domain.SignalLevelMax,
+			},
+			{
+				name:  "multiple term match",
+				url:   &url.URL{Host: "example.com"},
+				terms: []string{"example.com", "test"},
+				want:  domain.SignalLevelMax,
+			},
+		}
 
-		// Act
-		level := ds.Level(&domain.Page{
-			URL: "http://example.com",
-		}, terms)
+		for _, tc := range cases {
+			t.Run(tc.name, func(t *testing.T) {
 
-		// Assert
-		if level != domain.SignalLevelVeryHigh {
-			t.Errorf("Expected very high level, got %v", level)
+				ds := &Domain{}
+				level := ds.fullDomainMatch(tc.url, tc.terms)
+
+				if level != tc.want {
+					t.Errorf("Expected %s, got %f", tc.want, level)
+				}
+			})
 		}
 	})
+}
 
-	t.Run("Level", func(t *testing.T) {
-		// Arrange
-		ds := &signal.Domain{}
-		page := &domain.Page{
-			URL: "http://example.com",
-		}
-		term := []string{"example.com"}
-
-		// Act
-		level := ds.Level(page, term)
-
-		// Assert
-		if level != domain.SignalLevelMax {
-			t.Errorf("Expected max level, got %v", level)
-		}
-	})
-
-	t.Run("youtube.com example", func(t *testing.T) {
-		// Arrange
-		ds := &signal.Domain{}
-		page := &domain.Page{
-			URL: "https://youtube.com",
-		}
-		term := []string{"youtube.com"}
-
-		// Act
-		level := ds.Level(page, term)
-
-		// Assert
-		if level != domain.SignalLevelMax {
-			t.Errorf("Expected max level, got %v", level)
+func TestDomainHostnameMatch(t *testing.T) {
+	t.Run("adds a very high signal level for a hostname match", func(t *testing.T) {
+		cases := []struct {
+			name  string
+			url   *url.URL
+			terms []string
+			want  domain.SignalLevel
+		}{
+			{
+				name:  "single term match",
+				url:   &url.URL{Host: "example.com"},
+				terms: []string{"example"},
+				want:  domain.SignalLevelVeryHigh,
+			},
+			{
+				name:  "multiple term match",
+				url:   &url.URL{Host: "google.com"},
+				terms: []string{"google", "test"},
+				want:  domain.SignalLevelVeryHigh,
+			},
 		}
 
+		for _, tc := range cases {
+			t.Run(tc.name, func(t *testing.T) {
+
+				ds := &Domain{}
+				level := ds.hostnameMatch(tc.url, tc.terms)
+
+				if level != tc.want {
+					t.Errorf("Expected %s, got %f", tc.want, level)
+				}
+			})
+		}
 	})
 }

@@ -111,7 +111,6 @@ func (cs *Service) ProcessCrawlJobs() {
 
 		if err != nil {
 			cs.pushBack(job, time.Now().Add(time.Hour), err.Error())
-			time.Sleep(1 * time.Second)
 			continue
 		}
 

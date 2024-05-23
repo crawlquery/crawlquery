@@ -3,61 +3,48 @@ package signal
 import (
 	"crawlquery/node/domain"
 	"net/url"
-	"strings"
 )
+
+// embed:
 
 type Domain struct{}
 
-func (ds *Domain) fuzzySearch(host string, terms []string) domain.SignalLevel {
-	for _, term := range terms {
-		if strings.Contains(strings.ToLower(host), strings.ToLower(term)) {
-			// Return different levels based on the term or other conditions
-			if len(term) > 5 {
-				return domain.SignalLevelHigh
-			}
-			return domain.SignalLevelMedium
+func (ds *Domain) fullDomainMatch(url *url.URL, term []string) domain.SignalLevel {
+	// full domain matching
+	for _, t := range term {
+		if url.Host == t {
+			return domain.SignalLevelMax
 		}
 	}
+
+	return domain.SignalLevelNone
+}
+
+func (ds *Domain) hostnameMatch(url *url.URL, term []string) domain.SignalLevel {
+	// hostname matching
+	for _, t := range term {
+		if url.Hostname() == t {
+			return domain.SignalLevelVeryHigh
+		}
+	}
+
 	return domain.SignalLevelNone
 }
 
 func (ds *Domain) Level(page *domain.Page, term []string) domain.SignalLevel {
 
+	baseLevel := domain.SignalLevelNone
+
 	parsedUrl, err := url.Parse(page.URL)
-
 	if err != nil {
-		return domain.SignalLevelNone
+		return baseLevel
 	}
-
-	var fullDomainMatch bool
-	host := parsedUrl.Host
 
 	// full domain matching
-	for _, t := range term {
-		if host == t {
-			fullDomainMatch = true
-			break
-		}
-	}
+	baseLevel += ds.fullDomainMatch(parsedUrl, term)
 
-	if parsedUrl.Path == "" && fullDomainMatch {
-		return domain.SignalLevelMax
-	}
+	// hostname matching
+	baseLevel += ds.hostnameMatch(parsedUrl, term)
 
-	var subdomainMatch bool
-	subdomain := strings.Split(host, ".")[0]
-
-	// subdomain matching
-	for _, t := range term {
-		if subdomain == t {
-			subdomainMatch = true
-		}
-	}
-
-	if subdomainMatch && parsedUrl.Path == "" {
-		return domain.SignalLevelVeryHigh
-	}
-
-	// fuzzy search
-	return ds.fuzzySearch(host, term)
+	return baseLevel
 }
