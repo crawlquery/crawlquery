@@ -64,6 +64,16 @@ func (s *Service) Index(pageID string) error {
 	// TO GET THE KEYWORDS
 	page.Keywords = token.Keywords(doc)
 
+	if page.MetaDescription == "" {
+		subKeyWords := page.Keywords
+
+		if len(subKeyWords) > 10 {
+			subKeyWords = subKeyWords[:10]
+		}
+
+		page.MetaDescription = strings.Join(subKeyWords, ", ")
+	}
+
 	err = s.pageService.Update(page)
 
 	if err != nil {

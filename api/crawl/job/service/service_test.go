@@ -20,6 +20,9 @@ import (
 	resRepo "crawlquery/api/crawl/restriction/repository/mem"
 	resService "crawlquery/api/crawl/restriction/service"
 
+	pageRepo "crawlquery/api/page/repository/mem"
+	pageService "crawlquery/api/page/service"
+
 	"errors"
 	"testing"
 
@@ -30,7 +33,7 @@ func TestCreate(t *testing.T) {
 	t.Run("can create a job", func(t *testing.T) {
 		// Arrange
 		repo := mem.NewRepository()
-		svc := service.NewService(repo, nil, nil, nil, testutil.NewTestLogger())
+		svc := service.NewService(repo, nil, nil, nil, nil, testutil.NewTestLogger())
 		url := "http://example.com"
 
 		// Act
@@ -57,7 +60,7 @@ func TestCreate(t *testing.T) {
 	t.Run("validates url", func(t *testing.T) {
 		// Arrange
 		repo := mem.NewRepository()
-		svc := service.NewService(repo, nil, nil, nil, testutil.NewTestLogger())
+		svc := service.NewService(repo, nil, nil, nil, nil, testutil.NewTestLogger())
 		url := "notaurl"
 
 		// Act
@@ -76,7 +79,7 @@ func TestCreate(t *testing.T) {
 	t.Run("normalizes url", func(t *testing.T) {
 		// Arrange
 		repo := mem.NewRepository()
-		svc := service.NewService(repo, nil, nil, nil, testutil.NewTestLogger())
+		svc := service.NewService(repo, nil, nil, nil, nil, testutil.NewTestLogger())
 		url := "http://example.com?utm_source=google&utm_medium=cpc&utm_campaign=summer-sale"
 
 		// Act
@@ -95,7 +98,7 @@ func TestCreate(t *testing.T) {
 	t.Run("handles repository error", func(t *testing.T) {
 		// Arrange
 		repo := mem.NewRepository()
-		svc := service.NewService(repo, nil, nil, nil, testutil.NewTestLogger())
+		svc := service.NewService(repo, nil, nil, nil, nil, testutil.NewTestLogger())
 		expectErr := errors.New("db locked")
 		repo.ForceError(expectErr)
 
@@ -162,9 +165,12 @@ func TestProcessCrawlJobs(t *testing.T) {
 		resRepo := resRepo.NewRepository()
 		resService := resService.NewService(resRepo, testutil.NewTestLogger())
 
+		pageRepo := pageRepo.NewRepository()
+		pageService := pageService.NewService(pageRepo, testutil.NewTestLogger())
+
 		// Arrange
 		repo := mem.NewRepository()
-		svc := service.NewService(repo, shardService, nodeService, resService, testutil.NewTestLogger())
+		svc := service.NewService(repo, shardService, nodeService, resService, pageService, testutil.NewTestLogger())
 		job, _ := svc.Create(url)
 
 		// Act
@@ -228,7 +234,7 @@ func TestProcessCrawlJobs(t *testing.T) {
 		url := "http://example.com/homepage"
 		// Arrange
 		repo := mem.NewRepository()
-		svc := service.NewService(repo, nil, nil, resService, testutil.NewTestLogger())
+		svc := service.NewService(repo, nil, nil, resService, nil, testutil.NewTestLogger())
 		job, _ := svc.Create(url)
 
 		// Act
@@ -257,10 +263,90 @@ func TestProcessCrawlJobs(t *testing.T) {
 		}
 	})
 
+	t.Run("creates page if crawl is successful", func(t *testing.T) {
+		nodeRepo := nodeRepo.NewRepository()
+		nodeService := nodeService.NewService(nodeRepo, nil, nil, testutil.NewTestLogger())
+
+		nodeRepo.Create(&domain.Node{
+			ID:        "node1",
+			ShardID:   0,
+			Hostname:  "node1.cluster.com",
+			Port:      8080,
+			CreatedAt: time.Now(),
+		})
+
+		nodeRepo.Create(&domain.Node{
+			ID:        "node2",
+			ShardID:   1,
+			Hostname:  "node2.cluster.com",
+			Port:      8080,
+			CreatedAt: time.Now(),
+		})
+
+		shardRepo := shardRepo.NewRepository()
+		shardService := shardService.NewService(shardRepo, testutil.NewTestLogger())
+
+		shardRepo.Create(&domain.Shard{
+			ID: 0,
+		})
+
+		shardRepo.Create(&domain.Shard{
+			ID: 1,
+		})
+
+		defer gock.Off()
+
+		url := "http://example.com"
+
+		pageID := util.PageID(url)
+
+		responseJson := fmt.Sprintf(`{"page_id":"%s","url":"%s"}`, pageID, url)
+
+		gock.New("http://node1.cluster.com:8080").
+			Post("/crawl").
+			JSON(responseJson).
+			Reply(200)
+
+		resRepo := resRepo.NewRepository()
+		resService := resService.NewService(resRepo, testutil.NewTestLogger())
+
+		pageRepo := pageRepo.NewRepository()
+		pageService := pageService.NewService(pageRepo, testutil.NewTestLogger())
+
+		// Arrange
+		repo := mem.NewRepository()
+		svc := service.NewService(repo, shardService, nodeService, resService, pageService, testutil.NewTestLogger())
+		svc.Create(url)
+
+		// Act
+		go svc.ProcessCrawlJobs()
+
+		// Wait for the job to be processed
+		time.Sleep(100 * time.Millisecond)
+
+		pageCheck, err := pageRepo.Get(pageID)
+
+		if err != nil {
+			t.Errorf("Error getting page: %v", err)
+		}
+
+		if pageCheck == nil {
+			t.Fatalf("Expected page to be set")
+		}
+
+		if pageCheck.ID != pageID {
+			t.Errorf("Expected page ID to be %s, got %s", pageID, pageCheck.ID)
+		}
+
+		if pageCheck.ShardID != 0 {
+			t.Errorf("Expected page ShardID to be 0, got %d", pageCheck.ShardID)
+		}
+	})
+
 	t.Run("handles repository error", func(t *testing.T) {
 		// Arrange
 		repo := mem.NewRepository()
-		svc := service.NewService(repo, nil, nil, nil, testutil.NewTestLogger())
+		svc := service.NewService(repo, nil, nil, nil, nil, testutil.NewTestLogger())
 		expectErr := errors.New("db locked")
 		repo.ForceError(expectErr)
 

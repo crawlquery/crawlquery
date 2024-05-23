@@ -18,6 +18,7 @@ type Service struct {
 	shardService       domain.ShardService
 	nodeService        domain.NodeService
 	restrictionService domain.CrawlRestrictionService
+	pageService        domain.PageService
 	logger             *zap.SugaredLogger
 }
 
@@ -26,6 +27,7 @@ func NewService(
 	shardService domain.ShardService,
 	nodeService domain.NodeService,
 	restrictionService domain.CrawlRestrictionService,
+	pageService domain.PageService,
 	logger *zap.SugaredLogger,
 ) *Service {
 	return &Service{
@@ -33,12 +35,13 @@ func NewService(
 		shardService:       shardService,
 		nodeService:        nodeService,
 		restrictionService: restrictionService,
+		pageService:        pageService,
 		logger:             logger,
 	}
 }
 
 var trackingParams = []string{
-	"utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content", "gclid", "fbclid",
+	"utm_source", "utm_medium", "utm_platform", "utm_campaign", "utm_term", "utm_content", "gclid", "fbclid",
 }
 
 func normalizeURL(rawURL string) (string, error) {
@@ -137,8 +140,15 @@ func (cs *Service) ProcessCrawlJobs() {
 			continue
 		}
 
+		shardID, err := cs.shardService.GetURLShardID(job.URL)
+
+		if err != nil {
+			cs.logger.Errorw("Crawl.Service.ProcessCrawlJobs: error getting shardID", "error", err)
+			continue
+		}
+
 		// Process the job
-		err = cs.processJob(job)
+		err = cs.processJob(job, shardID)
 
 		if err != nil {
 			cs.pushBack(job, time.Now().Add(time.Hour), err.Error())
@@ -156,22 +166,20 @@ func (cs *Service) ProcessCrawlJobs() {
 			time.Sleep(5 * time.Second)
 		}
 
+		_, err = cs.pageService.Create(job.PageID, shardID)
+
+		if err != nil {
+			cs.logger.Errorw("Crawl.Service.ProcessCrawlJobs: error creating page", "error", err)
+			continue
+		}
+
 		cs.restrictionService.Restrict(pasedURL.Hostname())
 	}
 }
 
-func (cs *Service) processJob(job *domain.CrawlJob) error {
+func (cs *Service) processJob(job *domain.CrawlJob, shardID uint) error {
 	// Process the job
 	cs.logger.Infow("Crawl.Service.ProcessCrawlJobs: processing job", "job", job)
-
-	shardID, err := cs.shardService.GetURLShardID(job.URL)
-
-	if err != nil {
-		cs.logger.Errorw("Crawl.Service.ProcessCrawlJobs: error getting shardID", "error", err)
-		return err
-	}
-
-	cs.logger.Infow("Crawl.Service.ProcessCrawlJobs: shardID", "shardID", shardID)
 
 	nodes, err := cs.nodeService.ListByShardID(shardID)
 

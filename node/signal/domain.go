@@ -2,15 +2,27 @@ package signal
 
 import (
 	"crawlquery/node/domain"
-	"net/url"
+
+	tld "github.com/jpillora/go-tld"
 )
 
 // embed:
 
 type Domain struct{}
 
-func (ds *Domain) fullDomainMatch(url *url.URL, term []string) domain.SignalLevel {
-	// full domain matching
+func (ds *Domain) domainMatch(url *tld.URL, term []string) domain.SignalLevel {
+	// domain matching
+	for _, t := range term {
+		if url.Domain == t {
+			return domain.SignalLevelVeryHigh
+		}
+	}
+
+	return domain.SignalLevelNone
+}
+
+func (ds *Domain) hostnameMatch(url *tld.URL, term []string) domain.SignalLevel {
+	// hostname matching
 	for _, t := range term {
 		if url.Host == t {
 			return domain.SignalLevelMax
@@ -20,31 +32,21 @@ func (ds *Domain) fullDomainMatch(url *url.URL, term []string) domain.SignalLeve
 	return domain.SignalLevelNone
 }
 
-func (ds *Domain) hostnameMatch(url *url.URL, term []string) domain.SignalLevel {
-	// hostname matching
-	for _, t := range term {
-		if url.Hostname() == t {
-			return domain.SignalLevelVeryHigh
-		}
-	}
-
-	return domain.SignalLevelNone
-}
-
 func (ds *Domain) Level(page *domain.Page, term []string) domain.SignalLevel {
+
+	tldURL, err := tld.Parse(page.URL)
+
+	if err != nil {
+		return domain.SignalLevelNone
+	}
 
 	baseLevel := domain.SignalLevelNone
 
-	parsedUrl, err := url.Parse(page.URL)
-	if err != nil {
-		return baseLevel
-	}
-
 	// full domain matching
-	baseLevel += ds.fullDomainMatch(parsedUrl, term)
+	baseLevel += ds.domainMatch(tldURL, term)
 
 	// hostname matching
-	baseLevel += ds.hostnameMatch(parsedUrl, term)
+	baseLevel += ds.hostnameMatch(tldURL, term)
 
 	return baseLevel
 }

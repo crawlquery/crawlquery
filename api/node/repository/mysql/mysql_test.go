@@ -116,6 +116,7 @@ func TestList(t *testing.T) {
 		node := &domain.Node{
 			ID:        util.UUID(),
 			AccountID: util.UUID(),
+			Key:       util.UUID(),
 			Hostname:  "testnode",
 			Port:      8080,
 			ShardID:   1,
@@ -124,6 +125,7 @@ func TestList(t *testing.T) {
 		node2 := &domain.Node{
 			ID:        util.UUID(),
 			AccountID: util.UUID(),
+			Key:       util.UUID(),
 			Hostname:  "testnode2",
 			Port:      8081,
 			ShardID:   2,
@@ -173,6 +175,7 @@ func TestListByAccounID(t *testing.T) {
 			ID:        util.UUID(),
 			AccountID: "account1",
 			Hostname:  "testnode",
+			Key:       util.UUID(),
 			Port:      8080,
 			ShardID:   1,
 		}
@@ -181,6 +184,7 @@ func TestListByAccounID(t *testing.T) {
 			ID:        util.UUID(),
 			AccountID: "account2",
 			Hostname:  "testnode2",
+			Key:       util.UUID(),
 			Port:      8081,
 			ShardID:   2,
 		}

@@ -2,29 +2,31 @@ package signal
 
 import (
 	"crawlquery/node/domain"
-	"net/url"
 	"testing"
+
+	tld "github.com/jpillora/go-tld"
 )
 
-func TestDomainFullDomainMatch(t *testing.T) {
+func TestDomainSignalDomainMatch(t *testing.T) {
 	t.Run("adds a max signal level for a full domain match", func(t *testing.T) {
+		tldURL, _ := tld.Parse("http://example.com")
 		cases := []struct {
 			name  string
-			url   *url.URL
+			url   *tld.URL
 			terms []string
 			want  domain.SignalLevel
 		}{
 			{
 				name:  "single term match",
-				url:   &url.URL{Host: "example.com"},
-				terms: []string{"example.com"},
-				want:  domain.SignalLevelMax,
+				url:   tldURL,
+				terms: []string{"example"},
+				want:  domain.SignalLevelVeryHigh,
 			},
 			{
 				name:  "multiple term match",
-				url:   &url.URL{Host: "example.com"},
-				terms: []string{"example.com", "test"},
-				want:  domain.SignalLevelMax,
+				url:   tldURL,
+				terms: []string{"example", "test"},
+				want:  domain.SignalLevelVeryHigh,
 			},
 		}
 
@@ -32,7 +34,7 @@ func TestDomainFullDomainMatch(t *testing.T) {
 			t.Run(tc.name, func(t *testing.T) {
 
 				ds := &Domain{}
-				level := ds.fullDomainMatch(tc.url, tc.terms)
+				level := ds.domainMatch(tc.url, tc.terms)
 
 				if level != tc.want {
 					t.Errorf("Expected %s, got %f", tc.want, level)
@@ -42,25 +44,26 @@ func TestDomainFullDomainMatch(t *testing.T) {
 	})
 }
 
-func TestDomainHostnameMatch(t *testing.T) {
+func TestDomainSignalHostnameMatch(t *testing.T) {
 	t.Run("adds a very high signal level for a hostname match", func(t *testing.T) {
+		tldURL, _ := tld.Parse("http://example.com")
 		cases := []struct {
 			name  string
-			url   *url.URL
+			url   *tld.URL
 			terms []string
 			want  domain.SignalLevel
 		}{
 			{
 				name:  "single term match",
-				url:   &url.URL{Host: "example.com"},
-				terms: []string{"example"},
-				want:  domain.SignalLevelVeryHigh,
+				url:   tldURL,
+				terms: []string{"example.com"},
+				want:  domain.SignalLevelMax,
 			},
 			{
 				name:  "multiple term match",
-				url:   &url.URL{Host: "google.com"},
-				terms: []string{"google", "test"},
-				want:  domain.SignalLevelVeryHigh,
+				url:   tldURL,
+				terms: []string{"example.com", "example.com"},
+				want:  domain.SignalLevelMax,
 			},
 		}
 

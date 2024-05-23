@@ -29,7 +29,7 @@ func NewService(
 }
 
 var trackingParams = []string{
-	"utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content", "gclid", "fbclid",
+	"utm_source", "utm_medium", "utm_platform", "utm_campaign", "utm_term", "utm_content", "gclid", "fbclid",
 }
 
 func normalizeURL(rawURL string) (string, error) {

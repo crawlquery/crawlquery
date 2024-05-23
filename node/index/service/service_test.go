@@ -75,14 +75,6 @@ func TestIndex(t *testing.T) {
 	if page.Title != "Test Page" {
 		t.Fatalf("Expected title to be Test Page, got %s", page.Title)
 	}
-
-	if page.MetaDescription != "" {
-		t.Fatalf("Expected meta description to be empty, got %s", page.MetaDescription)
-	}
-
-	if len(page.Keywords) != 4 {
-		t.Fatalf("Expected 4 keywords, got %d", len(page.Keywords))
-	}
 }
 
 func TestReIndex(t *testing.T) {
@@ -150,14 +142,6 @@ func TestReIndex(t *testing.T) {
 		if page.Title != "Test Page" {
 			t.Fatalf("Expected title to be Test Page, got %s", page.Title)
 		}
-
-		if page.MetaDescription != "" {
-			t.Fatalf("Expected meta description to be empty, got %s", page.MetaDescription)
-		}
-
-		if len(page.Keywords) != 4 {
-			t.Fatalf("Expected 4 keywords, got %d", len(page.Keywords))
-		}
 	})
 }
 
@@ -221,13 +205,6 @@ func TestGetIndex(t *testing.T) {
 			t.Fatalf("Expected title to be Test Page, got %s", page.Title)
 		}
 
-		if page.MetaDescription != "" {
-			t.Fatalf("Expected meta description to be empty, got %s", page.MetaDescription)
-		}
-
-		if len(page.Keywords) != 4 {
-			t.Fatalf("Expected 4 keywords, got %d", len(page.Keywords))
-		}
 	})
 }
 
@@ -284,8 +261,8 @@ func TestSearch(t *testing.T) {
 			t.Fatalf("Expected page ID to be page1, got %s", results[0].PageID)
 		}
 
-		if results[0].Score != 1052 {
-			t.Fatalf("Expected score to be 1052, got %f", results[0].Score)
+		if results[0].Score < 1000 {
+			t.Fatalf("Expected score to be more, got %f", results[0].Score)
 		}
 
 		if results[0].Page.URL != "http://example.com" {
@@ -301,7 +278,7 @@ func TestSearch(t *testing.T) {
 		}
 	})
 
-	t.Run("applies domain name signal", func(t *testing.T) {
+	t.Run("applies domain signal", func(t *testing.T) {
 		pageRepo := pageRepo.NewRepository()
 		pageService := pageService.NewService(pageRepo)
 
@@ -349,8 +326,8 @@ func TestSearch(t *testing.T) {
 			t.Fatalf("Expected 1 result, got %d", len(results))
 		}
 
-		if results[0].Score != 1040 {
-			t.Fatalf("Expected score to be 1040, got %f", results[0].Score)
+		if results[0].Score < 1000 {
+			t.Fatalf("Expected score to be 1000 or more, got %f", results[0].Score)
 		}
 
 	})

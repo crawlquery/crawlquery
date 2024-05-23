@@ -66,6 +66,13 @@ var migrations = []Migration{
 			created_at TIMESTAMP NOT NULL,
 			PRIMARY KEY (src_id, dst_id))`,
 	},
+	{
+		Name: "create_pages_table",
+		SQL: `CREATE TABLE pages (
+			id VARCHAR(32) PRIMARY KEY,
+			shard_id INT NOT NULL,
+			created_at TIMESTAMP NOT NULL)`,
+	},
 }
 
 var migrationTable = `CREATE TABLE IF NOT EXISTS migrations (
