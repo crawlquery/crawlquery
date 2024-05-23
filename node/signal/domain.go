@@ -2,7 +2,6 @@ package signal
 
 import (
 	"crawlquery/node/domain"
-	sharedDomain "crawlquery/pkg/domain"
 	"net/url"
 	"strings"
 )
@@ -22,7 +21,7 @@ func (ds *Domain) fuzzySearch(host string, terms []string) domain.SignalLevel {
 	return domain.SignalLevelNone
 }
 
-func (ds *Domain) Level(page *sharedDomain.Page, term []string) domain.SignalLevel {
+func (ds *Domain) Level(page *domain.Page, term []string) domain.SignalLevel {
 
 	parsedUrl, err := url.Parse(page.URL)
 

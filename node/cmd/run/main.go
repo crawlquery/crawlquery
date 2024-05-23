@@ -13,9 +13,6 @@ import (
 	pageRepo "crawlquery/node/page/repository/bolt"
 	pageService "crawlquery/node/page/service"
 
-	keywordRepo "crawlquery/node/keyword/repository/bolt"
-	keywordService "crawlquery/node/keyword/service"
-
 	peerService "crawlquery/node/peer/service"
 
 	indexHandler "crawlquery/node/index/handler"
@@ -64,11 +61,6 @@ func main() {
 		sugar.Fatalf("Error creating page repository: %v", err)
 	}
 
-	keywordRepo, err := keywordRepo.NewRepository(keywordDBPath)
-	if err != nil {
-		sugar.Fatalf("Error creating keyword repository: %v", err)
-	}
-
 	api := api.NewClient(apiURL, sugar)
 
 	// Authenticate with the API
@@ -86,16 +78,15 @@ func main() {
 	// Create services
 	htmlService := htmlService.NewService(htmlRepo)
 	pageService := pageService.NewService(pageRepo)
-	keywordService := keywordService.NewService(keywordRepo)
-	peerService := peerService.NewService(api, keywordService, pageService, &domain.Peer{
+	peerService := peerService.NewService(api, pageService, &domain.Peer{
 		ID:       node.ID,
 		Hostname: node.Hostname,
 		Port:     node.Port,
 		ShardID:  node.ShardID,
 	}, sugar)
-	indexService := indexService.NewService(pageService, htmlService, keywordService, peerService, sugar)
+	indexService := indexService.NewService(pageService, htmlService, peerService, sugar)
 	crawlService := crawlService.NewService(htmlService, pageService, indexService, api, sugar)
-	dumpService := dumpService.NewService(pageService, keywordService)
+	dumpService := dumpService.NewService(pageService)
 
 	// Create handlers
 	indexHandler := indexHandler.NewHandler(indexService, sugar)

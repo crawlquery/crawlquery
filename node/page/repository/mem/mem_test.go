@@ -2,13 +2,12 @@ package mem
 
 import (
 	"crawlquery/node/domain"
-	sharedDomain "crawlquery/pkg/domain"
 	"testing"
 )
 
 func TestPageRepo(t *testing.T) {
 	r := NewRepository()
-	err := r.Save("page1", &sharedDomain.Page{
+	err := r.Save("page1", &domain.Page{
 		ID: "page1",
 	})
 
@@ -42,11 +41,11 @@ func TestPageRepo(t *testing.T) {
 
 func TestGetAll(t *testing.T) {
 	r := NewRepository()
-	r.Save("page1", &sharedDomain.Page{
+	r.Save("page1", &domain.Page{
 		ID: "page1",
 	})
 
-	r.Save("page2", &sharedDomain.Page{
+	r.Save("page2", &domain.Page{
 		ID: "page2",
 	})
 
@@ -71,7 +70,7 @@ func TestGetAll(t *testing.T) {
 func TestDelete(t *testing.T) {
 	r := NewRepository()
 
-	err := r.Save("page1", &sharedDomain.Page{
+	err := r.Save("page1", &domain.Page{
 		ID: "page1",
 	})
 

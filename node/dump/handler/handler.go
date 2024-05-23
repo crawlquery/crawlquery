@@ -24,12 +24,3 @@ func (h *Handler) Page(c *gin.Context) {
 	}
 	c.Data(200, "application/json", data)
 }
-
-func (h *Handler) Keyword(c *gin.Context) {
-	data, err := h.service.Keyword()
-	if err != nil {
-		c.JSON(500, gin.H{"error": err.Error()})
-		return
-	}
-	c.Data(200, "application/json", data)
-}

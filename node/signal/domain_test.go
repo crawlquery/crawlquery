@@ -3,7 +3,6 @@ package signal_test
 import (
 	"crawlquery/node/domain"
 	"crawlquery/node/signal"
-	sharedDomain "crawlquery/pkg/domain"
 	"testing"
 )
 
@@ -14,7 +13,7 @@ func TestDomain(t *testing.T) {
 		terms := []string{"example"}
 
 		// Act
-		level := ds.Level(&sharedDomain.Page{
+		level := ds.Level(&domain.Page{
 			URL: "http://example.com",
 		}, terms)
 
@@ -27,7 +26,7 @@ func TestDomain(t *testing.T) {
 	t.Run("Apply", func(t *testing.T) {
 		// Arrange
 		ds := &signal.Domain{}
-		page := &sharedDomain.Page{
+		page := &domain.Page{
 			URL: "http://example.com",
 		}
 		term := []string{"example.com"}
@@ -44,7 +43,7 @@ func TestDomain(t *testing.T) {
 	t.Run("youtube.com example", func(t *testing.T) {
 		// Arrange
 		ds := &signal.Domain{}
-		page := &sharedDomain.Page{
+		page := &domain.Page{
 			URL: "https://youtube.com",
 		}
 		term := []string{"youtube.com"}

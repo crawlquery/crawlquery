@@ -45,6 +45,5 @@ func NewRouter(
 	router.GET("/index/hash", indexHandler.Hash)
 
 	router.GET("/dump/page", dumpHandler.Page)
-	router.GET("/dump/keyword", dumpHandler.Keyword)
 	return router
 }

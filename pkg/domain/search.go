@@ -6,7 +6,7 @@ type Result struct {
 	Page   *Page   `json:"page"`
 }
 
-// Page represents a web page with metadata.
+// Page represents a web page with metadata. Note this does not include the keywords.
 type Page struct {
 	ID              string `json:"id"`
 	URL             string `json:"url"`

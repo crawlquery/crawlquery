@@ -7,15 +7,10 @@ import (
 	sharedDomain "crawlquery/pkg/domain"
 	"crawlquery/pkg/factory"
 	"crawlquery/pkg/testutil"
-	"crypto/sha256"
-	"encoding/hex"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
-
-	keywordRepo "crawlquery/node/keyword/repository/mem"
-	keywordService "crawlquery/node/keyword/service"
 
 	pageRepo "crawlquery/node/page/repository/mem"
 	pageService "crawlquery/node/page/service"
@@ -39,15 +34,11 @@ func TestSearch(t *testing.T) {
 		htmlRepo := htmlRepo.NewRepository()
 		htmlService := htmlService.NewService(htmlRepo)
 
-		keywordRepo := keywordRepo.NewRepository()
-		keywordService := keywordService.NewService(keywordRepo)
-
-		peerService := peerService.NewService(nil, keywordService, pageService, nil, testutil.NewTestLogger())
+		peerService := peerService.NewService(nil, pageService, nil, testutil.NewTestLogger())
 
 		indexService := indexService.NewService(
 			pageService,
 			htmlService,
-			keywordService,
 			peerService,
 			testutil.NewTestLogger(),
 		)
@@ -119,15 +110,11 @@ func TestSearch(t *testing.T) {
 		htmlRepo := htmlRepo.NewRepository()
 		htmlService := htmlService.NewService(htmlRepo)
 
-		keywordRepo := keywordRepo.NewRepository()
-		keywordService := keywordService.NewService(keywordRepo)
-
-		peerService := peerService.NewService(nil, keywordService, pageService, nil, testutil.NewTestLogger())
+		peerService := peerService.NewService(nil, pageService, nil, testutil.NewTestLogger())
 
 		indexService := indexService.NewService(
 			pageService,
 			htmlService,
-			keywordService,
 			peerService,
 			testutil.NewTestLogger(),
 		)
@@ -155,15 +142,11 @@ func TestEvent(t *testing.T) {
 		htmlRepo := htmlRepo.NewRepository()
 		htmlService := htmlService.NewService(htmlRepo)
 
-		keywordRepo := keywordRepo.NewRepository()
-		keywordService := keywordService.NewService(keywordRepo)
-
-		peerService := peerService.NewService(nil, keywordService, pageService, nil, testutil.NewTestLogger())
+		peerService := peerService.NewService(nil, pageService, nil, testutil.NewTestLogger())
 
 		indexService := indexService.NewService(
 			pageService,
 			htmlService,
-			keywordService,
 			peerService,
 			testutil.NewTestLogger(),
 		)
@@ -174,18 +157,12 @@ func TestEvent(t *testing.T) {
 		ctx, _ := gin.CreateTestContext(w)
 
 		indexEvent := domain.IndexEvent{
-			Page: &sharedDomain.Page{
+			Page: &domain.Page{
 				URL:             "http://example.com",
 				ID:              "page1",
 				Title:           "Example",
 				MetaDescription: "An example page",
-			},
-			Keywords: map[string]*domain.Posting{
-				"keyword1": {
-					PageID:    "page1",
-					Frequency: 1,
-					Positions: []int{1},
-				},
+				Keywords:        []string{"distro", "linux"},
 			},
 		}
 
@@ -225,22 +202,16 @@ func TestEvent(t *testing.T) {
 			t.Fatalf("expected meta description to be An example page, got %s", page.MetaDescription)
 		}
 
-		postings, err := keywordService.GetPostings("keyword1")
-
-		if err != nil {
-			t.Fatalf("error getting keyword: %v", err)
+		if len(page.Keywords) != 2 {
+			t.Fatalf("expected 2 keywords, got %d", len(page.Keywords))
 		}
 
-		if len(postings) != 1 {
-			t.Fatalf("expected 1 posting, got %d", len(postings))
+		if page.Keywords[0] != "distro" {
+			t.Fatalf("expected keyword to be distro, got %s", page.Keywords[0])
 		}
 
-		if postings[0].PageID != "page1" {
-			t.Fatalf("expected page id to be page1, got %s", postings[0].PageID)
-		}
-
-		if postings[0].Frequency != 1 {
-			t.Fatalf("expected frequency to be 1, got %d", postings[0].Frequency)
+		if page.Keywords[1] != "linux" {
+			t.Fatalf("expected keyword to be linux, got %s", page.Keywords[1])
 		}
 	})
 }
@@ -251,20 +222,7 @@ func TestHash(t *testing.T) {
 		pageRepo := pageRepo.NewRepository()
 		pageService := pageService.NewService(pageRepo)
 
-		keywordRepo := keywordRepo.NewRepository()
-		keywordService := keywordService.NewService(keywordRepo)
-
-		indexService := indexService.NewService(pageService, nil, keywordService, nil, testutil.NewTestLogger())
-
-		postings := map[string]*domain.Posting{
-			"token": {
-				PageID:    "page1",
-				Frequency: 1,
-				Positions: []int{1},
-			},
-		}
-
-		keywordService.SavePostings(postings)
+		indexService := indexService.NewService(pageService, nil, nil, testutil.NewTestLogger())
 
 		indexHandler := indexHandler.NewHandler(indexService, testutil.NewTestLogger())
 
@@ -287,16 +245,6 @@ func TestHash(t *testing.T) {
 			t.Fatalf("error decoding response: %v", err)
 		}
 
-		expectedKeywordHash, err := keywordService.Hash()
-
-		if err != nil {
-			t.Fatalf("error getting keyword hash: %v", err)
-		}
-
-		if response["keyword"] != expectedKeywordHash {
-			t.Fatalf("expected hash %s; got %s", expectedKeywordHash, response["keyword"])
-		}
-
 		expectedPageHash, err := pageService.Hash()
 
 		if err != nil {
@@ -305,15 +253,6 @@ func TestHash(t *testing.T) {
 
 		if response["page"] != expectedPageHash {
 			t.Fatalf("expected hash %s; got %s", expectedPageHash, response["page"])
-		}
-
-		combined := expectedPageHash + expectedKeywordHash
-
-		hash := sha256.Sum256([]byte(combined))
-		expectedCombined := hex.EncodeToString(hash[:])
-
-		if response["combined"] != expectedCombined {
-			t.Fatalf("expected hash %s; got %s", expectedCombined, response["combined"])
 		}
 
 	})

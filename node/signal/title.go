@@ -4,8 +4,6 @@ import (
 	"crawlquery/node/domain"
 	"regexp"
 	"strings"
-
-	sharedDomain "crawlquery/pkg/domain"
 )
 
 type Title struct{}
@@ -33,7 +31,7 @@ func (t *Title) fullMatch(title string, terms []string) domain.SignalLevel {
 	return domain.SignalLevelNone
 }
 
-func (ts *Title) Level(page *sharedDomain.Page, terms []string) domain.SignalLevel {
+func (ts *Title) Level(page *domain.Page, terms []string) domain.SignalLevel {
 
 	baseLevel := domain.SignalLevelNone
 

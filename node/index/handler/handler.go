@@ -66,7 +66,7 @@ func (ih *IndexHandler) Event(c *gin.Context) {
 }
 
 func (ih *IndexHandler) Hash(c *gin.Context) {
-	pageHash, keywordHash, combinedHash, err := ih.service.Hash()
+	pageHash, err := ih.service.Hash()
 	if err != nil {
 		ih.logger.Error(err)
 		c.JSON(500, gin.H{
@@ -75,8 +75,6 @@ func (ih *IndexHandler) Hash(c *gin.Context) {
 		return
 	}
 	c.JSON(200, gin.H{
-		"page":     pageHash,
-		"keyword":  keywordHash,
-		"combined": combinedHash,
+		"page": pageHash,
 	})
 }

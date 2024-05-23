@@ -2,22 +2,21 @@ package mem
 
 import (
 	"crawlquery/node/domain"
-	sharedDomain "crawlquery/pkg/domain"
 )
 
 type Repository struct {
-	pages      map[string]*sharedDomain.Page
+	pages      map[string]*domain.Page
 	pageHashes map[string]string
 }
 
 func NewRepository() *Repository {
 	return &Repository{
-		pages:      make(map[string]*sharedDomain.Page),
+		pages:      make(map[string]*domain.Page),
 		pageHashes: make(map[string]string),
 	}
 }
 
-func (r *Repository) Save(pageID string, page *sharedDomain.Page) error {
+func (r *Repository) Save(pageID string, page *domain.Page) error {
 	r.pages[pageID] = page
 	return nil
 }
@@ -27,7 +26,7 @@ func (r *Repository) Delete(pageID string) error {
 	return nil
 }
 
-func (r *Repository) Get(pageID string) (*sharedDomain.Page, error) {
+func (r *Repository) Get(pageID string) (*domain.Page, error) {
 	page, ok := r.pages[pageID]
 	if !ok {
 		return nil, domain.ErrPageNotFound
@@ -35,7 +34,7 @@ func (r *Repository) Get(pageID string) (*sharedDomain.Page, error) {
 	return page, nil
 }
 
-func (r *Repository) GetAll() (map[string]*sharedDomain.Page, error) {
+func (r *Repository) GetAll() (map[string]*domain.Page, error) {
 	return r.pages, nil
 }
 

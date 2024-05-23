@@ -5,7 +5,6 @@ import (
 	"crawlquery/node/domain"
 	"crawlquery/node/peer/service"
 	"crawlquery/pkg/client/api"
-	sharedDomain "crawlquery/pkg/domain"
 	"crawlquery/pkg/testutil"
 	"testing"
 	"time"
@@ -15,7 +14,7 @@ import (
 
 func TestAddPeer(t *testing.T) {
 	t.Run("can add peer", func(t *testing.T) {
-		service := service.NewService(nil, nil, nil, nil, testutil.NewTestLogger())
+		service := service.NewService(nil, nil, nil, testutil.NewTestLogger())
 
 		peer := &domain.Peer{
 			ID:       "peer1",
@@ -34,7 +33,7 @@ func TestAddPeer(t *testing.T) {
 	})
 
 	t.Run("can only add the same peer once", func(t *testing.T) {
-		service := service.NewService(nil, nil, nil, nil, testutil.NewTestLogger())
+		service := service.NewService(nil, nil, nil, testutil.NewTestLogger())
 
 		peer := &domain.Peer{
 			ID:       "peer1",
@@ -55,7 +54,7 @@ func TestAddPeer(t *testing.T) {
 }
 
 func TestGetPeer(t *testing.T) {
-	service := service.NewService(nil, nil, nil, nil, testutil.NewTestLogger())
+	service := service.NewService(nil, nil, nil, testutil.NewTestLogger())
 
 	peer := &domain.Peer{
 		ID:       "peer1",
@@ -78,7 +77,7 @@ func TestGetPeer(t *testing.T) {
 }
 
 func TestRemovePeer(t *testing.T) {
-	service := service.NewService(nil, nil, nil, nil, testutil.NewTestLogger())
+	service := service.NewService(nil, nil, nil, testutil.NewTestLogger())
 
 	peer := &domain.Peer{
 		ID:       "peer1",
@@ -99,7 +98,7 @@ func TestRemovePeer(t *testing.T) {
 }
 
 func TestSendIndexEvent(t *testing.T) {
-	service := service.NewService(nil, nil, nil, nil, testutil.NewTestLogger())
+	service := service.NewService(nil, nil, nil, testutil.NewTestLogger())
 
 	peer := &domain.Peer{
 		ID:       "peer1",
@@ -110,7 +109,7 @@ func TestSendIndexEvent(t *testing.T) {
 
 	service.AddPeer(peer)
 
-	page := &sharedDomain.Page{
+	page := &domain.Page{
 		URL:             "http://example.com",
 		ID:              "page1",
 		Title:           "Example",
@@ -119,13 +118,6 @@ func TestSendIndexEvent(t *testing.T) {
 
 	event := &domain.IndexEvent{
 		Page: page,
-		Keywords: map[string]*domain.Posting{
-			"keyword1": {
-				PageID:    "page1",
-				Frequency: 1,
-				Positions: []int{1},
-			},
-		},
 	}
 
 	defer gock.Off()
@@ -144,7 +136,7 @@ func TestSendIndexEvent(t *testing.T) {
 }
 
 func TestBroadcastIndexEvent(t *testing.T) {
-	service := service.NewService(nil, nil, nil, nil, testutil.NewTestLogger())
+	service := service.NewService(nil, nil, nil, testutil.NewTestLogger())
 
 	peer1 := &domain.Peer{
 		ID:       "peer1",
@@ -163,7 +155,7 @@ func TestBroadcastIndexEvent(t *testing.T) {
 	service.AddPeer(peer1)
 	service.AddPeer(peer2)
 
-	page := &sharedDomain.Page{
+	page := &domain.Page{
 		URL:             "http://example.com",
 		ID:              "page1",
 		Title:           "Example",
@@ -172,13 +164,6 @@ func TestBroadcastIndexEvent(t *testing.T) {
 
 	event := &domain.IndexEvent{
 		Page: page,
-		Keywords: map[string]*domain.Posting{
-			"keyword1": {
-				PageID:    "page1",
-				Frequency: 1,
-				Positions: []int{1},
-			},
-		},
 	}
 
 	defer gock.Off()
@@ -203,7 +188,7 @@ func TestBroadcastIndexEvent(t *testing.T) {
 }
 
 func TestRemoveAllPeers(t *testing.T) {
-	service := service.NewService(nil, nil, nil, nil, testutil.NewTestLogger())
+	service := service.NewService(nil, nil, nil, testutil.NewTestLogger())
 
 	peer1 := &domain.Peer{
 		ID:       "peer1",
@@ -258,7 +243,7 @@ func TestSyncPeerList(t *testing.T) {
 
 		api := api.NewClient("http://localhost:8080", testutil.NewTestLogger())
 
-		service := service.NewService(api, nil, nil, &domain.Peer{
+		service := service.NewService(api, nil, &domain.Peer{
 			ID:       "host",
 			Hostname: "localhost",
 			Port:     8080,
@@ -300,7 +285,7 @@ func TestSyncPeerList(t *testing.T) {
 
 		api := api.NewClient("http://localhost:8080", testutil.NewTestLogger())
 
-		service := service.NewService(api, nil, nil, &domain.Peer{
+		service := service.NewService(api, nil, &domain.Peer{
 			ID:       "host",
 			Hostname: "localhost",
 			Port:     8080,
@@ -339,7 +324,7 @@ func TestSyncPeerListEvery(t *testing.T) {
 
 	api := api.NewClient("http://localhost:8080", testutil.NewTestLogger())
 
-	service := service.NewService(api, nil, nil, &domain.Peer{
+	service := service.NewService(api, nil, &domain.Peer{
 		ID:       "host",
 		Hostname: "localhost",
 		Port:     8080,

@@ -1,7 +1,7 @@
 package bolt
 
 import (
-	"crawlquery/pkg/domain"
+	"crawlquery/node/domain"
 	"encoding/json"
 	"fmt"
 	"time"

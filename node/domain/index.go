@@ -17,7 +17,7 @@ type ForwardIndex map[string]*domain.Page
 
 type IndexService interface {
 	Search(query string) ([]domain.Result, error)
-	Hash() (string, string, string, error)
+	Hash() (string, error)
 	Index(pageID string) error
 	ApplyIndexEvent(event *IndexEvent) error
 }

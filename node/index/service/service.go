@@ -6,8 +6,6 @@ import (
 	"crawlquery/node/parse"
 	"crawlquery/node/signal"
 	"crawlquery/node/token"
-	"crypto/sha256"
-	"encoding/hex"
 	"sort"
 	"strings"
 
@@ -18,46 +16,24 @@ import (
 )
 
 type Service struct {
-	pageService    domain.PageService
-	htmlService    domain.HTMLService
-	keywordService domain.KeywordService
-	peerService    domain.PeerService
-	logger         *zap.SugaredLogger
+	pageService domain.PageService
+	htmlService domain.HTMLService
+	peerService domain.PeerService
+	logger      *zap.SugaredLogger
 }
 
 func NewService(
 	pageService domain.PageService,
 	htmlService domain.HTMLService,
-	keywordService domain.KeywordService,
 	peerService domain.PeerService,
 	logger *zap.SugaredLogger,
 ) *Service {
 	return &Service{
-		pageService:    pageService,
-		htmlService:    htmlService,
-		keywordService: keywordService,
-		peerService:    peerService,
-		logger:         logger,
+		pageService: pageService,
+		htmlService: htmlService,
+		peerService: peerService,
+		logger:      logger,
 	}
-}
-
-func (s *Service) MakePostings(page *sharedDomain.Page, keywords []string) map[string]*domain.Posting {
-	postings := make(map[string]*domain.Posting, 0)
-
-	for i, keyword := range keywords {
-		if _, ok := postings[keyword]; !ok {
-			postings[keyword] = &domain.Posting{
-				Frequency: 1,
-				PageID:    page.ID,
-				Positions: []int{i},
-			}
-		} else {
-			postings[keyword].Frequency++
-			postings[keyword].Positions = append(postings[keyword].Positions, i)
-		}
-	}
-
-	return postings
 }
 
 func (s *Service) Index(pageID string) error {
@@ -86,15 +62,7 @@ func (s *Service) Index(pageID string) error {
 
 	// FOR NOW KEYWORDS MUST COME LAST AS IT REMOVES HTML TAGS
 	// TO GET THE KEYWORDS
-	keywords := token.Keywords(doc)
-	postings := s.MakePostings(page, keywords)
-
-	err = s.keywordService.SavePostings(postings)
-
-	if err != nil {
-		s.logger.Errorw("Error getting keywords", "error", err, "pageID", pageID)
-		return err
-	}
+	page.Keywords = token.Keywords(doc)
 
 	err = s.pageService.Update(page)
 
@@ -104,8 +72,7 @@ func (s *Service) Index(pageID string) error {
 	}
 
 	go s.peerService.BroadcastIndexEvent(&domain.IndexEvent{
-		Page:     page,
-		Keywords: postings,
+		Page: page,
 	})
 
 	return nil
@@ -141,8 +108,13 @@ func (s *Service) Search(query string) ([]sharedDomain.Result, error) {
 		if score > 1 {
 			results = append(results, sharedDomain.Result{
 				PageID: page.ID,
-				Page:   page,
-				Score:  score,
+				Page: &sharedDomain.Page{
+					ID:              page.ID,
+					URL:             page.URL,
+					Title:           page.Title,
+					MetaDescription: page.MetaDescription,
+				},
+				Score: score,
 			})
 		}
 	}
@@ -155,61 +127,23 @@ func (s *Service) Search(query string) ([]sharedDomain.Result, error) {
 }
 
 func (s *Service) ApplyIndexEvent(event *domain.IndexEvent) error {
-	page, _ := s.pageService.Get(event.Page.ID)
-	var err error
-	if page == nil {
-		page, err = s.pageService.Create(event.Page.ID, event.Page.URL)
-
-		if err != nil {
-			s.logger.Errorf("Error creating page: %v", err)
-			return err
-		}
-	}
-
-	// add the title and meta description
-	err = s.pageService.Update(event.Page)
+	// update the page
+	err := s.pageService.Update(event.Page)
 
 	if err != nil {
 		s.logger.Errorf("Error updating page: %v", err)
 		return err
 	}
 
-	// remove old postings
-	err = s.keywordService.RemovePostingsByPageID(page.ID)
-
-	if err != nil {
-		s.logger.Errorf("Error removing postings: %v", err)
-		return err
-	}
-
-	// add new postings
-	err = s.keywordService.SavePostings(event.Keywords)
-
-	if err != nil {
-		s.logger.Errorf("Error saving postings: %v", err)
-		return err
-	}
-
 	return nil
 }
 
-func computeHash(data []byte) string {
-	hash := sha256.Sum256(data)
-	return hex.EncodeToString(hash[:])
-}
-
-func (s *Service) Hash() (string, string, string, error) {
+func (s *Service) Hash() (string, error) {
 	pageHash, err := s.pageService.Hash()
 
 	if err != nil {
-		return "", "", "", err
+		return "", err
 	}
 
-	keywordHash, err := s.keywordService.Hash()
-
-	if err != nil {
-		return "", "", "", err
-	}
-
-	return pageHash, keywordHash, computeHash([]byte(pageHash + keywordHash)), nil
+	return pageHash, nil
 }

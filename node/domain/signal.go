@@ -1,9 +1,7 @@
 package domain
 
-import sharedDomain "crawlquery/pkg/domain"
-
 type Signal interface {
-	Level(page *sharedDomain.Page, term []string) SignalLevel
+	Level(page *Page, term []string) SignalLevel
 }
 
 type SignalLevel float64

@@ -3,8 +3,6 @@ package signal
 import (
 	"crawlquery/node/domain"
 	"testing"
-
-	sharedDomain "crawlquery/pkg/domain"
 )
 
 func TestTitleAnyMatch(t *testing.T) {
@@ -95,7 +93,7 @@ func TestTitle(t *testing.T) {
 		terms := []string{"Google", "Drive"}
 
 		// Act
-		level := ts.Level(&sharedDomain.Page{
+		level := ts.Level(&domain.Page{
 			Title: "Google Drive: Sign-in",
 		}, terms)
 
@@ -111,7 +109,7 @@ func TestTitle(t *testing.T) {
 		terms := []string{"Google", "Drive:"}
 
 		// Act
-		level := ts.Level(&sharedDomain.Page{
+		level := ts.Level(&domain.Page{
 			Title: "Google Drive: Sign-in",
 		}, terms)
 
@@ -127,7 +125,7 @@ func TestTitle(t *testing.T) {
 		terms := []string{"gmail", "google"}
 
 		// Act
-		level := ts.Level(&sharedDomain.Page{
+		level := ts.Level(&domain.Page{
 			Title: "Gmail - Free Storage and Email from Google",
 		}, terms)
 
@@ -143,7 +141,7 @@ func TestTitle(t *testing.T) {
 		terms := []string{"gmail", "google"}
 
 		// Act
-		level := ts.Level(&sharedDomain.Page{
+		level := ts.Level(&domain.Page{
 			Title: "Gmail Google",
 		}, terms)
 

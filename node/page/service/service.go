@@ -2,7 +2,6 @@ package service
 
 import (
 	"crawlquery/node/domain"
-	sharedDomain "crawlquery/pkg/domain"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -24,7 +23,7 @@ func computeHash(data []byte) string {
 	return hex.EncodeToString(hash[:])
 }
 
-func (s *Service) UpdatePageHash(page *sharedDomain.Page) error {
+func (s *Service) UpdatePageHash(page *domain.Page) error {
 	encoded, err := json.Marshal(page)
 
 	if err != nil {
@@ -36,9 +35,9 @@ func (s *Service) UpdatePageHash(page *sharedDomain.Page) error {
 	return s.pageRepo.UpdateHash(page.ID, hash)
 }
 
-func (s *Service) Create(pageID string, url string) (*sharedDomain.Page, error) {
+func (s *Service) Create(pageID string, url string) (*domain.Page, error) {
 
-	page := &sharedDomain.Page{
+	page := &domain.Page{
 		ID:  pageID,
 		URL: url,
 	}
@@ -58,7 +57,7 @@ func (s *Service) Create(pageID string, url string) (*sharedDomain.Page, error) 
 	return page, nil
 }
 
-func (s *Service) GetAll() (map[string]*sharedDomain.Page, error) {
+func (s *Service) GetAll() (map[string]*domain.Page, error) {
 	return s.pageRepo.GetAll()
 }
 
@@ -72,11 +71,11 @@ func (s *Service) Delete(pageID string) error {
 	return s.pageRepo.DeleteHash(pageID)
 }
 
-func (s *Service) Update(page *sharedDomain.Page) error {
+func (s *Service) Update(page *domain.Page) error {
 	return s.pageRepo.Save(page.ID, page)
 }
 
-func (s *Service) Get(pageID string) (*sharedDomain.Page, error) {
+func (s *Service) Get(pageID string) (*domain.Page, error) {
 	return s.pageRepo.Get(pageID)
 }
 
