@@ -2,7 +2,7 @@ package handler
 
 import (
 	"crawlquery/node/domain"
-	"crawlquery/pkg/dto"
+	"crawlquery/node/dto"
 	"net/url"
 
 	"github.com/gin-gonic/gin"
@@ -54,7 +54,7 @@ func (ch *CrawlHandler) Crawl(c *gin.Context) {
 		return
 	}
 
-	err = ch.crawlService.Crawl(req.PageID, req.URL)
+	pageHash, err := ch.crawlService.Crawl(req.PageID, req.URL)
 
 	if err != nil {
 		ch.logger.Errorw("Error crawling page", "error", err)
@@ -65,7 +65,7 @@ func (ch *CrawlHandler) Crawl(c *gin.Context) {
 	}
 
 	ch.logger.Infow("Page crawled", "pageID", req.PageID, "url", req.URL)
-	c.JSON(200, gin.H{
-		"message": "success",
+	c.JSON(200, &dto.CrawlResponse{
+		PageHash: pageHash,
 	})
 }

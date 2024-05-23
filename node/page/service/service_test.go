@@ -11,7 +11,7 @@ func TestCreate(t *testing.T) {
 	pageRepo := pageRepo.NewRepository()
 	service := service.NewService(pageRepo)
 
-	page, err := service.Create("1", "http://example.com")
+	page, err := service.Create("1", "http://example.com", "hash1")
 
 	if err != nil {
 		t.Fatalf("Error saving page: %v", err)
@@ -38,13 +38,17 @@ func TestCreate(t *testing.T) {
 	if check.URL != "http://example.com" {
 		t.Fatalf("Expected page URL to be 'http://example.com', got '%s'", check.URL)
 	}
+
+	if check.Hash != "hash1" {
+		t.Fatalf("Expected page Hash to be 'hash1', got '%s'", check.Hash)
+	}
 }
 
 func TestGet(t *testing.T) {
 	pageRepo := pageRepo.NewRepository()
 	service := service.NewService(pageRepo)
 
-	_, err := service.Create("1", "http://example.com")
+	_, err := service.Create("1", "http://example.com", "hash1")
 
 	if err != nil {
 		t.Fatalf("Error saving page: %v", err)
@@ -63,19 +67,23 @@ func TestGet(t *testing.T) {
 	if check.URL != "http://example.com" {
 		t.Fatalf("Expected page URL to be 'http://example.com', got '%s'", check.URL)
 	}
+
+	if check.Hash != "hash1" {
+		t.Fatalf("Expected page Hash to be 'hash1', got '%s'", check.Hash)
+	}
 }
 
 func TestGetAll(t *testing.T) {
 	pageRepo := pageRepo.NewRepository()
 	service := service.NewService(pageRepo)
 
-	_, err := service.Create("1", "http://example.com")
+	_, err := service.Create("1", "http://example.com", "hash1")
 
 	if err != nil {
 		t.Fatalf("Error saving page: %v", err)
 	}
 
-	_, err = service.Create("2", "http://example2.com")
+	_, err = service.Create("2", "http://example2.com", "hash2")
 
 	if err != nil {
 		t.Fatalf("Error saving page: %v", err)
@@ -96,7 +104,7 @@ func TestUpdate(t *testing.T) {
 	pageRepo := pageRepo.NewRepository()
 	service := service.NewService(pageRepo)
 
-	page, err := service.Create("1", "http://example.com")
+	page, err := service.Create("1", "http://example.com", "hash1")
 
 	if err != nil {
 		t.Fatalf("Error saving page: %v", err)
@@ -129,7 +137,7 @@ func TestDelete(t *testing.T) {
 	pageRepo := pageRepo.NewRepository()
 	service := service.NewService(pageRepo)
 
-	_, err := service.Create("1", "http://example.com")
+	_, err := service.Create("1", "http://example.com", "hash1")
 
 	if err != nil {
 		t.Fatalf("Error saving page: %v", err)
@@ -153,7 +161,7 @@ func TestHash(t *testing.T) {
 	t.Run("can create hash", func(t *testing.T) {
 		repo := pageRepo.NewRepository()
 		s := service.NewService(repo)
-		_, err := s.Create("page1", "http://example.com")
+		_, err := s.Create("page1", "http://example.com", "hash1")
 
 		if err != nil {
 			t.Fatalf("Error saving postings: %v", err)
@@ -173,7 +181,7 @@ func TestHash(t *testing.T) {
 	t.Run("can delete hash", func(t *testing.T) {
 		repo := pageRepo.NewRepository()
 		s := service.NewService(repo)
-		_, err := s.Create("page1", "http://example.com")
+		_, err := s.Create("page1", "http://example.com", "hash1")
 
 		if err != nil {
 			t.Fatalf("Error saving postings: %v", err)
@@ -193,8 +201,8 @@ func TestHash(t *testing.T) {
 	t.Run("can get hash of all pages", func(t *testing.T) {
 		repo := pageRepo.NewRepository()
 		s := service.NewService(repo)
-		s.Create("page1", "http://example.com")
-		s.Create("page2", "http://example2.com")
+		s.Create("page1", "http://example.com", "hash1")
+		s.Create("page2", "http://example2.com", "hash1")
 
 		hash1, err := s.Hash()
 
@@ -206,7 +214,7 @@ func TestHash(t *testing.T) {
 			t.Fatalf("Expected hash to not be empty")
 		}
 
-		_, err = s.Create("page3", "http://example3.com")
+		_, err = s.Create("page3", "http://example3.com", "hash1")
 
 		if err != nil {
 			t.Fatalf("Error saving postings: %v", err)
@@ -231,13 +239,13 @@ func TestHash(t *testing.T) {
 func TestJSON(t *testing.T) {
 	repo := pageRepo.NewRepository()
 	s := service.NewService(repo)
-	_, err := s.Create("page1", "http://example.com")
+	_, err := s.Create("page1", "http://example.com", "hash1")
 
 	if err != nil {
 		t.Fatalf("Error saving page: %v", err)
 	}
 
-	_, err = s.Create("page2", "http://example2.com")
+	_, err = s.Create("page2", "http://example2.com", "hash2")
 
 	if err != nil {
 		t.Fatalf("Error saving page: %v", err)
@@ -249,7 +257,7 @@ func TestJSON(t *testing.T) {
 		t.Fatalf("Error getting json: %v", err)
 	}
 
-	expected := `{"page1":{"id":"page1","url":"http://example.com","title":"","meta_description":"","keywords":null},"page2":{"id":"page2","url":"http://example2.com","title":"","meta_description":"","keywords":null}}`
+	expected := `{"page1":{"id":"page1","hash":"hash1","url":"http://example.com","title":"","meta_description":"","keywords":null},"page2":{"id":"page2","hash":"hash2","url":"http://example2.com","title":"","meta_description":"","keywords":null}}`
 
 	if string(json) != expected {
 		t.Fatalf("Expected json to be %s, got %s", expected, json)

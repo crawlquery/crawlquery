@@ -148,7 +148,7 @@ func (cs *Service) ProcessCrawlJobs() {
 		}
 
 		// Process the job
-		err = cs.processJob(job, shardID)
+		pageHash, err := cs.processJob(job, shardID)
 
 		if err != nil {
 			cs.pushBack(job, time.Now().Add(time.Hour), err.Error())
@@ -166,7 +166,7 @@ func (cs *Service) ProcessCrawlJobs() {
 			time.Sleep(5 * time.Second)
 		}
 
-		_, err = cs.pageService.Create(job.PageID, shardID)
+		_, err = cs.pageService.Create(job.PageID, shardID, pageHash)
 
 		if err != nil {
 			cs.logger.Errorw("Crawl.Service.ProcessCrawlJobs: error creating page", "error", err)
@@ -177,7 +177,7 @@ func (cs *Service) ProcessCrawlJobs() {
 	}
 }
 
-func (cs *Service) processJob(job *domain.CrawlJob, shardID uint) error {
+func (cs *Service) processJob(job *domain.CrawlJob, shardID uint) (string, error) {
 	// Process the job
 	cs.logger.Infow("Crawl.Service.ProcessCrawlJobs: processing job", "job", job)
 
@@ -185,7 +185,7 @@ func (cs *Service) processJob(job *domain.CrawlJob, shardID uint) error {
 
 	if err != nil {
 		cs.logger.Errorw("Crawl.Service.ProcessCrawlJobs: error getting nodes", "error", err)
-		return err
+		return "", err
 	}
 
 	nodes = cs.nodeService.Randomize(nodes)
@@ -194,19 +194,19 @@ func (cs *Service) processJob(job *domain.CrawlJob, shardID uint) error {
 
 	if len(nodes) == 0 {
 		cs.logger.Errorw("Crawl.Service.ProcessCrawlJobs: no nodes available", "nodes", nodes)
-		return errors.New("no nodes available")
+		return "", errors.New("no nodes available")
 	}
 
 	cs.logger.Infow("Crawl.Service.ProcessCrawlJobs: processing node", "node", nodes[0])
 
 	// Send the job to the node
-	err = cs.nodeService.SendCrawlJob(nodes[0], job)
+	pageHash, err := cs.nodeService.SendCrawlJob(nodes[0], job)
 
 	if err != nil {
 		cs.logger.Errorw("Crawl.Service.ProcessCrawlJobs: error sending job to node", "error", err)
-		return err
+		return "", err
 	}
 
 	cs.logger.Infow("Crawl.Service.ProcessCrawlJobs: job sent to node", "node", nodes[0])
-	return nil
+	return pageHash, nil
 }

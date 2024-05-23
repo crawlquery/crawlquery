@@ -28,7 +28,7 @@ func (s *Service) Get(pageID string) (*domain.Page, error) {
 	return page, nil
 }
 
-func (s *Service) Create(pageID string, shardID uint) (*domain.Page, error) {
+func (s *Service) Create(pageID string, shardID uint, hash string) (*domain.Page, error) {
 
 	if _, err := s.pageRepo.Get(pageID); err == nil {
 		s.logger.Errorw("Page already exists", "pageID", pageID)
@@ -38,6 +38,7 @@ func (s *Service) Create(pageID string, shardID uint) (*domain.Page, error) {
 	page := &domain.Page{
 		ID:        pageID,
 		ShardID:   shardID,
+		Hash:      hash,
 		CreatedAt: time.Now(),
 	}
 

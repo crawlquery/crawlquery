@@ -14,5 +14,5 @@ type CrawlHandler interface {
 }
 
 type CrawlService interface {
-	Crawl(pageID, url string) error
+	Crawl(pageID, url string) (string, error)
 }

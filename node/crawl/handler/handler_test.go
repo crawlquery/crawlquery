@@ -2,8 +2,9 @@ package handler_test
 
 import (
 	"bytes"
-	"crawlquery/pkg/dto"
+	"crawlquery/node/dto"
 	"crawlquery/pkg/testutil"
+	"crawlquery/pkg/util"
 	"encoding/json"
 	"net/http/httptest"
 	"testing"
@@ -44,6 +45,8 @@ func TestCrawl(t *testing.T) {
 
 		expectedData := "<html><head><title>Example</title></head><body><h1>Hello, World!</h1></body></html>"
 
+		expectedPageHash := util.Sha256Hex32([]byte(expectedData))
+
 		gock.New("http://example.com").
 			Get("/").
 			Reply(200).
@@ -73,8 +76,13 @@ func TestCrawl(t *testing.T) {
 			t.Errorf("Error crawling page: %v", err)
 		}
 
-		if err != nil {
-			t.Fatalf("Error creating repository: %v", err)
+		var resp dto.CrawlResponse
+		if err := json.NewDecoder(w.Body).Decode(&resp); err != nil {
+			t.Fatalf("Error decoding response: %v", err)
+		}
+
+		if resp.PageHash != expectedPageHash {
+			t.Fatalf("Expected page hash to be '%s', got '%s'", expectedPageHash, resp.PageHash)
 		}
 
 		data, err := htmlRepo.Get("test1")

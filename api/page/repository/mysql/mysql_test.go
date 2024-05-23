@@ -20,10 +20,11 @@ func TestGet(t *testing.T) {
 		page := &domain.Page{
 			ID:        "123",
 			ShardID:   1,
+			Hash:      "abc123",
 			CreatedAt: time.Now(),
 		}
 
-		_, err := db.Exec("INSERT INTO pages (id, shard_id, created_at) VALUES (?, ?, ?)", page.ID, page.ShardID, page.CreatedAt)
+		_, err := db.Exec("INSERT INTO pages (id, shard_id, hash, created_at) VALUES (?, ?, ?, ?)", page.ID, page.ShardID, page.Hash, page.CreatedAt)
 
 		defer db.Exec("DELETE FROM pages WHERE id = ?", page.ID)
 		if err != nil {
@@ -42,6 +43,10 @@ func TestGet(t *testing.T) {
 
 		if res.ShardID != 1 {
 			t.Errorf("expected page ShardID to be 1, got %d", res.ShardID)
+		}
+
+		if res.Hash != "abc123" {
+			t.Errorf("expected page Hash to be abc123, got %s", res.Hash)
 		}
 
 		if res.CreatedAt.UTC().Round(time.Second) != page.CreatedAt.UTC().Round(time.Second) {
@@ -75,6 +80,7 @@ func TestCreate(t *testing.T) {
 		page := &domain.Page{
 			ID:        "123",
 			ShardID:   1,
+			Hash:      "abc123",
 			CreatedAt: time.Now(),
 		}
 
@@ -87,9 +93,10 @@ func TestCreate(t *testing.T) {
 
 		var id string
 		var shardID int
+		var hash string
 		var createdAt time.Time
 
-		err = db.QueryRow("SELECT id, shard_id, created_at FROM pages WHERE id = ?", page.ID).Scan(&id, &shardID, &createdAt)
+		err = db.QueryRow("SELECT id, shard_id, hash, created_at FROM pages WHERE id = ?", page.ID).Scan(&id, &shardID, &hash, &createdAt)
 
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
@@ -101,6 +108,10 @@ func TestCreate(t *testing.T) {
 
 		if shardID != 1 {
 			t.Errorf("expected page ShardID to be 1, got %d", shardID)
+		}
+
+		if hash != "abc123" {
+			t.Errorf("expected page Hash to be abc123, got %s", hash)
 		}
 
 		if createdAt.UTC().Round(time.Second) != page.CreatedAt.UTC().Round(time.Second) {

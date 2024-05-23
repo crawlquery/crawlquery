@@ -35,11 +35,12 @@ func (s *Service) UpdatePageHash(page *domain.Page) error {
 	return s.pageRepo.UpdateHash(page.ID, hash)
 }
 
-func (s *Service) Create(pageID string, url string) (*domain.Page, error) {
+func (s *Service) Create(pageID, url, hash string) (*domain.Page, error) {
 
 	page := &domain.Page{
-		ID:  pageID,
-		URL: url,
+		ID:   pageID,
+		URL:  url,
+		Hash: hash,
 	}
 
 	err := s.pageRepo.Save(pageID, page)

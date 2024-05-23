@@ -13,7 +13,7 @@ func TestGet(t *testing.T) {
 		pageRepo := pageRepo.NewRepository()
 		pageService := pageService.NewService(pageRepo, testutil.NewTestLogger())
 
-		page, err := pageService.Create("pageID", 0)
+		page, err := pageService.Create("pageID", 0, "hash123")
 
 		if err != nil {
 			t.Fatalf("error creating page: %v", err)
@@ -47,7 +47,7 @@ func TestCreate(t *testing.T) {
 		pageRepo := pageRepo.NewRepository()
 		pageService := pageService.NewService(pageRepo, testutil.NewTestLogger())
 
-		page, err := pageService.Create("pageID", 0)
+		page, err := pageService.Create("pageID", 0, "hash123")
 
 		if err != nil {
 			t.Fatalf("error creating page: %v", err)
@@ -60,19 +60,23 @@ func TestCreate(t *testing.T) {
 		if page.ShardID != 0 {
 			t.Errorf("got page ShardID %d, want 0", page.ShardID)
 		}
+
+		if page.Hash != "hash123" {
+			t.Errorf("got page Hash %s, want hash123", page.Hash)
+		}
 	})
 
 	t.Run("returns error if page already exists", func(t *testing.T) {
 		pageRepo := pageRepo.NewRepository()
 		pageService := pageService.NewService(pageRepo, testutil.NewTestLogger())
 
-		_, err := pageService.Create("pageID", 0)
+		_, err := pageService.Create("pageID", 0, "hash123")
 
 		if err != nil {
 			t.Fatalf("error creating page: %v", err)
 		}
 
-		_, err = pageService.Create("pageID", 0)
+		_, err = pageService.Create("pageID", 0, "hash123")
 
 		if err == nil {
 			t.Fatalf("expected error, got nil")

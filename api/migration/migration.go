@@ -71,6 +71,7 @@ var migrations = []Migration{
 		SQL: `CREATE TABLE pages (
 			id VARCHAR(32) PRIMARY KEY,
 			shard_id INT NOT NULL,
+			hash VARCHAR(32) NOT NULL,
 			created_at TIMESTAMP NOT NULL)`,
 	},
 }

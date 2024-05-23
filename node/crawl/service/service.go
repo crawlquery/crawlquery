@@ -3,6 +3,7 @@ package service
 import (
 	"crawlquery/node/domain"
 	"crawlquery/pkg/client/api"
+	"crawlquery/pkg/util"
 
 	"github.com/gocolly/colly/v2"
 	"go.uber.org/zap"
@@ -32,12 +33,13 @@ func NewService(
 	}
 }
 
-func (cs *CrawlService) Crawl(pageID, url string) error {
+func (cs *CrawlService) Crawl(pageID, url string) (string, error) {
 
 	// Instantiate default collector
 	c := colly.NewCollector()
 
 	var failedErr error
+	var pageHash string
 
 	c.OnResponse(func(r *colly.Response) {
 		if r.StatusCode != 200 {
@@ -46,6 +48,8 @@ func (cs *CrawlService) Crawl(pageID, url string) error {
 			failedErr = domain.ErrCrawlFailedToFetchHtml
 			return
 		}
+
+		pageHash = util.Sha256Hex32(r.Body)
 
 		err := cs.htmlService.Save(pageID, r.Body)
 		if err != nil {
@@ -57,7 +61,7 @@ func (cs *CrawlService) Crawl(pageID, url string) error {
 		if err != nil && page != nil && page.ID != pageID {
 			cs.logger.Info("Existing page found", "pageID", pageID)
 		} else {
-			page, err = cs.pageService.Create(pageID, url)
+			page, err = cs.pageService.Create(pageID, url, pageHash)
 			if err != nil {
 				cs.logger.Errorw("Error creating page", "error", err, "pageID", pageID)
 				failedErr = err
@@ -88,5 +92,5 @@ func (cs *CrawlService) Crawl(pageID, url string) error {
 
 	c.Visit(url)
 
-	return failedErr
+	return pageHash, failedErr
 }

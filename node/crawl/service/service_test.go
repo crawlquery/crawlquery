@@ -44,7 +44,7 @@ func TestCrawl(t *testing.T) {
 			Reply(200).
 			BodyString(expectedData)
 
-		err := service.Crawl("test1", "http://example.com")
+		_, err := service.Crawl("test1", "http://example.com")
 
 		if err != nil {
 			t.Errorf("Error crawling page: %v", err)
@@ -116,10 +116,14 @@ func TestCrawl(t *testing.T) {
 			JSON(`{"src":"http://example.com","dst":"http://example.com/about"}`).
 			Reply(200)
 
-		err := service.Crawl("test1", "http://example.com")
+		pageHash, err := service.Crawl("test1", "http://example.com")
 
 		if err != nil {
 			t.Errorf("Error crawling page: %v", err)
+		}
+
+		if pageHash == "" {
+			t.Fatalf("Expected page hash to be set")
 		}
 
 		if err != nil {
@@ -173,7 +177,7 @@ func TestCrawl(t *testing.T) {
 			Get("/").
 			Reply(404)
 
-		err := service.Crawl("test1", "http://example.com")
+		_, err := service.Crawl("test1", "http://example.com")
 
 		if err == nil {
 			t.Errorf("Expected error, got nil")

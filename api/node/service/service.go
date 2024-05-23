@@ -1,14 +1,11 @@
 package service
 
 import (
-	"bytes"
 	"crawlquery/api/domain"
-	"crawlquery/pkg/dto"
+	"crawlquery/pkg/client/api/node"
 	"crawlquery/pkg/util"
-	"encoding/json"
 	"fmt"
 	"math/rand"
-	"net/http"
 	"time"
 
 	"go.uber.org/zap"
@@ -215,36 +212,11 @@ func (s *Service) ListByShardID(shardID uint) ([]*domain.Node, error) {
 	return filtered, nil
 }
 
-func (s *Service) SendCrawlJob(node *domain.Node, job *domain.CrawlJob) error {
+func (s *Service) SendCrawlJob(n *domain.Node, job *domain.CrawlJob) (string, error) {
 
-	req := dto.CrawlRequest{
-		PageID: job.PageID,
-		URL:    job.URL,
-	}
+	c := node.NewClient(fmt.Sprintf("http://%s:%d", n.Hostname, n.Port))
 
-	jsonBody, err := json.Marshal(req)
-
-	if err != nil {
-		return err
-	}
-
-	res, err := http.Post(
-		fmt.Sprintf("http://%s:%d/crawl", node.Hostname, node.Port),
-		"application/json",
-		bytes.NewBuffer(jsonBody),
-	)
-
-	if err != nil {
-		return err
-	}
-
-	defer res.Body.Close()
-
-	if res.StatusCode != http.StatusOK {
-		return fmt.Errorf("unexpected status code: %d", res.StatusCode)
-	}
-
-	return nil
+	return c.Crawl(job.PageID, job.URL)
 }
 
 func (s *Service) Auth(key string) (*domain.Node, error) {

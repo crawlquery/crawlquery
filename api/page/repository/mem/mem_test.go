@@ -12,6 +12,7 @@ func TestCreate(t *testing.T) {
 		page := &domain.Page{
 			ID:      "123",
 			ShardID: 1,
+			Hash:    "hash",
 		}
 
 		err := repo.Create(page)
@@ -30,6 +31,10 @@ func TestCreate(t *testing.T) {
 
 		if repo.pages["123"].ShardID != 1 {
 			t.Errorf("expected page ShardID to be 1, got %d", repo.pages["123"].ShardID)
+		}
+
+		if repo.pages["123"].Hash != "hash" {
+			t.Errorf("expected page Hash to be hash, got %s", repo.pages["123"].Hash)
 		}
 	})
 }

@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	sharedDomain "crawlquery/pkg/domain"
+	"crawlquery/pkg/util"
 
 	"github.com/PuerkitoBio/goquery"
 	"go.uber.org/zap"
@@ -59,6 +60,7 @@ func (s *Service) Index(pageID string) error {
 
 	page.Title = parse.Title(doc)
 	page.MetaDescription = parse.MetaDescription(doc)
+	page.Hash = util.Sha256Hex32(html)
 
 	// FOR NOW KEYWORDS MUST COME LAST AS IT REMOVES HTML TAGS
 	// TO GET THE KEYWORDS
@@ -150,6 +152,7 @@ func (s *Service) Search(query string) ([]sharedDomain.Result, error) {
 				PageID: page.ID,
 				Page: &sharedDomain.Page{
 					ID:              page.ID,
+					Hash:            page.Hash,
 					URL:             page.URL,
 					Title:           page.Title,
 					MetaDescription: page.MetaDescription,

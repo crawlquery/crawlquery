@@ -15,6 +15,12 @@ func SHA1(s string) string {
 	return uuid.NewSHA1(uuid.New(), []byte(s)).String()
 }
 
+func Sha256Hex32(b []byte) string {
+	hash := sha256.New()
+	hash.Write(b)
+	return hex.EncodeToString(hash.Sum(nil))[:32]
+}
+
 // PageID generates a unique 32-character hash for a given URL.
 func PageID(url string) string {
 	// Create a new SHA-256 hash.

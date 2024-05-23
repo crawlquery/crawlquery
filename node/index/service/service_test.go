@@ -4,6 +4,7 @@ import (
 	"crawlquery/node/domain"
 	"crawlquery/node/index/service"
 	"crawlquery/pkg/testutil"
+	"crawlquery/pkg/util"
 
 	htmlRepo "crawlquery/node/html/repository/mem"
 	htmlService "crawlquery/node/html/service"
@@ -158,7 +159,7 @@ func TestGetIndex(t *testing.T) {
 		htmlRepo := htmlRepo.NewRepository()
 		htmlService := htmlService.NewService(htmlRepo)
 
-		htmlRepo.Save("page1", []byte(`
+		html := []byte(`
 		<html>
 			<head>
 				<title>Test Page</title>
@@ -169,7 +170,8 @@ func TestGetIndex(t *testing.T) {
 				<p>This is a test page</p>
 			</body>
 		</html>
-	`))
+	`)
+		htmlRepo.Save("page1", html)
 
 		peerService := peerService.NewService(nil, pageService, nil, testutil.NewTestLogger())
 
@@ -205,6 +207,12 @@ func TestGetIndex(t *testing.T) {
 			t.Fatalf("Expected title to be Test Page, got %s", page.Title)
 		}
 
+		expectedHash := util.Sha256Hex32(html)
+
+		if page.Hash != expectedHash {
+			t.Fatalf("Expected hash to be %s, got %s", expectedHash, page.Hash)
+		}
+
 	})
 }
 
@@ -221,7 +229,7 @@ func TestSearch(t *testing.T) {
 		htmlRepo := htmlRepo.NewRepository()
 		htmlService := htmlService.NewService(htmlRepo)
 
-		htmlRepo.Save("page1", []byte(`
+		html := []byte(`
 		<html>
 			<head>
 				<title>Test Page</title>
@@ -233,7 +241,8 @@ func TestSearch(t *testing.T) {
 				<p>This is a test page</p>
 			</body>
 		</html>
-	`))
+	`)
+		htmlRepo.Save("page1", html)
 
 		peerService := peerService.NewService(nil, pageService, nil, testutil.NewTestLogger())
 
@@ -275,6 +284,12 @@ func TestSearch(t *testing.T) {
 
 		if results[0].Page.MetaDescription != "This is a test page" {
 			t.Fatalf("Expected meta description to be This is a test page, got %s", results[0].Page.MetaDescription)
+		}
+
+		expectedHash := util.Sha256Hex32(html)
+
+		if results[0].Page.Hash != expectedHash {
+			t.Fatalf("Expected hash to be %s, got %s", expectedHash, results[0].Page.Hash)
 		}
 	})
 
@@ -329,7 +344,6 @@ func TestSearch(t *testing.T) {
 		if results[0].Score < 1000 {
 			t.Fatalf("Expected score to be 1000 or more, got %f", results[0].Score)
 		}
-
 	})
 }
 

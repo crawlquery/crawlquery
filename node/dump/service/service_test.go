@@ -30,6 +30,7 @@ func TestPage(t *testing.T) {
 		pageRepo.Save("1", &domain.Page{
 			ID:       "1",
 			URL:      "http://example.com",
+			Hash:     "1",
 			Keywords: []string{"test", "page"},
 		})
 
@@ -39,7 +40,7 @@ func TestPage(t *testing.T) {
 			t.Fatalf("Error getting page dump: %v", err)
 		}
 
-		if string(data) != `{"1":{"id":"1","url":"http://example.com","title":"","meta_description":"","keywords":["test","page"]}}` {
+		if string(data) != `{"1":{"id":"1","hash":"1","url":"http://example.com","title":"","meta_description":"","keywords":["test","page"]}}` {
 			t.Fatalf("Expected page dump to be '1', got %s", string(data))
 		}
 	})

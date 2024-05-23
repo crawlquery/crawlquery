@@ -45,7 +45,7 @@ func TestSearch(t *testing.T) {
 
 		for k, dummy := range factory.ThreePages {
 
-			page, err := pageService.Create(k, dummy.URL)
+			page, err := pageService.Create(k, dummy.URL, "hash1")
 
 			if err != nil {
 				t.Fatalf("error saving page: %v", err)
@@ -134,7 +134,7 @@ func TestReIndex(t *testing.T) {
 
 		for k, dummy := range factory.ThreePages {
 
-			page, err := pageService.Create(k, dummy.URL)
+			page, err := pageService.Create(k, dummy.URL, "hash1")
 
 			if err != nil {
 				t.Fatalf("error saving page: %v", err)
@@ -202,7 +202,7 @@ func TestGetIndex(t *testing.T) {
 
 		for k, dummy := range factory.ThreePages {
 
-			page, err := pageService.Create(k, dummy.URL)
+			page, err := pageService.Create(k, dummy.URL, "hash1")
 
 			if err != nil {
 				t.Fatalf("error saving page: %v", err)
