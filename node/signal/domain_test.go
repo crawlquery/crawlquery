@@ -18,12 +18,12 @@ func TestDomain(t *testing.T) {
 		}, terms)
 
 		// Assert
-		if level != domain.SignalLevelHigh {
-			t.Errorf("Expected high level, got %v", level)
+		if level != domain.SignalLevelVeryHigh {
+			t.Errorf("Expected very high level, got %v", level)
 		}
 	})
 
-	t.Run("Apply", func(t *testing.T) {
+	t.Run("Level", func(t *testing.T) {
 		// Arrange
 		ds := &signal.Domain{}
 		page := &domain.Page{
@@ -35,8 +35,8 @@ func TestDomain(t *testing.T) {
 		level := ds.Level(page, term)
 
 		// Assert
-		if level != domain.SignalLevelVeryStrong {
-			t.Errorf("Expected very strong level, got %v", level)
+		if level != domain.SignalLevelMax {
+			t.Errorf("Expected max level, got %v", level)
 		}
 	})
 
@@ -52,8 +52,8 @@ func TestDomain(t *testing.T) {
 		level := ds.Level(page, term)
 
 		// Assert
-		if level != domain.SignalLevelVeryHigh {
-			t.Errorf("Expected none level, got %v", level)
+		if level != domain.SignalLevelMax {
+			t.Errorf("Expected max level, got %v", level)
 		}
 
 	})

@@ -249,7 +249,7 @@ func TestJSON(t *testing.T) {
 		t.Fatalf("Error getting json: %v", err)
 	}
 
-	expected := `{"page1":{"id":"page1","url":"http://example.com","title":"","meta_description":""},"page2":{"id":"page2","url":"http://example2.com","title":"","meta_description":""}}`
+	expected := `{"page1":{"id":"page1","url":"http://example.com","title":"","meta_description":"","keywords":null},"page2":{"id":"page2","url":"http://example2.com","title":"","meta_description":"","keywords":null}}`
 
 	if string(json) != expected {
 		t.Fatalf("Expected json to be %s, got %s", expected, json)

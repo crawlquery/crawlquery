@@ -38,7 +38,7 @@ func TestPageDump(t *testing.T) {
 		if w.Code != http.StatusOK {
 			t.Fatalf("Expected status code 200, got %d", w.Code)
 		}
-		expected := `{"1":{"id":"1","url":"http://example.com","title":"","meta_description":""}}`
+		expected := `{"1":{"id":"1","url":"http://example.com","title":"","meta_description":"","keywords":null}}`
 		if w.Body.String() != expected {
 			t.Fatalf("Expected body to be '%s', got '%s'", expected, w.Body.String())
 		}
