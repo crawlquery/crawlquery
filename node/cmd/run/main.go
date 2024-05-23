@@ -21,6 +21,9 @@ import (
 	dumpHandler "crawlquery/node/dump/handler"
 	dumpService "crawlquery/node/dump/service"
 
+	statHandler "crawlquery/node/stat/handler"
+	statService "crawlquery/node/stat/service"
+
 	"crawlquery/node/router"
 
 	"flag"
@@ -85,16 +88,18 @@ func main() {
 	indexService := indexService.NewService(pageService, htmlService, peerService, sugar)
 	crawlService := crawlService.NewService(htmlService, pageService, indexService, api, sugar)
 	dumpService := dumpService.NewService(pageService)
+	statService := statService.NewService(pageService, dumpService)
 
 	// Create handlers
 	indexHandler := indexHandler.NewHandler(indexService, sugar)
 	crawlHandler := crawlHandler.NewHandler(crawlService, sugar)
 	dumpHandler := dumpHandler.NewHandler(dumpService)
+	statHandler := statHandler.NewHandler(statService)
 
 	peerService.SyncPeerList()
 	go peerService.SyncPeerListEvery(30 * time.Second)
 
-	r := router.NewRouter(indexHandler, crawlHandler, dumpHandler)
+	r := router.NewRouter(indexHandler, crawlHandler, dumpHandler, statHandler)
 
 	r.Run(fmt.Sprintf(":%d", node.Port))
 }

@@ -28,6 +28,7 @@ func NewRouter(
 	indexHandler domain.IndexHandler,
 	crawlHandler domain.CrawlHandler,
 	dumpHandler domain.DumpHandler,
+	statHandler domain.StatHandler,
 ) *gin.Engine {
 	router := gin.Default()
 	router.Use(cors.New(cors.Config{
@@ -42,8 +43,13 @@ func NewRouter(
 	router.POST("/crawl", crawlHandler.Crawl)
 
 	router.POST("/event", indexHandler.Event)
-	router.GET("/index/hash", indexHandler.Hash)
+	router.GET("/hash/index", indexHandler.Hash)
+
+	router.GET("/index/:pageID", indexHandler.GetIndex)
+	router.POST("/index/:pageID/reindex", indexHandler.ReIndex)
 
 	router.GET("/dump/page", dumpHandler.Page)
+
+	router.GET("/stats", statHandler.Info)
 	return router
 }

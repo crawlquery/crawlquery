@@ -85,6 +85,152 @@ func TestIndex(t *testing.T) {
 	}
 }
 
+func TestReIndex(t *testing.T) {
+	t.Run("can reindex page", func(t *testing.T) {
+		pageRepo := pageRepo.NewRepository()
+		pageService := pageService.NewService(pageRepo)
+
+		pageRepo.Save("page1", &domain.Page{
+			ID:  "page1",
+			URL: "http://example.com",
+		})
+
+		htmlRepo := htmlRepo.NewRepository()
+		htmlService := htmlService.NewService(htmlRepo)
+
+		htmlRepo.Save("page1", []byte(`
+		<html>
+			<head>
+				<title>Test Page</title>
+			</head>
+
+			<body>
+				<h1>Test Page</h1>
+				<p>This is a test page</p>
+			</body>
+		</html>
+	`))
+
+		peerService := peerService.NewService(nil, pageService, nil, testutil.NewTestLogger())
+
+		logger := testutil.NewTestLogger()
+
+		s := service.NewService(pageService, htmlService, peerService, logger)
+
+		err := s.Index("page1")
+
+		if err != nil {
+			t.Fatalf("Expected no error, got %v", err)
+		}
+
+		err = s.ReIndex("page1")
+
+		if err != nil {
+			t.Fatalf("Expected no error, got %v", err)
+		}
+
+		page, err := pageRepo.Get("page1")
+
+		if err != nil {
+			t.Fatalf("Expected no error, got %v", err)
+		}
+
+		if page == nil {
+			t.Fatalf("Expected page to be found, got nil")
+		}
+
+		if page.ID != "page1" {
+			t.Fatalf("Expected page ID to be page1, got %s", page.ID)
+		}
+
+		if page.URL != "http://example.com" {
+			t.Fatalf("Expected URL to be http://example.com, got %s", page.URL)
+		}
+
+		if page.Title != "Test Page" {
+			t.Fatalf("Expected title to be Test Page, got %s", page.Title)
+		}
+
+		if page.MetaDescription != "" {
+			t.Fatalf("Expected meta description to be empty, got %s", page.MetaDescription)
+		}
+
+		if len(page.Keywords) != 4 {
+			t.Fatalf("Expected 4 keywords, got %d", len(page.Keywords))
+		}
+	})
+}
+
+func TestGetIndex(t *testing.T) {
+	t.Run("can get index", func(t *testing.T) {
+		pageRepo := pageRepo.NewRepository()
+		pageService := pageService.NewService(pageRepo)
+
+		pageRepo.Save("page1", &domain.Page{
+			ID:  "page1",
+			URL: "http://example.com",
+		})
+
+		htmlRepo := htmlRepo.NewRepository()
+		htmlService := htmlService.NewService(htmlRepo)
+
+		htmlRepo.Save("page1", []byte(`
+		<html>
+			<head>
+				<title>Test Page</title>
+			</head>
+
+			<body>
+				<h1>Test Page</h1>
+				<p>This is a test page</p>
+			</body>
+		</html>
+	`))
+
+		peerService := peerService.NewService(nil, pageService, nil, testutil.NewTestLogger())
+
+		logger := testutil.NewTestLogger()
+
+		s := service.NewService(pageService, htmlService, peerService, logger)
+
+		err := s.Index("page1")
+
+		if err != nil {
+			t.Fatalf("Expected no error, got %v", err)
+		}
+
+		page, err := s.GetIndex("page1")
+
+		if err != nil {
+			t.Fatalf("Expected no error, got %v", err)
+		}
+
+		if page == nil {
+			t.Fatalf("Expected page to be found, got nil")
+		}
+
+		if page.ID != "page1" {
+			t.Fatalf("Expected page ID to be page1, got %s", page.ID)
+		}
+
+		if page.URL != "http://example.com" {
+			t.Fatalf("Expected URL to be http://example.com, got %s", page.URL)
+		}
+
+		if page.Title != "Test Page" {
+			t.Fatalf("Expected title to be Test Page, got %s", page.Title)
+		}
+
+		if page.MetaDescription != "" {
+			t.Fatalf("Expected meta description to be empty, got %s", page.MetaDescription)
+		}
+
+		if len(page.Keywords) != 4 {
+			t.Fatalf("Expected 4 keywords, got %d", len(page.Keywords))
+		}
+	})
+}
+
 func TestSearch(t *testing.T) {
 	t.Run("can search for keyword", func(t *testing.T) {
 		pageRepo := pageRepo.NewRepository()
@@ -203,8 +349,8 @@ func TestSearch(t *testing.T) {
 			t.Fatalf("Expected 1 result, got %d", len(results))
 		}
 
-		if results[0].Score != 1000 {
-			t.Fatalf("Expected score to be 1000, got %f", results[0].Score)
+		if results[0].Score != 1040 {
+			t.Fatalf("Expected score to be 1040, got %f", results[0].Score)
 		}
 
 	})

@@ -42,6 +42,49 @@ func (sh *IndexHandler) Search(c *gin.Context) {
 	})
 }
 
+func (ih *IndexHandler) ReIndex(c *gin.Context) {
+	pageID := c.Param("pageID")
+	if pageID == "" {
+		c.JSON(400, gin.H{
+			"error": "missing pageID",
+		})
+		return
+	}
+
+	if err := ih.service.ReIndex(pageID); err != nil {
+		ih.logger.Error(err)
+		c.JSON(500, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(200, gin.H{
+		"message": "page reindexed",
+	})
+}
+
+func (ih *IndexHandler) GetIndex(c *gin.Context) {
+	pageID := c.Param("pageID")
+	if pageID == "" {
+		c.JSON(400, gin.H{
+			"error": "missing pageID",
+		})
+		return
+	}
+
+	index, err := ih.service.GetIndex(pageID)
+	if err != nil {
+		ih.logger.Error(err)
+		c.JSON(500, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(200, index)
+}
+
 func (ih *IndexHandler) Event(c *gin.Context) {
 	var event domain.IndexEvent
 	if err := c.ShouldBindJSON(&event); err != nil {

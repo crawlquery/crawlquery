@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"flag"
 	"fmt"
 	"net/http"
 	"os"
@@ -10,7 +11,13 @@ import (
 
 func main() {
 
-	file, err := os.ReadFile("domains.txt")
+	var seedFile string
+
+	flag.StringVar(&seedFile, "file", "global/domains.txt", "File containing domains to seed")
+
+	flag.Parse()
+
+	file, err := os.ReadFile(seedFile)
 
 	if err != nil {
 		panic(err)
@@ -22,7 +29,7 @@ func main() {
 		res, err := http.Post(
 			"http://localhost:8080/crawl-jobs",
 			"application/json",
-			bytes.NewBuffer([]byte(fmt.Sprintf(`{"url": "https://%s"}`, domain))))
+			bytes.NewBuffer([]byte(fmt.Sprintf(`{"url": "%s"}`, domain))))
 
 		if err != nil {
 			continue

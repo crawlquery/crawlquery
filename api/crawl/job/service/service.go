@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"strings"
 	"time"
 
 	"go.uber.org/zap"
@@ -36,10 +37,40 @@ func NewService(
 	}
 }
 
+var trackingParams = []string{
+	"utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content", "gclid", "fbclid",
+}
+
+func normalizeURL(rawURL string) (string, error) {
+	parsedURL, err := url.Parse(rawURL)
+	if err != nil {
+		return "", err
+	}
+
+	queryParams := parsedURL.Query()
+	for _, param := range trackingParams {
+		queryParams.Del(param)
+	}
+	parsedURL.RawQuery = queryParams.Encode()
+
+	parsedURL.Host = strings.ToLower(parsedURL.Host)
+	parsedURL.Scheme = strings.ToLower(parsedURL.Scheme)
+
+	return parsedURL.String(), nil
+}
+
 func (cs *Service) Create(url string) (*domain.CrawlJob, error) {
+
+	normalizedURL, err := normalizeURL(url)
+
+	if err != nil {
+		cs.logger.Errorw("Crawl.Service.AddJob: error normalizing URL", "error", err)
+		return nil, err
+	}
+
 	job := &domain.CrawlJob{
 		ID:        util.UUID(),
-		URL:       url,
+		URL:       normalizedURL,
 		PageID:    util.PageID(url),
 		CreatedAt: time.Now(),
 	}
@@ -111,6 +142,7 @@ func (cs *Service) ProcessCrawlJobs() {
 
 		if err != nil {
 			cs.pushBack(job, time.Now().Add(time.Hour), err.Error())
+			time.Sleep(100 * time.Millisecond)
 			continue
 		}
 

@@ -58,7 +58,7 @@ func TestCreate(t *testing.T) {
 		// Arrange
 		repo := mem.NewRepository()
 		svc := service.NewService(repo, nil, nil, nil, testutil.NewTestLogger())
-		url := "x123!"
+		url := "notaurl"
 
 		// Act
 		job, err := svc.Create(url)
@@ -70,6 +70,25 @@ func TestCreate(t *testing.T) {
 
 		if job != nil {
 			t.Errorf("Expected job to be nil")
+		}
+	})
+
+	t.Run("normalizes url", func(t *testing.T) {
+		// Arrange
+		repo := mem.NewRepository()
+		svc := service.NewService(repo, nil, nil, nil, testutil.NewTestLogger())
+		url := "http://example.com?utm_source=google&utm_medium=cpc&utm_campaign=summer-sale"
+
+		// Act
+		job, err := svc.Create(url)
+
+		// Assert
+		if err != nil {
+			t.Errorf("Error adding job: %v", err)
+		}
+
+		if job.URL != "http://example.com" {
+			t.Errorf("Expected URL to be %s, got %s", url, job.URL)
 		}
 	})
 

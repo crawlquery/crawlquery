@@ -58,6 +58,14 @@ var migrations = []Migration{
 		domain VARCHAR(255) NOT NULL PRIMARY KEY,
 		until TIMESTAMP)`,
 	},
+	{
+		Name: "create_links_table",
+		SQL: `CREATE TABLE links (
+			src_id VARCHAR(32) NOT NULL,
+			dst_id VARCHAR(32) NOT NULL,
+			created_at TIMESTAMP NOT NULL,
+			PRIMARY KEY (src_id, dst_id))`,
+	},
 }
 
 var migrationTable = `CREATE TABLE IF NOT EXISTS migrations (

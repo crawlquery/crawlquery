@@ -115,6 +115,146 @@ func TestSearch(t *testing.T) {
 	})
 }
 
+func TestReIndex(t *testing.T) {
+	t.Run("reindexes page", func(t *testing.T) {
+		pageRepo := pageRepo.NewRepository()
+		pageService := pageService.NewService(pageRepo)
+
+		htmlRepo := htmlRepo.NewRepository()
+		htmlService := htmlService.NewService(htmlRepo)
+
+		peerService := peerService.NewService(nil, pageService, nil, testutil.NewTestLogger())
+
+		indexService := indexService.NewService(
+			pageService,
+			htmlService,
+			peerService,
+			testutil.NewTestLogger(),
+		)
+
+		for k, dummy := range factory.ThreePages {
+
+			page, err := pageService.Create(k, dummy.URL)
+
+			if err != nil {
+				t.Fatalf("error saving page: %v", err)
+			}
+
+			err = htmlService.Save(page.ID, []byte(dummy.HTML))
+
+			if err != nil {
+				t.Fatalf("error saving html: %v", err)
+			}
+		}
+
+		indexHandler := indexHandler.NewHandler(indexService, testutil.NewTestLogger())
+
+		w := httptest.NewRecorder()
+		ctx, _ := gin.CreateTestContext(w)
+
+		ctx.Request, _ = http.NewRequest(http.MethodGet, "/reindex/home1", nil)
+		ctx.Params = gin.Params{
+			{Key: "pageID", Value: "home1"},
+		}
+
+		indexHandler.ReIndex(ctx)
+
+		if w.Code != http.StatusOK {
+			t.Errorf("expected status OK; got %v", w.Code)
+		}
+
+		page, err := pageService.Get("home1")
+
+		if err != nil {
+			t.Fatalf("error getting page: %v", err)
+		}
+
+		if page == nil {
+			t.Fatalf("expected page to be found, got nil")
+		}
+
+		if page.ID != "home1" {
+			t.Fatalf("expected page ID to be home1, got %s", page.ID)
+		}
+
+		if page.Title != "Home" {
+			t.Fatalf("expected title to be Home, got %s", page.Title)
+		}
+	})
+}
+
+func TestGetIndex(t *testing.T) {
+	t.Run("returns page", func(t *testing.T) {
+		pageRepo := pageRepo.NewRepository()
+		pageService := pageService.NewService(pageRepo)
+
+		htmlRepo := htmlRepo.NewRepository()
+		htmlService := htmlService.NewService(htmlRepo)
+
+		peerService := peerService.NewService(nil, pageService, nil, testutil.NewTestLogger())
+
+		indexService := indexService.NewService(
+			pageService,
+			htmlService,
+			peerService,
+			testutil.NewTestLogger(),
+		)
+
+		for k, dummy := range factory.ThreePages {
+
+			page, err := pageService.Create(k, dummy.URL)
+
+			if err != nil {
+				t.Fatalf("error saving page: %v", err)
+			}
+
+			err = htmlService.Save(page.ID, []byte(dummy.HTML))
+
+			if err != nil {
+				t.Fatalf("error saving html: %v", err)
+			}
+
+			err = indexService.Index(page.ID)
+
+			if err != nil {
+				t.Fatalf("error indexing page: %v", err)
+			}
+		}
+
+		indexHandler := indexHandler.NewHandler(indexService, testutil.NewTestLogger())
+
+		w := httptest.NewRecorder()
+		ctx, _ := gin.CreateTestContext(w)
+
+		ctx.Request, _ = http.NewRequest(http.MethodGet, "/index/home1", nil)
+		ctx.Params = gin.Params{
+			{Key: "pageID", Value: "home1"},
+		}
+
+		indexHandler.GetIndex(ctx)
+
+		if w.Code != http.StatusOK {
+			t.Errorf("expected status OK; got %v", w.Code)
+		}
+
+		var response *domain.Page
+
+		err := json.Unmarshal(w.Body.Bytes(), &response)
+
+		if err != nil {
+			t.Fatalf("error decoding response: %v", err)
+		}
+
+		if response.ID != "home1" {
+			t.Fatalf("expected page ID to be home1, got %s", response.ID)
+		}
+
+		if response.Title != "Home" {
+			t.Fatalf("expected title to be Home, got %s", response.Title)
+		}
+	})
+}
+
 func TestEvent(t *testing.T) {
 	t.Run("can handle index event", func(t *testing.T) {
 		pageRepo := pageRepo.NewRepository()
