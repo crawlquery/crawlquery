@@ -11,7 +11,7 @@ import (
 	"sync"
 	"time"
 
-	sharedDomain "crawlquery/pkg/domain"
+	nodeDomain "crawlquery/node/domain"
 	"crawlquery/pkg/dto"
 
 	"go.uber.org/zap"
@@ -30,7 +30,7 @@ func NewService(nodeService domain.NodeService, logger *zap.SugaredLogger) *Serv
 }
 
 // Search searches for the term and waits for the fastest node in each shard.
-func (s *Service) Search(term string) ([]sharedDomain.Result, error) {
+func (s *Service) Search(term string) ([]nodeDomain.Result, error) {
 	shardNodes, err := s.nodeService.ListGroupByShard()
 	if err != nil {
 		return nil, err
@@ -41,7 +41,7 @@ func (s *Service) Search(term string) ([]sharedDomain.Result, error) {
 		return nil, domain.ErrInternalError
 	}
 
-	var results []sharedDomain.Result
+	var results []nodeDomain.Result
 	var resultsLock sync.Mutex
 	var wg sync.WaitGroup
 
@@ -56,7 +56,7 @@ func (s *Service) Search(term string) ([]sharedDomain.Result, error) {
 			}
 
 			// Initialize results channel with buffer size of the number of nodes
-			resultsChan := make(chan []sharedDomain.Result, len(nodes))
+			resultsChan := make(chan []nodeDomain.Result, len(nodes))
 			ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 			defer cancel()
 
@@ -94,7 +94,7 @@ func (s *Service) Search(term string) ([]sharedDomain.Result, error) {
 	wg.Wait()
 
 	// filter out duplicate results
-	uniqueResults := make(map[string]sharedDomain.Result)
+	uniqueResults := make(map[string]nodeDomain.Result)
 
 	for _, res := range results {
 		if _, ok := uniqueResults[res.PageID]; !ok {
@@ -102,7 +102,7 @@ func (s *Service) Search(term string) ([]sharedDomain.Result, error) {
 		}
 	}
 
-	results = make([]sharedDomain.Result, 0, len(uniqueResults))
+	results = make([]nodeDomain.Result, 0, len(uniqueResults))
 
 	for _, res := range uniqueResults {
 		results = append(results, res)

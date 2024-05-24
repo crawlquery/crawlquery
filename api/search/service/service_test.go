@@ -5,7 +5,7 @@ import (
 	nodeRepo "crawlquery/api/node/repository/mem"
 	nodeService "crawlquery/api/node/service"
 	"crawlquery/api/search/service"
-	sharedDomain "crawlquery/pkg/domain"
+	nodeDomain "crawlquery/node/domain"
 	"crawlquery/pkg/dto"
 	"crawlquery/pkg/testutil"
 	"testing"
@@ -43,11 +43,11 @@ func TestSearch(t *testing.T) {
 			MatchParam("q", "term").
 			Reply(200).
 			JSON(dto.NodeSearchResponse{
-				Results: []sharedDomain.Result{
+				Results: []nodeDomain.Result{
 					{
 						PageID: "page1",
 						Score:  0.5,
-						Page: &sharedDomain.Page{
+						Page: &nodeDomain.ResultPage{
 							ID:    "page1",
 							URL:   "http://google.com",
 							Title: "Google",
@@ -61,11 +61,11 @@ func TestSearch(t *testing.T) {
 			MatchParam("q", "term").
 			Reply(200).
 			JSON(dto.NodeSearchResponse{
-				Results: []sharedDomain.Result{
+				Results: []nodeDomain.Result{
 					{
 						PageID: "page2",
 						Score:  0.6,
-						Page: &sharedDomain.Page{
+						Page: &nodeDomain.ResultPage{
 							ID:    "page2",
 							URL:   "http://facebook.com",
 							Title: "Facebook",
@@ -116,11 +116,11 @@ func TestSearch(t *testing.T) {
 			MatchParam("q", "term").
 			Reply(200).
 			JSON(dto.NodeSearchResponse{
-				Results: []sharedDomain.Result{
+				Results: []nodeDomain.Result{
 					{
 						PageID: "page1",
 						Score:  0.5,
-						Page: &sharedDomain.Page{
+						Page: &nodeDomain.ResultPage{
 							ID:    "page1",
 							URL:   "http://google.com",
 							Title: "Google",
@@ -134,11 +134,11 @@ func TestSearch(t *testing.T) {
 			MatchParam("q", "term").
 			Reply(200).
 			JSON(dto.NodeSearchResponse{
-				Results: []sharedDomain.Result{
+				Results: []nodeDomain.Result{
 					{
 						PageID: "page1",
 						Score:  0.5,
-						Page: &sharedDomain.Page{
+						Page: &nodeDomain.ResultPage{
 							ID:    "page1",
 							URL:   "http://google.com",
 							Title: "Google",

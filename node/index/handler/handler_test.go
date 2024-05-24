@@ -279,11 +279,11 @@ func TestEvent(t *testing.T) {
 
 		indexEvent := domain.IndexEvent{
 			Page: &domain.Page{
-				URL:             "http://example.com",
-				ID:              "page1",
-				Title:           "Example",
-				MetaDescription: "An example page",
-				Keywords:        []string{"distro", "linux"},
+				URL:         "http://example.com",
+				ID:          "page1",
+				Title:       "Example",
+				Description: "An example page",
+				Keywords:    []string{"distro", "linux"},
 			},
 		}
 
@@ -319,8 +319,8 @@ func TestEvent(t *testing.T) {
 			t.Fatalf("expected title to be Example, got %s", page.Title)
 		}
 
-		if page.MetaDescription != "An example page" {
-			t.Fatalf("expected meta description to be An example page, got %s", page.MetaDescription)
+		if page.Description != "An example page" {
+			t.Fatalf("expected meta description to be An example page, got %s", page.Description)
 		}
 
 		if len(page.Keywords) != 2 {

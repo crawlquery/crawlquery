@@ -23,25 +23,25 @@ func TestInfo(t *testing.T) {
 
 		pages := map[string]*domain.Page{
 			"1": {
-				ID:              "1",
-				URL:             "http://example.com",
-				Title:           "Example Domain",
-				MetaDescription: "",
-				Keywords:        []string{"example", "domain"},
+				ID:          "1",
+				URL:         "http://example.com",
+				Title:       "Example Domain",
+				Description: "",
+				Keywords:    []string{"example", "domain"},
 			},
 			"2": {
-				ID:              "2",
-				URL:             "http://example.com",
-				Title:           "Example Domain",
-				MetaDescription: "",
-				Keywords:        []string{"example", "domain"},
+				ID:          "2",
+				URL:         "http://example.com",
+				Title:       "Example Domain",
+				Description: "",
+				Keywords:    []string{"example", "domain"},
 			},
 			"3": {
-				ID:              "3",
-				URL:             "http://example.com",
-				Title:           "Example Domain",
-				MetaDescription: "",
-				Keywords:        []string{"example", "domain"},
+				ID:          "3",
+				URL:         "http://example.com",
+				Title:       "Example Domain",
+				Description: "",
+				Keywords:    []string{"example", "domain"},
 			},
 		}
 

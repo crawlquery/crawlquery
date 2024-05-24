@@ -9,7 +9,6 @@ import (
 	"sort"
 	"strings"
 
-	sharedDomain "crawlquery/pkg/domain"
 	"crawlquery/pkg/util"
 
 	"github.com/PuerkitoBio/goquery"
@@ -59,21 +58,21 @@ func (s *Service) Index(pageID string) error {
 	}
 
 	page.Title = parse.Title(doc)
-	page.MetaDescription = parse.MetaDescription(doc)
+	page.Description = parse.Description(doc)
 	page.Hash = util.Sha256Hex32(html)
 
 	// FOR NOW KEYWORDS MUST COME LAST AS IT REMOVES HTML TAGS
 	// TO GET THE KEYWORDS
 	page.Keywords = token.Keywords(doc)
 
-	if page.MetaDescription == "" {
+	if page.Description == "" {
 		subKeyWords := page.Keywords
 
 		if len(subKeyWords) > 10 {
 			subKeyWords = subKeyWords[:10]
 		}
 
-		page.MetaDescription = strings.Join(subKeyWords, ", ")
+		page.Description = strings.Join(subKeyWords, ", ")
 	}
 
 	err = s.pageService.Update(page)
@@ -119,7 +118,7 @@ func (s *Service) ReIndex(pageID string) error {
 	return nil
 }
 
-func (s *Service) Search(query string) ([]sharedDomain.Result, error) {
+func (s *Service) Search(query string) ([]domain.Result, error) {
 
 	term := strings.Split(query, " ")
 	// Get all pages
@@ -133,7 +132,7 @@ func (s *Service) Search(query string) ([]sharedDomain.Result, error) {
 		return nil, err
 	}
 
-	results := make([]sharedDomain.Result, 0)
+	results := make([]domain.Result, 0)
 
 	signals := []domain.Signal{
 		&signal.Domain{},
@@ -142,22 +141,27 @@ func (s *Service) Search(query string) ([]sharedDomain.Result, error) {
 	}
 
 	for _, page := range pages {
-		score := 0.0
+
+		var breakdown map[string]domain.SignalBreakdown = make(map[string]domain.SignalBreakdown)
+		totalScore := 0.0
 		for _, signal := range signals {
-			score += float64(signal.Level(page, term))
+			val, sigs := signal.Level(page, term)
+			breakdown[signal.Name()] = sigs
+			totalScore += float64(val)
 		}
 
-		if score > 1 {
-			results = append(results, sharedDomain.Result{
+		if totalScore > 1 {
+			results = append(results, domain.Result{
 				PageID: page.ID,
-				Page: &sharedDomain.Page{
-					ID:              page.ID,
-					Hash:            page.Hash,
-					URL:             page.URL,
-					Title:           page.Title,
-					MetaDescription: page.MetaDescription,
+				Page: &domain.ResultPage{
+					ID:          page.ID,
+					Hash:        page.Hash,
+					URL:         page.URL,
+					Title:       page.Title,
+					Description: page.Description,
 				},
-				Score: score,
+				Signals: breakdown,
+				Score:   totalScore,
 			})
 		}
 	}

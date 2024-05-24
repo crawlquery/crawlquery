@@ -1,7 +1,10 @@
 package domain
 
+type SignalBreakdown map[string]SignalLevel
+
 type Signal interface {
-	Level(page *Page, term []string) SignalLevel
+	Level(page *Page, term []string) (SignalLevel, SignalBreakdown)
+	Name() string
 }
 
 type SignalLevel float64

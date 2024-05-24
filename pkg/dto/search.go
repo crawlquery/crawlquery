@@ -1,6 +1,6 @@
 package dto
 
-import "crawlquery/pkg/domain"
+import "crawlquery/node/domain"
 
 type NodeSearchResponse struct {
 	Results []domain.Result `json:"results"`

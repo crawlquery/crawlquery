@@ -1,7 +1,6 @@
 package domain
 
 import (
-	"crawlquery/pkg/domain"
 	"errors"
 
 	"github.com/gin-gonic/gin"
@@ -10,7 +9,7 @@ import (
 var ErrCrawlFailedToIndexPage = errors.New("failed to index page")
 
 type IndexService interface {
-	Search(query string) ([]domain.Result, error)
+	Search(query string) ([]Result, error)
 	Hash() (string, error)
 	Index(pageID string) error
 	ReIndex(pageID string) error

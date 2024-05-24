@@ -80,3 +80,43 @@ func TestDomainSignalHostnameMatch(t *testing.T) {
 		}
 	})
 }
+
+func TestDomainSignalLevel(t *testing.T) {
+	t.Run("returns the sum of the domain and hostname match levels", func(t *testing.T) {
+		cases := []struct {
+			name  string
+			page  *domain.Page
+			terms []string
+			want  domain.SignalLevel
+		}{
+			{
+				name: "single term match",
+				page: &domain.Page{
+					URL: "http://example.com",
+				},
+				terms: []string{"example.com"},
+				want:  domain.SignalLevelMax,
+			},
+			{
+				name: "multiple term match",
+				page: &domain.Page{
+					URL: "http://example.com",
+				},
+				terms: []string{"example.com", "example.com"},
+				want:  domain.SignalLevelMax,
+			},
+		}
+
+		for _, tc := range cases {
+			t.Run(tc.name, func(t *testing.T) {
+
+				ds := &Domain{}
+				level, _ := ds.Level(tc.page, tc.terms)
+
+				if level != tc.want {
+					t.Errorf("Expected %s, got %f", tc.want, level)
+				}
+			})
+		}
+	})
+}

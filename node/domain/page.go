@@ -8,12 +8,14 @@ var ErrPageNotFound = errors.New("page not found")
 var ErrHashNotFound = errors.New("hash not found")
 
 type Page struct {
-	ID              string   `json:"id"`
-	Hash            string   `json:"hash"`
-	URL             string   `json:"url"`
-	Title           string   `json:"title"`
-	MetaDescription string   `json:"meta_description"`
-	Keywords        []string `json:"keywords"`
+	ID          string     `json:"id"`
+	Hash        string     `json:"hash"`
+	URL         string     `json:"url"`
+	Title       string     `json:"title"`
+	Description string     `json:"description"`
+	Keywords    []string   `json:"keywords"`
+	Phrases     [][]string `json:"phrases"`
+	Language    string     `json:"language"`
 }
 
 type PageRepository interface {

@@ -282,8 +282,8 @@ func TestSearch(t *testing.T) {
 			t.Fatalf("Expected title to be Test Page, got %s", results[0].Page.Title)
 		}
 
-		if results[0].Page.MetaDescription != "This is a test page" {
-			t.Fatalf("Expected meta description to be This is a test page, got %s", results[0].Page.MetaDescription)
+		if results[0].Page.Description != "This is a test page" {
+			t.Fatalf("Expected meta description to be This is a test page, got %s", results[0].Page.Description)
 		}
 
 		expectedHash := util.Sha256Hex32(html)
@@ -345,6 +345,64 @@ func TestSearch(t *testing.T) {
 			t.Fatalf("Expected score to be 1000 or more, got %f", results[0].Score)
 		}
 	})
+
+	t.Run("sets signal breakdown", func(t *testing.T) {
+		pageRepo := pageRepo.NewRepository()
+		pageService := pageService.NewService(pageRepo)
+
+		pageRepo.Save("page1", &domain.Page{
+			ID:  "page1",
+			URL: "http://example.com",
+		})
+
+		htmlRepo := htmlRepo.NewRepository()
+		htmlService := htmlService.NewService(htmlRepo)
+
+		html := []byte(`
+		<html>
+			<head>
+				<title>Test Page</title>
+				<meta name="description" content="This is a test page">
+			</head>
+
+			<body>
+				<h1>Test Page</h1>
+				<p>This is a test page</p>
+			</body>
+		</html>
+	`)
+		htmlRepo.Save("page1", html)
+
+		peerService := peerService.NewService(nil, pageService, nil, testutil.NewTestLogger())
+
+		logger := testutil.NewTestLogger()
+
+		s := service.NewService(pageService, htmlService, peerService, logger)
+
+		err := s.Index("page1")
+
+		if err != nil {
+			t.Fatalf("Expected no error, got %v", err)
+		}
+
+		results, err := s.Search("example")
+
+		if err != nil {
+			t.Fatalf("Expected no error, got %v", err)
+		}
+
+		if len(results) != 1 {
+			t.Fatalf("Expected 1 result, got %d", len(results))
+		}
+
+		if len(results[0].Signals) != 3 {
+			t.Fatalf("Expected 3 signals, got %d", len(results[0].Signals))
+		}
+
+		if results[0].Signals["domain"]["domain"] != 40 {
+			t.Fatalf("Expected domain signal to be 40, got %f", results[0].Signals["domain"]["domain"])
+		}
+	})
 }
 
 func TestApplyIndexEvent(t *testing.T) {
@@ -361,11 +419,11 @@ func TestApplyIndexEvent(t *testing.T) {
 		service := service.NewService(pageService, htmlService, peerService, testutil.NewTestLogger())
 
 		page := &domain.Page{
-			URL:             "http://example.com",
-			ID:              "page1",
-			Title:           "Example",
-			MetaDescription: "An example page",
-			Keywords:        []string{"distro", "linux"},
+			URL:         "http://example.com",
+			ID:          "page1",
+			Title:       "Example",
+			Description: "An example page",
+			Keywords:    []string{"distro", "linux"},
 		}
 
 		event := &domain.IndexEvent{
@@ -396,8 +454,8 @@ func TestApplyIndexEvent(t *testing.T) {
 			t.Fatalf("Expected title to be Example, got %s", page.Title)
 		}
 
-		if page.MetaDescription != "An example page" {
-			t.Fatalf("Expected meta description to be An example page, got %s", page.MetaDescription)
+		if page.Description != "An example page" {
+			t.Fatalf("Expected meta description to be An example page, got %s", page.Description)
 		}
 
 		if len(page.Keywords) != 2 {

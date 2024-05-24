@@ -93,7 +93,7 @@ func TestTitle(t *testing.T) {
 		terms := []string{"Google", "Drive"}
 
 		// Act
-		level := ts.Level(&domain.Page{
+		level, _ := ts.Level(&domain.Page{
 			Title: "Google Drive: Sign-in",
 		}, terms)
 
@@ -109,7 +109,7 @@ func TestTitle(t *testing.T) {
 		terms := []string{"Google", "Drive:"}
 
 		// Act
-		level := ts.Level(&domain.Page{
+		level, _ := ts.Level(&domain.Page{
 			Title: "Google Drive: Sign-in",
 		}, terms)
 
@@ -125,7 +125,7 @@ func TestTitle(t *testing.T) {
 		terms := []string{"gmail", "google"}
 
 		// Act
-		level := ts.Level(&domain.Page{
+		level, _ := ts.Level(&domain.Page{
 			Title: "Gmail - Free Storage and Email from Google",
 		}, terms)
 
@@ -141,13 +141,13 @@ func TestTitle(t *testing.T) {
 		terms := []string{"gmail", "google"}
 
 		// Act
-		level := ts.Level(&domain.Page{
+		level, _ := ts.Level(&domain.Page{
 			Title: "Gmail Google",
 		}, terms)
 
 		// Assert
-		if level < domain.SignalLevelMax {
-			t.Errorf("Expected at least max level, got %f", level)
+		if level < domain.SignalLevelHigh {
+			t.Errorf("Expected at least high, got %f", level)
 		}
 	})
 }

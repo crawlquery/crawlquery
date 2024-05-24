@@ -10,7 +10,19 @@ import (
 
 type Domain struct{}
 
+func (Domain) Name() string {
+	return "domain"
+}
+
 func (ds *Domain) domainMatch(url *tld.URL, term []string) domain.SignalLevel {
+	if len(term) == 1 {
+		if term[0] == url.Domain {
+			if url.Subdomain == "" && url.Path == "" {
+				return domain.SignalLevelMax * 1000
+			}
+		}
+	}
+
 	// domain matching
 	for _, t := range term {
 		if url.Domain == t {
@@ -22,6 +34,13 @@ func (ds *Domain) domainMatch(url *tld.URL, term []string) domain.SignalLevel {
 }
 
 func (ds *Domain) hostnameMatch(url *tld.URL, term []string) domain.SignalLevel {
+	if len(term) == 1 {
+		if term[0] == url.Hostname() {
+			if url.Subdomain == "" && url.Path == "" {
+				return domain.SignalLevelMax * 1000
+			}
+		}
+	}
 	// hostname matching
 	for _, t := range term {
 		if url.Host == t {
@@ -32,21 +51,28 @@ func (ds *Domain) hostnameMatch(url *tld.URL, term []string) domain.SignalLevel 
 	return domain.SignalLevelNone
 }
 
-func (ds *Domain) Level(page *domain.Page, term []string) domain.SignalLevel {
+func (ds *Domain) Level(page *domain.Page, term []string) (domain.SignalLevel, domain.SignalBreakdown) {
 
 	tldURL, err := tld.Parse(page.URL)
 
 	if err != nil {
-		return domain.SignalLevelNone
+		return domain.SignalLevelNone, domain.SignalBreakdown{}
 	}
 
 	baseLevel := domain.SignalLevelNone
 
 	// full domain matching
-	baseLevel += ds.domainMatch(tldURL, term)
+	domainLevel := ds.domainMatch(tldURL, term)
 
 	// hostname matching
-	baseLevel += ds.hostnameMatch(tldURL, term)
+	hostname := ds.hostnameMatch(tldURL, term)
 
-	return baseLevel
+	baseLevel += domainLevel
+	baseLevel += hostname
+
+	return baseLevel, domain.SignalBreakdown{
+		"domain":   domainLevel,
+		"hostname": hostname,
+	}
+
 }

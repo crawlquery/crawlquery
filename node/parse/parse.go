@@ -8,6 +8,6 @@ func Title(doc *goquery.Document) string {
 	return doc.Find("head title").Text()
 }
 
-func MetaDescription(doc *goquery.Document) string {
+func Description(doc *goquery.Document) string {
 	return doc.Find("head meta[name=description]").AttrOr("content", "")
 }

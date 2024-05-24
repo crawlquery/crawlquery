@@ -1,6 +1,6 @@
 package dto
 
-import "crawlquery/pkg/domain"
+import "crawlquery/node/domain"
 
 type SearchResponsePage struct {
 	ID          string `json:"id"`
@@ -27,7 +27,7 @@ func NewSearchResponse(results []domain.Result) *SearchResponse {
 			ID:          r.Page.ID,
 			URL:         r.Page.URL,
 			Title:       r.Page.Title,
-			Description: r.Page.MetaDescription,
+			Description: r.Page.Description,
 		}
 
 		res.Results = append(res.Results, SearchResponseResult{

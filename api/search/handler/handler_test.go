@@ -13,7 +13,7 @@ import (
 	"testing"
 	"time"
 
-	sharedDomain "crawlquery/pkg/domain"
+	nodeDomain "crawlquery/node/domain"
 	nodeDto "crawlquery/pkg/dto"
 
 	nodeService "crawlquery/api/node/service"
@@ -50,11 +50,11 @@ func TestSearch(t *testing.T) {
 			MatchParam("q", "term").
 			Reply(200).
 			JSON(nodeDto.NodeSearchResponse{
-				Results: []sharedDomain.Result{
+				Results: []nodeDomain.Result{
 					{
 						PageID: "page1",
 						Score:  0.5,
-						Page: &sharedDomain.Page{
+						Page: &nodeDomain.ResultPage{
 							ID:    "page1",
 							URL:   "http://google.com",
 							Title: "Google",
@@ -68,11 +68,11 @@ func TestSearch(t *testing.T) {
 			MatchParam("q", "term").
 			Reply(200).
 			JSON(nodeDto.NodeSearchResponse{
-				Results: []sharedDomain.Result{
+				Results: []nodeDomain.Result{
 					{
 						PageID: "page2",
 						Score:  0.6,
-						Page: &sharedDomain.Page{
+						Page: &nodeDomain.ResultPage{
 							ID:    "page2",
 							URL:   "http://facebook.com",
 							Title: "Facebook",

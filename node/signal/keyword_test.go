@@ -19,7 +19,7 @@ func TestKeyword(t *testing.T) {
 					Keywords: []string{"example"},
 				},
 				terms: []string{"example"},
-				want:  domain.SignalLevelLow,
+				want:  domain.SignalLevelMax,
 			},
 			{
 				name: "multiple term match",
@@ -27,7 +27,7 @@ func TestKeyword(t *testing.T) {
 					Keywords: []string{"example", "test"},
 				},
 				terms: []string{"example", "test"},
-				want:  domain.SignalLevelLow * 2,
+				want:  domain.SignalLevelMax * 2,
 			},
 		}
 
@@ -36,7 +36,7 @@ func TestKeyword(t *testing.T) {
 
 				ks := &Keyword{}
 
-				level := ks.Level(tc.page, tc.terms)
+				level, _ := ks.Level(tc.page, tc.terms)
 
 				if level != tc.want {
 					t.Errorf("Expected %s, got %v", tc.want, level)

@@ -31,7 +31,7 @@ func (c *Client) Crawl(pageID, url string) (string, error) {
 	}
 
 	res, err := http.Post(
-		c.BaseURL+"/crawl-jobs",
+		c.BaseURL+"/crawl",
 		"application/json",
 		bytes.NewBuffer(jsonBody),
 	)

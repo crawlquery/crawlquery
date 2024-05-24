@@ -2,7 +2,7 @@ package dto_test
 
 import (
 	"crawlquery/api/dto"
-	"crawlquery/pkg/domain"
+	"crawlquery/node/domain"
 	"testing"
 )
 
@@ -13,11 +13,11 @@ func TestNewSearchResponse(t *testing.T) {
 			{
 				PageID: "page1",
 				Score:  0.5,
-				Page: &domain.Page{
-					ID:              "page1",
-					URL:             "http://google.com",
-					Title:           "Google",
-					MetaDescription: "Search the world's information, including webpages, images, videos and more.",
+				Page: &domain.ResultPage{
+					ID:          "page1",
+					URL:         "http://google.com",
+					Title:       "Google",
+					Description: "Search the world's information, including webpages, images, videos and more.",
 				},
 			},
 		}
@@ -50,8 +50,8 @@ func TestNewSearchResponse(t *testing.T) {
 			t.Errorf("Expected page title to be %s, got %s", results[0].Page.Title, res.Results[0].Page.Title)
 		}
 
-		if res.Results[0].Page.Description != results[0].Page.MetaDescription {
-			t.Errorf("Expected page description to be %s, got %s", results[0].Page.MetaDescription, res.Results[0].Page.Description)
+		if res.Results[0].Page.Description != results[0].Page.Description {
+			t.Errorf("Expected page description to be %s, got %s", results[0].Page.Description, res.Results[0].Page.Description)
 		}
 	})
 }

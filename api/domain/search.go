@@ -1,7 +1,7 @@
 package domain
 
 import (
-	"crawlquery/pkg/domain"
+	"crawlquery/node/domain"
 	"errors"
 
 	"github.com/gin-gonic/gin"

@@ -8,6 +8,10 @@ import (
 
 type Title struct{}
 
+func (Title) Name() string {
+	return "title"
+}
+
 func (t *Title) anyMatch(title string, terms []string) domain.SignalLevel {
 	baseLevel := domain.SignalLevelNone
 
@@ -25,13 +29,13 @@ func (t *Title) anyMatch(title string, terms []string) domain.SignalLevel {
 func (t *Title) fullMatch(title string, terms []string) domain.SignalLevel {
 	combined := strings.Join(terms, " ")
 	if strings.EqualFold(title, combined) {
-		return domain.SignalLevelMax
+		return domain.SignalLevelHigh
 	}
 
 	return domain.SignalLevelNone
 }
 
-func (ts *Title) Level(page *domain.Page, terms []string) domain.SignalLevel {
+func (ts *Title) Level(page *domain.Page, terms []string) (domain.SignalLevel, domain.SignalBreakdown) {
 
 	baseLevel := domain.SignalLevelNone
 
@@ -43,9 +47,16 @@ func (ts *Title) Level(page *domain.Page, terms []string) domain.SignalLevel {
 		cleanedTerms[i] = regexp.MustCompile(`[^a-zA-Z0-9 ]+`).ReplaceAllString(term, "")
 	}
 
-	baseLevel += ts.anyMatch(cleanedTitle, cleanedTerms)
+	anyMatch := ts.anyMatch(cleanedTitle, cleanedTerms)
 
-	baseLevel += ts.fullMatch(cleanedTitle, cleanedTerms)
+	fullMatch := ts.fullMatch(cleanedTitle, cleanedTerms)
 
-	return baseLevel
+	baseLevel += anyMatch
+
+	baseLevel += fullMatch
+
+	return baseLevel, domain.SignalBreakdown{
+		"any":  anyMatch,
+		"full": fullMatch,
+	}
 }

@@ -110,10 +110,10 @@ func TestSendIndexEvent(t *testing.T) {
 	service.AddPeer(peer)
 
 	page := &domain.Page{
-		URL:             "http://example.com",
-		ID:              "page1",
-		Title:           "Example",
-		MetaDescription: "An example page",
+		URL:         "http://example.com",
+		ID:          "page1",
+		Title:       "Example",
+		Description: "An example page",
 	}
 
 	event := &domain.IndexEvent{
@@ -156,10 +156,10 @@ func TestBroadcastIndexEvent(t *testing.T) {
 	service.AddPeer(peer2)
 
 	page := &domain.Page{
-		URL:             "http://example.com",
-		ID:              "page1",
-		Title:           "Example",
-		MetaDescription: "An example page",
+		URL:         "http://example.com",
+		ID:          "page1",
+		Title:       "Example",
+		Description: "An example page",
 	}
 
 	event := &domain.IndexEvent{
