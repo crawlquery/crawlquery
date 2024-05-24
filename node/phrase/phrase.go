@@ -15,7 +15,11 @@ type PhraseSubCategories map[SubCategoryName]PhraseSubCategory
 
 func phraseCategories() PhraseCategories {
 	return PhraseCategories{
-		"noun": nounPhraseSubCategories(),
+		"noun":          nounPhraseSubCategories(),
+		"verb":          verbPhraseSubCategories(),
+		"adjective":     adjectivePhraseSubCategories(),
+		"prepositional": prepositionalPhraseSubCategories(),
+		"adverbial":     adverbialPhraseSubCategories(),
 	}
 }
 
