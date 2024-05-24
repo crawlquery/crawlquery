@@ -13,38 +13,20 @@ type PhraseSubCategory []PhraseTemplate
 type PhraseCategories map[CategoryName]PhraseSubCategories
 type PhraseSubCategories map[SubCategoryName]PhraseSubCategory
 
-var SimpleNounTemplates = PhraseSubCategory{
-	// A tree
-	{"NN"},
-
-	// A search engine
-	{"NN", "NN"},
-}
-
-var AdjectiveNounTemplates = PhraseSubCategory{
-	// bright red car
-	{"JJ", "JJ", "NN"},
-
-	// lazy dog
-	{"JJ", "NN"},
-
-	//quick brown fox
-	{"JJ", "NN", "NN"},
-}
-
-func NounTemplates() PhraseSubCategories {
-	templates := PhraseSubCategories{
-		"simple_noun":    SimpleNounTemplates,
-		"adjective_noun": AdjectiveNounTemplates,
-	}
-
-	return templates
-}
-
-func Templates() PhraseCategories {
+func phraseCategories() PhraseCategories {
 	return PhraseCategories{
-		"noun": NounTemplates(),
+		"noun": nounPhraseSubCategories(),
 	}
+}
+
+func ParseSentence(sentence string) ([][]string, error) {
+	doc, err := prose.NewDocument(sentence)
+	if err != nil {
+		return nil, err
+	}
+	tokens := doc.Tokens()
+
+	return parsePhrases(tokens, phraseCategories())
 }
 
 type match struct {
@@ -53,14 +35,9 @@ type match struct {
 	phrase []string
 }
 
-func parsePhrases(sentence string, phraseCategories PhraseCategories) ([][]string, error) {
-	doc, err := prose.NewDocument(sentence)
-	if err != nil {
-		return nil, err
-	}
+func parsePhrases(tokens []prose.Token, phraseCategories PhraseCategories) ([][]string, error) {
 
 	var phrases [][]string
-	tokens := doc.Tokens()
 
 	for _, subCategories := range phraseCategories {
 		subCategoryPhrases := parseSubCategories(tokens, subCategories)
