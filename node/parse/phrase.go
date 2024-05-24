@@ -30,10 +30,18 @@ func (pp *PhraseParser) HeadingPhrases() []string {
 }
 
 var PhraseTemplates = [][]string{
+
+	// Infinitive phrases
 	// the best five search engines
 	{"DT", "JJS", "CD", "NN", "NNS"},
 	// the best search engine
 	{"DT", "JJS", "NN", "NN"},
+	// the best search engines
+	{"DT", "JJS", "NN", "NNS"},
+
+	// Noun phrases
+	// how to make a cake
+	{"WRB", "TO", "VB", "DT", "NN"},
 }
 
 func (PhraseParser) ParseSentence(sentence string) ([]string, error) {

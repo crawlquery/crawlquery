@@ -18,6 +18,8 @@ func TestPhraseParserParseSentence(t *testing.T) {
 			sentence string
 			want     []string
 		}{
+
+			// Infinitive phrases
 			{
 				sentence: "What are the best five search engines, what are your dreams about?",
 				want:     []string{"the", "best", "five", "search", "engines"},
@@ -25,6 +27,16 @@ func TestPhraseParserParseSentence(t *testing.T) {
 			{
 				sentence: "What are the best search engine, what are your dreams about?",
 				want:     []string{"the", "best", "search", "engine"},
+			},
+			{
+				sentence: "What are the best search engines, what are your dreams about?",
+				want:     []string{"the", "best", "search", "engines"},
+			},
+
+			// Noun phrases
+			{
+				sentence: "What are you up to today, do you want to know how to make a cake?",
+				want:     []string{"how", "to", "make", "a", "cake"},
 			},
 		}
 
