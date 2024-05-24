@@ -2,9 +2,10 @@ package parse
 
 import (
 	"crawlquery/node/domain"
+	"crawlquery/node/phrase"
+	"errors"
 
 	"github.com/PuerkitoBio/goquery"
-	"github.com/jdkato/prose/v2"
 	"github.com/neurosnap/sentences/english"
 	"github.com/pemistahl/lingua-go"
 )
@@ -29,55 +30,6 @@ func (pp *PhraseParser) HeadingPhrases() []string {
 	return phrases
 }
 
-var PhraseTemplates = [][]string{
-
-	// Infinitive phrases
-	// the best five search engines
-	{"DT", "JJS", "CD", "NN", "NNS"},
-	// the best search engine
-	{"DT", "JJS", "NN", "NN"},
-	// the best search engines
-	{"DT", "JJS", "NN", "NNS"},
-
-	// Noun phrases
-	// how to make a cake
-	{"WRB", "TO", "VB", "DT", "NN"},
-}
-
-func (PhraseParser) ParseSentence(sentence string) ([]string, error) {
-	doc, err := prose.NewDocument(sentence)
-	if err != nil {
-		return nil, err
-	}
-
-	var phrase []string
-
-	for i := 0; i < len(doc.Tokens()); i++ {
-		for _, template := range PhraseTemplates {
-			if i+len(template) > len(doc.Tokens()) {
-				continue
-			}
-
-			match := true
-			for j, pos := range template {
-				if doc.Tokens()[i+j].Tag != pos {
-					match = false
-					break
-				}
-			}
-
-			if match {
-				for j := range template {
-					phrase = append(phrase, doc.Tokens()[i+j].Text)
-				}
-				return phrase, nil
-			}
-		}
-	}
-
-	return phrase, nil
-}
-
 func (pp *PhraseParser) ParseParagraph() ([][]string, error) {
 
 	var paragraphs []string
@@ -95,21 +47,33 @@ func (pp *PhraseParser) ParseParagraph() ([][]string, error) {
 	for _, p := range paragraphs {
 		sentences := tokenizer.Tokenize(p)
 		for _, s := range sentences {
-			parsed, err := pp.ParseSentence(s.Text)
+			parsedPhrases, err := phrase.ParseSentence(s.Text)
 
 			if err != nil {
 				return nil, err
 			}
-			phrases = append(phrases, parsed)
+
+			phrases = append(phrases, parsedPhrases...)
 		}
 	}
 
 	return phrases, nil
 }
 
-func (kp *PhraseParser) Parse(page *domain.Page) {
+func (kp *PhraseParser) Parse(page *domain.Page) error {
 
-	if page.Language != lingua.EN.String() {
-		return
+	if page.Language != lingua.English.String() {
+		return errors.New("only english pages are supported")
 	}
+
+	var phrases [][]string
+
+	paragraphPhrases, err := kp.ParseParagraph()
+	if err != nil {
+		return err
+	}
+
+	page.Phrases = append(phrases, paragraphPhrases...)
+
+	return nil
 }

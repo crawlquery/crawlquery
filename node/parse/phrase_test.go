@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"crawlquery/node/domain"
 	"crawlquery/node/parse"
-	"slices"
 	"testing"
 
 	"github.com/PuerkitoBio/goquery"
@@ -12,79 +11,75 @@ import (
 	testdataloader "github.com/peteole/testdata-loader"
 )
 
-func TestPhraseParserParseSentence(t *testing.T) {
-	t.Run("parses phrases from a sentence", func(t *testing.T) {
-		cases := []struct {
-			sentence string
-			want     []string
-		}{
-
-			// Infinitive phrases
-			{
-				sentence: "What are the best five search engines, what are your dreams about?",
-				want:     []string{"the", "best", "five", "search", "engines"},
-			},
-			{
-				sentence: "What are the best search engine, what are your dreams about?",
-				want:     []string{"the", "best", "search", "engine"},
-			},
-			{
-				sentence: "What are the best search engines, what are your dreams about?",
-				want:     []string{"the", "best", "search", "engines"},
-			},
-
-			// Noun phrases
-			{
-				sentence: "What are you up to today, do you want to know how to make a cake?",
-				want:     []string{"how", "to", "make", "a", "cake"},
-			},
+func TestPhraseParser(t *testing.T) {
+	t.Run("only parses english pages", func(t *testing.T) {
+		doc, err := goquery.NewDocumentFromReader(bytes.NewReader(testdataloader.GetTestFile("testdata/pages/recipe/how-to-make-bolognese-sauce.html")))
+		if err != nil {
+			t.Fatalf("Error loading document: %v", err)
 		}
 
-		for _, tc := range cases {
-			t.Run("parses phrases", func(t *testing.T) {
-				kp := parse.PhraseParser{}
+		pp := parse.NewPhraseParser(doc)
 
-				got, err := kp.ParseSentence(tc.sentence)
-				if err != nil {
-					t.Errorf("Error parsing sentence: %v", err)
-				}
+		page := &domain.Page{
+			URL:      "http://example.com",
+			Language: lingua.Italian.String(),
+		}
 
-				if !slices.Equal(got, tc.want) {
-					t.Errorf("Expected %v, got %v", tc.want, got)
-				}
-			})
+		pp.Parse(page)
+
+		if len(page.Phrases) != 0 {
+			t.Errorf("Expected no phrases, got %v", page.Phrases)
 		}
 	})
-}
 
-func TestPhraseParagraphPhrases(t *testing.T) {
-	t.Run("parses phrases from a paragraph", func(t *testing.T) {
+	t.Run("parses phrases from the page", func(t *testing.T) {
 		cases := []struct {
-			html []byte
-			want [][]string
+			html     []byte
+			contains [][]string
 		}{
 			{
 				html: testdataloader.GetTestFile("testdata/pages/info/which-search-engine-is-the-best.html"),
-				want: [][]string{
-					{"the", "best", "five", "search", "engines"},
+				contains: [][]string{
+					{"search", "engine"},
 				},
 			},
 		}
 
 		for _, tc := range cases {
-			t.Run("parses phrases", func(t *testing.T) {
+			t.Run("parses phrases from the page", func(t *testing.T) {
 				doc, err := goquery.NewDocumentFromReader(bytes.NewReader(tc.html))
 				if err != nil {
-					t.Errorf("Error parsing html: %v", err)
+					t.Fatalf("Error loading document: %v", err)
 				}
 
-				kp := parse.NewPhraseParser(doc)
+				pp := parse.NewPhraseParser(doc)
 
 				page := &domain.Page{
-					Language: lingua.EN.String(),
+					URL:      "http://example.com",
+					Language: lingua.English.String(),
 				}
-				kp.Parse(page)
 
+				err = pp.Parse(page)
+
+				if err != nil {
+					t.Fatalf("Error parsing phrases: %v", err)
+				}
+
+				for _, c := range tc.contains {
+					found := false
+					for _, p := range page.Phrases {
+						if len(p) != 2 {
+							continue
+						}
+						if p[0] == c[0] && p[1] == c[1] {
+							found = true
+						}
+					}
+
+					if !found {
+						t.Errorf("Expected to find %v in %v", c, page.Phrases)
+					}
+				}
 			})
 		}
 	})

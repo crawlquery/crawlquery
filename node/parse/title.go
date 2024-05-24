@@ -17,28 +17,30 @@ func NewTitleParser(doc *goquery.Document) *TitleParser {
 	}
 }
 
-func (tp *TitleParser) Parse(page *domain.Page) {
+func (tp *TitleParser) Parse(page *domain.Page) error {
 
 	ogTitle := tp.doc.Find("meta[property='og:title']").AttrOr("content", "")
 
 	if ogTitle != "" {
 		page.Title = ogTitle
-		return
+		return nil
 	}
 
 	titleTag := tp.doc.Find("title").Text()
 
 	if titleTag != "" {
 		page.Title = titleTag
-		return
+		return nil
 	}
 
 	domain, err := tld.Parse(page.URL)
 
 	if err != nil {
 		page.Title = "We couldn't find a title for this page."
-		return
+		return nil
 	}
 
 	page.Title = domain.Host
+
+	return nil
 }

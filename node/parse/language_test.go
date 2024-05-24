@@ -44,9 +44,9 @@ func TestLanguageParser(t *testing.T) {
 				if err != nil {
 					t.Errorf("Error parsing html: %v", err)
 				}
+				lp := parse.NewLanguageParser(doc)
 				page := &domain.Page{}
-				lp := parse.NewLanguageParser(page)
-				lp.Parse(doc)
+				lp.Parse(page)
 
 				if page.Language != tc.want {
 					t.Errorf("Expected %s, got %s", tc.want, page.Language)

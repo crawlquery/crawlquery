@@ -76,6 +76,10 @@ func TestIndex(t *testing.T) {
 	if page.Title != "Test Page" {
 		t.Fatalf("Expected title to be Test Page, got %s", page.Title)
 	}
+
+	if len(page.Phrases) == 0 {
+		t.Fatalf("Expected phrases to be found, got none")
+	}
 }
 
 func TestReIndex(t *testing.T) {

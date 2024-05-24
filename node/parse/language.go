@@ -8,21 +8,23 @@ import (
 )
 
 type LanguageParser struct {
-	page *domain.Page
+	doc *goquery.Document
 }
 
-func NewLanguageParser(page *domain.Page) *LanguageParser {
+func NewLanguageParser(doc *goquery.Document) *LanguageParser {
 	return &LanguageParser{
-		page: page,
+		doc: doc,
 	}
 }
 
-func (lp *LanguageParser) Parse(doc *goquery.Document) {
+func (lp *LanguageParser) Parse(page *domain.Page) error {
 	detector := lingua.NewLanguageDetectorBuilder().
 		FromAllLanguages().
 		Build()
 
-	lang, _ := detector.DetectLanguageOf(doc.Text())
+	lang, _ := detector.DetectLanguageOf(lp.doc.Text())
 
-	lp.page.Language = lang.String()
+	page.Language = lang.String()
+
+	return nil
 }

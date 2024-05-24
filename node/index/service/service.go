@@ -5,11 +5,8 @@ import (
 	"crawlquery/node/domain"
 	"crawlquery/node/parse"
 	"crawlquery/node/signal"
-	"crawlquery/node/token"
 	"sort"
 	"strings"
-
-	"crawlquery/pkg/util"
 
 	"github.com/PuerkitoBio/goquery"
 	"go.uber.org/zap"
@@ -57,22 +54,19 @@ func (s *Service) Index(pageID string) error {
 		return err
 	}
 
-	page.Title = parse.Title(doc)
-	page.Description = parse.Description(doc)
-	page.Hash = util.Sha256Hex32(html)
+	parsers := []domain.Parser{
+		parse.NewLanguageParser(doc),
+		parse.NewTitleParser(doc),
+		parse.NewPhraseParser(doc),
+	}
 
-	// FOR NOW KEYWORDS MUST COME LAST AS IT REMOVES HTML TAGS
-	// TO GET THE KEYWORDS
-	page.Keywords = token.Keywords(doc)
+	for _, parser := range parsers {
+		err = parser.Parse(page)
 
-	if page.Description == "" {
-		subKeyWords := page.Keywords
-
-		if len(subKeyWords) > 10 {
-			subKeyWords = subKeyWords[:10]
+		if err != nil {
+			s.logger.Errorw("Error parsing page", "error", err, "pageID", pageID)
+			return err
 		}
-
-		page.Description = strings.Join(subKeyWords, ", ")
 	}
 
 	err = s.pageService.Update(page)
