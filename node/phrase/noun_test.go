@@ -105,4 +105,43 @@ func TestParseNounPhrases(t *testing.T) {
 			})
 		}
 	})
+
+	t.Run("parses noun phrases", func(t *testing.T) {
+		cases := []struct {
+			name     string
+			sentence string
+			want     [][]string
+		}{
+			// Noun phrases
+			{
+				name:     "Noun phrase",
+				sentence: "I walked past a bright red car, and saw a lazy dog.",
+				want:     [][]string{{"bright", "red", "car"}, {"lazy", "dog"}, {"red", "car"}, {"dog"}, {"car"}},
+			},
+		}
+
+		for _, tc := range cases {
+			t.Run(tc.name, func(t *testing.T) {
+				doc, err := prose.NewDocument(tc.sentence)
+
+				if err != nil {
+					t.Errorf("Error parsing sentence: %v", err)
+				}
+
+				got, err := parsePhrases(doc.Tokens(), PhraseCategories{
+					"noun": nounPhraseSubCategories(),
+				})
+				if err != nil {
+					t.Errorf("Error parsing sentence: %v", err)
+				}
+
+				sortPhrases(tc.want)
+				sortPhrases(got)
+
+				if !reflect.DeepEqual(got, tc.want) {
+					t.Errorf("Expected %v, got %v", tc.want, got)
+				}
+			})
+		}
+	})
 }

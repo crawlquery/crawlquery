@@ -10,14 +10,14 @@ import (
 )
 
 func TestWordClasses(t *testing.T) {
-	sentence := "A search engine."
+	sentence := "He run quickly."
 	doc, _ := prose.NewDocument(sentence)
 
 	tokens := doc.Tokens()
 
 	fmt.Printf("Tokens: %v\n", tokens)
 
-	// t.Fail()
+	t.Fail()
 }
 
 func sortPhrases(phrases [][]string) {
