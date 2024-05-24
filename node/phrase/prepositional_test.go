@@ -30,6 +30,16 @@ func TestParsePrepositionalPhrases(t *testing.T) {
 				want:     [][]string{{"at", "an", "all-time", "high"}},
 			},
 			{
+				name:     "prepositional phrase with determiner",
+				sentence: "Price of eggs is finally falling but it was at an all-time high.",
+				want:     [][]string{{"Price", "of", "eggs"}, {"of", "eggs"}, {"at", "an", "all-time", "high"}},
+			},
+			{
+				name:     "simple prepositional phrase",
+				sentence: "The note was underneath the egg tray.",
+				want:     [][]string{{"underneath", "the", "egg", "tray"}},
+			},
+			{
 				name:     "multiple prepositional phrases",
 				sentence: "He met her at the park and they walked with friends in London.",
 				want: [][]string{

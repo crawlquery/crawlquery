@@ -20,6 +20,7 @@ func phraseCategories() PhraseCategories {
 		"adjective":     adjectivePhraseSubCategories(),
 		"prepositional": prepositionalPhraseSubCategories(),
 		"adverbial":     adverbialPhraseSubCategories(),
+		"quantifier":    quantifierPhraseSubCategories(),
 	}
 }
 

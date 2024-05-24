@@ -11,7 +11,7 @@ import (
 )
 
 func TestWordClasses(t *testing.T) {
-	sentence := "He met her at the park and they walked with friends."
+	sentence := "First, add some drainage for water by poking a few holes in the bottom of the carton. Barton Hill Farms suggests separating the lid from the bottom, then putting it underneath the egg tray to catch any wayward water."
 	doc, _ := prose.NewDocument(sentence)
 
 	tokens := doc.Tokens()
@@ -22,16 +22,41 @@ func TestWordClasses(t *testing.T) {
 }
 
 func TestParseSentence(t *testing.T) {
-	t.Run("parses a sentenc using noun, verb, and adjective phrases", func(t *testing.T) {
+	t.Run("parses a sentence using noun, verb, and adjective phrases", func(t *testing.T) {
 		cases := []struct {
 			name     string
 			sentence string
 			want     [][]string
 		}{
 			{
-				name:     "simple sentence",
+				name:     "price of eggs",
 				sentence: "The price of eggs is finally falling but it was at an all-time high just a few months ago.",
-				want:     [][]string{{"price", "of", "eggs"}, {"falling"}, {"is"}, {"just", "a", "few", "months", "ago"}, {"was"}, {"at", "an", "all-time", "high"}},
+				want:     [][]string{{"price", "of", "eggs"}, {"of", "eggs"}, {"price"}, {"falling"}, {"is"}, {"just", "a", "few", "months", "ago"}, {"few", "months"}, {"was"}, {"at", "an", "all-time", "high"}},
+			},
+			{
+				name:     "add some drainage",
+				sentence: "First, add some drainage for water by poking a few holes in the bottom of the carton. Barton Hill Farms suggests separating the lid from the bottom, then putting it underneath the egg tray to catch any wayward water.",
+				want: [][]string{
+					{"bottom"},
+					{"bottom"},
+					{"carton"},
+					{"drainage"},
+					{"egg", "tray"},
+					{"few", "holes"},
+					{"from", "the", "bottom"},
+					{"in", "the", "bottom"},
+					{"lid"},
+					{"of", "the", "carton"},
+					{"poking"},
+					{"putting"},
+					{"separating"},
+					{"suggests"},
+					{"tray"},
+					{"underneath", "the", "egg", "tray"},
+					{"water"},
+					{"water"},
+					{"wayward", "water"},
+				},
 			},
 		}
 
