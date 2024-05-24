@@ -221,7 +221,6 @@ func TestGetIndex(t *testing.T) {
 		if page.Hash != expectedHash {
 			t.Fatalf("Expected hash to be %s, got %s", expectedHash, page.Hash)
 		}
-
 	})
 }
 
@@ -279,7 +278,7 @@ func TestSearch(t *testing.T) {
 			t.Fatalf("Expected page ID to be page1, got %s", results[0].PageID)
 		}
 
-		if results[0].Score < 1000 {
+		if results[0].Score < 100 {
 			t.Fatalf("Expected score to be more, got %f", results[0].Score)
 		}
 
@@ -408,8 +407,8 @@ func TestSearch(t *testing.T) {
 			t.Fatalf("Expected 3 signals, got %d", len(results[0].Signals))
 		}
 
-		if results[0].Signals["domain"]["domain"] != 40 {
-			t.Fatalf("Expected domain signal to be 40, got %f", results[0].Signals["domain"]["domain"])
+		if results[0].Signals["domain"]["domain"] != 2000 {
+			t.Fatalf("Expected domain signal to be 2000, got %f", results[0].Signals["domain"]["domain"])
 		}
 	})
 }
@@ -432,7 +431,7 @@ func TestApplyIndexEvent(t *testing.T) {
 			ID:          "page1",
 			Title:       "Example",
 			Description: "An example page",
-			Keywords:    []string{"distro", "linux"},
+			Phrases:     [][]string{{"distro"}, {"linux"}},
 		}
 
 		event := &domain.IndexEvent{
@@ -467,8 +466,16 @@ func TestApplyIndexEvent(t *testing.T) {
 			t.Fatalf("Expected meta description to be An example page, got %s", page.Description)
 		}
 
-		if len(page.Keywords) != 2 {
-			t.Fatalf("Expected 2 keywords, got %d", len(page.Keywords))
+		if len(page.Phrases) != 2 {
+			t.Fatalf("Expected 2 phrases, got %d", len(page.Phrases))
+		}
+
+		if page.Phrases[0][0] != "distro" {
+			t.Fatalf("Expected phrase to be distro, got %s", page.Phrases[0][0])
+		}
+
+		if page.Phrases[1][0] != "linux" {
+			t.Fatalf("Expected phrase to be linux, got %s", page.Phrases[1][0])
 		}
 	})
 

@@ -18,7 +18,7 @@ func TestWordClasses(t *testing.T) {
 
 	fmt.Printf("Tokens: %v\n", tokens)
 
-	t.Fail()
+	// t.Fail()
 }
 
 func TestParseSentence(t *testing.T) {

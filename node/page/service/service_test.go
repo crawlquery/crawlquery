@@ -4,6 +4,7 @@ import (
 	"crawlquery/node/domain"
 	pageRepo "crawlquery/node/page/repository/mem"
 	"crawlquery/node/page/service"
+	"encoding/json"
 	"testing"
 )
 
@@ -251,16 +252,30 @@ func TestJSON(t *testing.T) {
 		t.Fatalf("Error saving page: %v", err)
 	}
 
-	json, err := s.JSON()
+	jsonB, err := s.JSON()
 
 	if err != nil {
 		t.Fatalf("Error getting json: %v", err)
 	}
 
-	expected := `{"page1":{"id":"page1","hash":"hash1","url":"http://example.com","title":"","meta_description":"","keywords":null},"page2":{"id":"page2","hash":"hash2","url":"http://example2.com","title":"","meta_description":"","keywords":null}}`
+	var pages map[string]*domain.Page
 
-	if string(json) != expected {
-		t.Fatalf("Expected json to be %s, got %s", expected, json)
+	err = json.Unmarshal(jsonB, &pages)
+
+	if err != nil {
+		t.Fatalf("Error unmarshalling json: %v", err)
+	}
+
+	if len(pages) != 2 {
+		t.Fatalf("Expected 2 pages, got %d", len(pages))
+	}
+
+	if pages["page1"].ID != "page1" {
+		t.Fatalf("Expected page ID to be 'page1', got '%s'", pages["page1"].ID)
+	}
+
+	if pages["page1"].URL != "http://example.com" {
+		t.Fatalf("Expected page URL to be 'http://example.com', got '%s'", pages["page1"].URL)
 	}
 
 }

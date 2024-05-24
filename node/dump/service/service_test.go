@@ -4,6 +4,7 @@ import (
 	"crawlquery/node/domain"
 	pageRepo "crawlquery/node/page/repository/mem"
 	pageService "crawlquery/node/page/service"
+	"encoding/json"
 
 	"testing"
 
@@ -28,10 +29,10 @@ func TestPage(t *testing.T) {
 		}
 
 		pageRepo.Save("1", &domain.Page{
-			ID:       "1",
-			URL:      "http://example.com",
-			Hash:     "1",
-			Keywords: []string{"test", "page"},
+			ID:      "1",
+			URL:     "http://example.com",
+			Hash:    "1",
+			Phrases: [][]string{{"test", "page"}},
 		})
 
 		data, err = dumpService.Page()
@@ -40,8 +41,36 @@ func TestPage(t *testing.T) {
 			t.Fatalf("Error getting page dump: %v", err)
 		}
 
-		if string(data) != `{"1":{"id":"1","hash":"1","url":"http://example.com","title":"","meta_description":"","keywords":["test","page"]}}` {
-			t.Fatalf("Expected page dump to be '1', got %s", string(data))
+		var slicePages map[string]*domain.Page
+
+		err = json.Unmarshal(data, &slicePages)
+
+		if err != nil {
+			t.Fatalf("Error unmarshalling page dump: %v", err)
+		}
+
+		if len(slicePages) != 1 {
+			t.Fatalf("Expected 1 page, got %d", len(slicePages))
+		}
+
+		if slicePages["1"].ID != "1" {
+			t.Fatalf("Expected page ID to be '1', got '%s'", slicePages["1"].ID)
+		}
+
+		if slicePages["1"].URL != "http://example.com" {
+			t.Fatalf("Expected page URL to be 'http://example.com', got '%s'", slicePages["1"].URL)
+		}
+
+		if slicePages["1"].Hash != "1" {
+			t.Fatalf("Expected page Hash to be '1', got '%s'", slicePages["1"].Hash)
+		}
+
+		if len(slicePages["1"].Phrases) != 1 {
+			t.Fatalf("Expected 1 phrase, got %d", len(slicePages["1"].Phrases))
+		}
+
+		if slicePages["1"].Phrases[0][0] != "test" {
+			t.Fatalf("Expected phrase to be 'test', got %s", slicePages["1"].Phrases[0][0])
 		}
 	})
 }

@@ -283,7 +283,7 @@ func TestSyncPeerList(t *testing.T) {
 	t.Run("can handle error", func(t *testing.T) {
 		defer gock.Off()
 
-		api := api.NewClient("http://localhost:8080", testutil.NewTestLogger())
+		api := api.NewClient("http://localhost:9202", testutil.NewTestLogger())
 
 		service := service.NewService(api, nil, &domain.Peer{
 			ID:       "host",

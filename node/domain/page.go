@@ -13,7 +13,6 @@ type Page struct {
 	URL         string     `json:"url"`
 	Title       string     `json:"title"`
 	Description string     `json:"description"`
-	Keywords    []string   `json:"keywords"`
 	Phrases     [][]string `json:"phrases"`
 	Language    string     `json:"language"`
 }

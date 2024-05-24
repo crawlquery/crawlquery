@@ -43,7 +43,7 @@ func TestCrawl(t *testing.T) {
 
 		defer gock.Off()
 
-		expectedData := "<html><head><title>Example</title></head><body><h1>Hello, World!</h1></body></html>"
+		expectedData := "<html><head><title>Example</title></head><body><h1>Hello, World!</h1><p>Website description</p></body></html>"
 
 		expectedPageHash := util.Sha256Hex32([]byte(expectedData))
 

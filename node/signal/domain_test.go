@@ -20,7 +20,7 @@ func TestDomainSignalDomainMatch(t *testing.T) {
 				name:  "single term match",
 				url:   tldURL,
 				terms: []string{"example"},
-				want:  domain.SignalLevelVeryHigh,
+				want:  domain.SignalLevelMax * 2,
 			},
 			{
 				name:  "multiple term match",
@@ -57,7 +57,7 @@ func TestDomainSignalHostnameMatch(t *testing.T) {
 				name:  "single term match",
 				url:   tldURL,
 				terms: []string{"example.com"},
-				want:  domain.SignalLevelMax,
+				want:  domain.SignalLevelMax * 2,
 			},
 			{
 				name:  "multiple term match",
@@ -95,7 +95,7 @@ func TestDomainSignalLevel(t *testing.T) {
 					URL: "http://example.com",
 				},
 				terms: []string{"example.com"},
-				want:  domain.SignalLevelMax,
+				want:  domain.SignalLevelMax * 2,
 			},
 			{
 				name: "multiple term match",

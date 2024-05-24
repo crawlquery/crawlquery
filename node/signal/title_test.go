@@ -58,7 +58,7 @@ func TestTitleFullMatch(t *testing.T) {
 				name:   "exact match",
 				title:  "Gmail",
 				terms:  []string{"gmail"},
-				result: domain.SignalLevelMax,
+				result: domain.SignalLevelHigh,
 			},
 			{
 				name:   "not an exact match",

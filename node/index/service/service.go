@@ -5,6 +5,7 @@ import (
 	"crawlquery/node/domain"
 	"crawlquery/node/parse"
 	"crawlquery/node/signal"
+	"crawlquery/pkg/util"
 	"sort"
 	"strings"
 
@@ -46,6 +47,8 @@ func (s *Service) Index(pageID string) error {
 		s.logger.Errorw("Error getting html", "error", err, "pageID", pageID)
 		return err
 	}
+
+	page.Hash = util.Sha256Hex32(html)
 
 	doc, err := goquery.NewDocumentFromReader(bytes.NewReader(html))
 

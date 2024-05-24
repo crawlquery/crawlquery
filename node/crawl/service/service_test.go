@@ -37,7 +37,7 @@ func TestCrawl(t *testing.T) {
 
 		defer gock.Off()
 
-		expectedData := "<html><head><title>Example</title></head><body><h1>Hello, World!</h1></body></html>"
+		expectedData := "<html><head><title>Example</title></head><body><h1>Hello, World!</h1><p>Welcome to my example website.</p></body></html>"
 
 		gock.New("http://example.com").
 			Get("/").
@@ -103,7 +103,7 @@ func TestCrawl(t *testing.T) {
 
 		defer gock.Off()
 
-		expectedData := `<html><head><title>Example</title></head><body><h1>Hello, World! <a href="http://example.com/about">About us</a></h1></body></html>`
+		expectedData := `<html><head><title>Example</title></head><body><h1>Hello, World! <a href="http://example.com/about">About us</a></h1><p>Welcome to my website.</p></body></html>`
 
 		gock.New("http://example.com").
 			Get("/").

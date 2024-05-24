@@ -1,8 +1,10 @@
 package handler_test
 
 import (
+	"crawlquery/node/domain"
 	pageRepo "crawlquery/node/page/repository/mem"
 	pageService "crawlquery/node/page/service"
+	"encoding/json"
 
 	dumpHandler "crawlquery/node/dump/handler"
 	dumpService "crawlquery/node/dump/service"
@@ -38,9 +40,29 @@ func TestPageDump(t *testing.T) {
 		if w.Code != http.StatusOK {
 			t.Fatalf("Expected status code 200, got %d", w.Code)
 		}
-		expected := `{"1":{"id":"1","hash":"hash1","url":"http://example.com","title":"","meta_description":"","keywords":null}}`
-		if w.Body.String() != expected {
-			t.Fatalf("Expected body to be '%s', got '%s'", expected, w.Body.String())
+
+		var slicePages map[string]*domain.Page
+
+		err = json.Unmarshal(w.Body.Bytes(), &slicePages)
+
+		if err != nil {
+			t.Fatalf("Error unmarshalling page dump: %v", err)
+		}
+
+		if len(slicePages) != 1 {
+			t.Fatalf("Expected 1 page, got %d", len(slicePages))
+		}
+
+		if slicePages["1"].ID != "1" {
+			t.Fatalf("Expected page ID to be '1', got '%s'", slicePages["1"].ID)
+		}
+
+		if slicePages["1"].URL != "http://example.com" {
+			t.Fatalf("Expected page URL to be 'http://example.com', got '%s'", slicePages["1"].URL)
+		}
+
+		if slicePages["1"].Hash != "hash1" {
+			t.Fatalf("Expected page Hash to be 'hash1', got '%s'", slicePages["1"].Hash)
 		}
 	})
 }
