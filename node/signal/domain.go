@@ -18,7 +18,7 @@ func (ds *Domain) domainMatch(url *tld.URL, term []string) domain.SignalLevel {
 	if len(term) == 1 {
 		if term[0] == url.Domain {
 			if url.Subdomain == "" && url.Path == "" {
-				return domain.SignalLevelMax * 1000
+				return domain.SignalLevelMax * 2
 			}
 		}
 	}
@@ -37,7 +37,7 @@ func (ds *Domain) hostnameMatch(url *tld.URL, term []string) domain.SignalLevel 
 	if len(term) == 1 {
 		if term[0] == url.Hostname() {
 			if url.Subdomain == "" && url.Path == "" {
-				return domain.SignalLevelMax * 1000
+				return domain.SignalLevelMax * 2
 			}
 		}
 	}

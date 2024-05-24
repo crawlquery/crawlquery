@@ -2,6 +2,7 @@ package parse
 
 import (
 	"crawlquery/node/domain"
+	"errors"
 
 	"github.com/PuerkitoBio/goquery"
 )
@@ -16,20 +17,20 @@ func NewDescriptionParser(doc *goquery.Document) *DescriptionParser {
 	}
 }
 
-func (dp *DescriptionParser) Parse(page *domain.Page) {
+func (dp *DescriptionParser) Parse(page *domain.Page) error {
 
 	ogDescription := dp.doc.Find("meta[property='og:description']").AttrOr("content", "")
 
 	if ogDescription != "" {
 		page.Description = ogDescription
-		return
+		return nil
 	}
 
 	metaDescription := dp.doc.Find("meta[name='description']").AttrOr("content", "")
 
 	if metaDescription != "" {
 		page.Description = metaDescription
-		return
+		return nil
 	}
 
 	// first paragraph
@@ -37,8 +38,8 @@ func (dp *DescriptionParser) Parse(page *domain.Page) {
 
 	if firstParagraph != "" {
 		page.Description = firstParagraph
-		return
+		return nil
 	}
 
-	page.Description = "We couldn't find a description for this page."
+	return errors.New("no description found")
 }

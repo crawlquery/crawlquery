@@ -57,6 +57,7 @@ func (s *Service) Index(pageID string) error {
 	parsers := []domain.Parser{
 		parse.NewLanguageParser(doc),
 		parse.NewTitleParser(doc),
+		parse.NewDescriptionParser(doc),
 		parse.NewPhraseParser(doc),
 	}
 
@@ -131,7 +132,7 @@ func (s *Service) Search(query string) ([]domain.Result, error) {
 	signals := []domain.Signal{
 		&signal.Domain{},
 		&signal.Title{},
-		&signal.Keyword{},
+		&signal.Phrase{},
 	}
 
 	for _, page := range pages {

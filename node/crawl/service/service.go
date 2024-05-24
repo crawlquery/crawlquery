@@ -79,10 +79,10 @@ func (cs *CrawlService) Crawl(pageID, url string) (string, error) {
 	})
 
 	c.OnHTML("a[href]", func(e *colly.HTMLElement) {
-		link := e.Attr("href")
-		if err := cs.api.CreateLink(url, link); err != nil {
-			cs.logger.Errorw("Error creating link", "error", err, "link", link)
-		}
+		// link := e.Attr("href")
+		// if err := cs.api.CreateLink(url, link); err != nil {
+		// 	cs.logger.Errorw("Error creating link", "error", err, "link", link)
+		// }
 	})
 
 	c.OnError(func(r *colly.Response, e error) {

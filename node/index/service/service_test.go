@@ -34,6 +34,7 @@ func TestIndex(t *testing.T) {
 		<html>
 			<head>
 				<title>Test Page</title>
+				<meta name="og:description" content="This is a test page">
 			</head>
 
 			<body>
@@ -75,6 +76,10 @@ func TestIndex(t *testing.T) {
 
 	if page.Title != "Test Page" {
 		t.Fatalf("Expected title to be Test Page, got %s", page.Title)
+	}
+
+	if page.Description != "This is a test page" {
+		t.Fatalf("Expected meta description to be This is a test page, got %s", page.Description)
 	}
 
 	if len(page.Phrases) == 0 {
