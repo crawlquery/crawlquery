@@ -28,7 +28,7 @@ func TestIndex(t *testing.T) {
 	})
 
 	htmlRepo := htmlRepo.NewRepository()
-	htmlService := htmlService.NewService(htmlRepo)
+	htmlService := htmlService.NewService(htmlRepo, nil)
 
 	htmlRepo.Save("page1", []byte(`
 		<html>
@@ -98,7 +98,7 @@ func TestReIndex(t *testing.T) {
 		})
 
 		htmlRepo := htmlRepo.NewRepository()
-		htmlService := htmlService.NewService(htmlRepo)
+		htmlService := htmlService.NewService(htmlRepo, nil)
 
 		htmlRepo.Save("page1", []byte(`
 		<html>
@@ -166,7 +166,7 @@ func TestGetIndex(t *testing.T) {
 		})
 
 		htmlRepo := htmlRepo.NewRepository()
-		htmlService := htmlService.NewService(htmlRepo)
+		htmlService := htmlService.NewService(htmlRepo, nil)
 
 		html := []byte(`
 		<html>
@@ -235,7 +235,7 @@ func TestSearch(t *testing.T) {
 		})
 
 		htmlRepo := htmlRepo.NewRepository()
-		htmlService := htmlService.NewService(htmlRepo)
+		htmlService := htmlService.NewService(htmlRepo, nil)
 
 		html := []byte(`
 		<html>
@@ -311,7 +311,7 @@ func TestSearch(t *testing.T) {
 		})
 
 		htmlRepo := htmlRepo.NewRepository()
-		htmlService := htmlService.NewService(htmlRepo)
+		htmlService := htmlService.NewService(htmlRepo, nil)
 
 		htmlRepo.Save("page1", []byte(`
 		<html>
@@ -364,7 +364,7 @@ func TestSearch(t *testing.T) {
 		})
 
 		htmlRepo := htmlRepo.NewRepository()
-		htmlService := htmlService.NewService(htmlRepo)
+		htmlService := htmlService.NewService(htmlRepo, nil)
 
 		html := []byte(`
 		<html>
@@ -420,7 +420,7 @@ func TestApplyIndexEvent(t *testing.T) {
 		pageService := pageService.NewService(pageRepo)
 
 		htmlRepo := htmlRepo.NewRepository()
-		htmlService := htmlService.NewService(htmlRepo)
+		htmlService := htmlService.NewService(htmlRepo, nil)
 
 		peerService := peerService.NewService(nil, pageService, nil, testutil.NewTestLogger())
 
@@ -491,7 +491,7 @@ func TestHash(t *testing.T) {
 	})
 
 	htmlRepo := htmlRepo.NewRepository()
-	htmlService := htmlService.NewService(htmlRepo)
+	htmlService := htmlService.NewService(htmlRepo, nil)
 
 	htmlRepo.Save("page1", []byte(`
 		<html>

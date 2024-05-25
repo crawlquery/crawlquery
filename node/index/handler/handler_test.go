@@ -32,7 +32,7 @@ func TestSearch(t *testing.T) {
 		pageService := pageService.NewService(pageRepo)
 
 		htmlRepo := htmlRepo.NewRepository()
-		htmlService := htmlService.NewService(htmlRepo)
+		htmlService := htmlService.NewService(htmlRepo, nil)
 
 		peerService := peerService.NewService(nil, pageService, nil, testutil.NewTestLogger())
 
@@ -51,7 +51,7 @@ func TestSearch(t *testing.T) {
 				t.Fatalf("error saving page: %v", err)
 			}
 
-			err = htmlService.Save(page.ID, []byte(dummy.HTML))
+			err = htmlRepo.Save(page.ID, []byte(dummy.HTML))
 
 			if err != nil {
 				t.Fatalf("error saving html: %v", err)
@@ -89,7 +89,7 @@ func TestSearch(t *testing.T) {
 		pageService := pageService.NewService(pageRepo)
 
 		htmlRepo := htmlRepo.NewRepository()
-		htmlService := htmlService.NewService(htmlRepo)
+		htmlService := htmlService.NewService(htmlRepo, nil)
 
 		peerService := peerService.NewService(nil, pageService, nil, testutil.NewTestLogger())
 
@@ -121,7 +121,7 @@ func TestReIndex(t *testing.T) {
 		pageService := pageService.NewService(pageRepo)
 
 		htmlRepo := htmlRepo.NewRepository()
-		htmlService := htmlService.NewService(htmlRepo)
+		htmlService := htmlService.NewService(htmlRepo, nil)
 
 		peerService := peerService.NewService(nil, pageService, nil, testutil.NewTestLogger())
 
@@ -140,7 +140,7 @@ func TestReIndex(t *testing.T) {
 				t.Fatalf("error saving page: %v", err)
 			}
 
-			err = htmlService.Save(page.ID, []byte(dummy.HTML))
+			err = htmlRepo.Save(page.ID, []byte(dummy.HTML))
 
 			if err != nil {
 				t.Fatalf("error saving html: %v", err)
@@ -189,7 +189,7 @@ func TestGetIndex(t *testing.T) {
 		pageService := pageService.NewService(pageRepo)
 
 		htmlRepo := htmlRepo.NewRepository()
-		htmlService := htmlService.NewService(htmlRepo)
+		htmlService := htmlService.NewService(htmlRepo, nil)
 
 		peerService := peerService.NewService(nil, pageService, nil, testutil.NewTestLogger())
 
@@ -208,7 +208,7 @@ func TestGetIndex(t *testing.T) {
 				t.Fatalf("error saving page: %v", err)
 			}
 
-			err = htmlService.Save(page.ID, []byte(dummy.HTML))
+			err = htmlRepo.Save(page.ID, []byte(dummy.HTML))
 
 			if err != nil {
 				t.Fatalf("error saving html: %v", err)
@@ -261,7 +261,7 @@ func TestEvent(t *testing.T) {
 		pageService := pageService.NewService(pageRepo)
 
 		htmlRepo := htmlRepo.NewRepository()
-		htmlService := htmlService.NewService(htmlRepo)
+		htmlService := htmlService.NewService(htmlRepo, nil)
 
 		peerService := peerService.NewService(nil, pageService, nil, testutil.NewTestLogger())
 

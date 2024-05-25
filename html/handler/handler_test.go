@@ -191,7 +191,7 @@ func TestStorePage(t *testing.T) {
 
 		handler.StorePage(ctx)
 
-		if w.Code != 200 {
+		if w.Code != 201 {
 			t.Fatalf("Test failed: Expected status 200, got %v", w.Code)
 		}
 

@@ -13,3 +13,8 @@ type HTMLRepository interface {
 	Get(pageID string) ([]byte, error)
 	Save(pageID string, html []byte) error
 }
+
+type HTMLBackupService interface {
+	Get(pageID string) ([]byte, error)
+	Save(pageID string, html []byte) error
+}

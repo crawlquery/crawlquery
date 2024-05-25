@@ -55,7 +55,7 @@ func (h Handler) StorePage(c *gin.Context) {
 		return
 	}
 
-	c.JSON(200, dto.StorePageResponse{
+	c.JSON(201, dto.StorePageResponse{
 		Success: true,
 	})
 }
