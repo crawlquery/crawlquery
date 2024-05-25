@@ -112,6 +112,7 @@ func main() {
 	linkHandler := linkHandler.NewHandler(linkService, sugar)
 
 	go crawlJobService.ProcessCrawlJobs()
+	go indexJobService.ProcessIndexJobs()
 
 	r := router.NewRouter(
 		accountService,
