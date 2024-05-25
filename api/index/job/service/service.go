@@ -140,5 +140,16 @@ func (s *Service) ProcessIndexJobs() {
 				s.logger.Errorw("Error updating index job", "error", err)
 			}
 		}
+
+		job.LastIndexedAt = sql.NullTime{
+			Time:  time.Now(),
+			Valid: true,
+		}
+
+		if err := s.Update(job); err != nil {
+			s.logger.Errorw("Error updating index job", "error", err)
+		}
+
+		s.logger.Infow("Index job processed", "job", job)
 	}
 }
