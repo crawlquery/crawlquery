@@ -3,6 +3,7 @@ package parse
 import (
 	"crawlquery/node/domain"
 	"errors"
+	"strings"
 
 	"github.com/PuerkitoBio/goquery"
 )
@@ -35,6 +36,11 @@ func (dp *DescriptionParser) Parse(page *domain.Page) error {
 
 	// first paragraph
 	firstParagraph := dp.doc.Find("p").First().Text()
+
+	// check string isn't just whitespace
+	if strings.TrimSpace(firstParagraph) == "" {
+		return errors.New("no description found")
+	}
 
 	if firstParagraph != "" {
 		page.Description = firstParagraph

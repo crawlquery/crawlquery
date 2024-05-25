@@ -90,6 +90,75 @@ func TestSearch(t *testing.T) {
 		}
 	})
 
+	t.Run("cleans term", func(t *testing.T) {
+		nodeRepo := nodeRepo.NewRepository()
+
+		nodeRepo.Create(&domain.Node{
+			ID:        "node1",
+			ShardID:   0,
+			Hostname:  "node1.cluster.com",
+			Port:      8080,
+			CreatedAt: time.Now(),
+		})
+
+		nodeRepo.Create(&domain.Node{
+			ID:        "node2",
+			ShardID:   1,
+			Hostname:  "node2.cluster.com",
+			Port:      8080,
+			CreatedAt: time.Now(),
+		})
+
+		defer gock.Off()
+
+		gock.New("http://node1.cluster.com:8080").
+			Get("/search").
+			MatchParam("q", "term hello").
+			Reply(200).
+			JSON(dto.NodeSearchResponse{
+				Results: []nodeDomain.Result{
+					{
+						PageID: "page1",
+						Score:  0.5,
+						Page: &nodeDomain.ResultPage{
+							ID:    "page1",
+							URL:   "http://google.com",
+							Title: "Google",
+						},
+					},
+				},
+			})
+
+		gock.New("http://node2.cluster.com:8080").
+			Get("/search").
+			MatchParam("q", "term hello").
+			Reply(200).
+			JSON(dto.NodeSearchResponse{
+				Results: []nodeDomain.Result{
+					{
+						PageID: "page1",
+						Score:  0.5,
+						Page: &nodeDomain.ResultPage{
+							ID:    "page1",
+							URL:   "http://google.com",
+							Title: "Google",
+						},
+					},
+				},
+			})
+
+		nodeService := nodeService.NewService(nodeRepo, nil, nil, testutil.NewTestLogger())
+		searchService := service.NewService(nodeService, testutil.NewTestLogger())
+
+		results, err := searchService.Search("   term      hello   ")
+		if err != nil {
+			t.Fatalf("Error searching: %v", err)
+		}
+
+		if len(results) != 1 {
+			t.Errorf("Expected 1 result, got %v", len(results))
+		}
+	})
 	t.Run("removes duplicate results", func(t *testing.T) {
 		nodeRepo := nodeRepo.NewRepository()
 

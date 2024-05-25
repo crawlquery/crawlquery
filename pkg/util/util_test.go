@@ -5,6 +5,44 @@ import (
 	"testing"
 )
 
+func TestValidatePageID(t *testing.T) {
+
+	invalidPageIDs := []string{
+		"page1$",
+		"/page1",
+		"page1/",
+		"(page1)",
+		"page1?do2omndomdodod",
+		"page1#",
+		"page1&",
+		"page1=",
+		"page1%",
+		"page1+",
+		"page1-",
+		"p@age1_",
+		// 32 characters
+		"page1page1page1page1page!page1pa",
+	}
+
+	for _, invalidPageID := range invalidPageIDs {
+
+		if util.ValidatePageID(invalidPageID) {
+			t.Fatalf("Test failed: Invalid page ID was accepted.")
+		}
+	}
+
+	validPageIDs := []string{
+		"jdjdjdjdjdjdjdjdjdjdjdjdjdjdjdj",
+		"3djdjdjdjd2djdjdjdjdjdjdjdjdjdj",
+	}
+
+	for _, validPageID := range validPageIDs {
+		if !util.ValidatePageID(validPageID) {
+			t.Fatalf("Test failed: Valid page ID was rejected.")
+		}
+	}
+}
+
 // TestPageID is a simple test function for PageID.
 func TestPageID(t *testing.T) {
 	url1 := "https://example.com"

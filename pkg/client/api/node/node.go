@@ -40,6 +40,25 @@ func (c *Client) Crawl(pageID, url string) (string, error) {
 		return "", err
 	}
 
+	if res.StatusCode == http.StatusBadRequest {
+
+		var errRes dto.ErrorResponse
+
+		err = json.NewDecoder(res.Body).Decode(&errRes)
+
+		if err != nil {
+			return "", fmt.Errorf("unexpected status code: %d", res.StatusCode)
+		}
+
+		defer res.Body.Close()
+
+		return "", fmt.Errorf("unexpected status code: %d (%s)", res.StatusCode, errRes.Error)
+	}
+
+	if res.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("unexpected status code: %d", res.StatusCode)
+	}
+
 	var crawlRes dto.CrawlResponse
 	err = json.NewDecoder(res.Body).Decode(&crawlRes)
 
@@ -49,8 +68,5 @@ func (c *Client) Crawl(pageID, url string) (string, error) {
 
 	defer res.Body.Close()
 
-	if res.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("unexpected status code: %d", res.StatusCode)
-	}
 	return crawlRes.PageHash, nil
 }

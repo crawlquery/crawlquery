@@ -4,6 +4,7 @@ import (
 	"crawlquery/node/domain"
 	"crawlquery/pkg/client/api"
 	"crawlquery/pkg/util"
+	"fmt"
 
 	"github.com/gocolly/colly/v2"
 	"go.uber.org/zap"
@@ -72,7 +73,7 @@ func (cs *CrawlService) Crawl(pageID, url string) (string, error) {
 
 		if err := cs.indexService.Index(pageID); err != nil {
 			cs.logger.Errorw("Error indexing page", "error", err, "pageID", pageID)
-			failedErr = domain.ErrCrawlFailedToIndexPage
+			failedErr = fmt.Errorf("failed to index page: %w", err)
 		}
 
 		cs.logger.Infow("Page indexed", "pageID", page.ID)

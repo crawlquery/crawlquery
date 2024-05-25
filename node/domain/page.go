@@ -2,6 +2,7 @@ package domain
 
 import (
 	"errors"
+	"time"
 )
 
 var ErrPageNotFound = errors.New("page not found")
@@ -15,6 +16,7 @@ type Page struct {
 	Description string     `json:"description"`
 	Phrases     [][]string `json:"phrases"`
 	Language    string     `json:"language"`
+	LastIndexed *time.Time `json:"last_indexed"`
 }
 
 type PageRepository interface {

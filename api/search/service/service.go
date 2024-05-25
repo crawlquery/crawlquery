@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"sort"
+	"strings"
 	"sync"
 	"time"
 
@@ -31,6 +32,12 @@ func NewService(nodeService domain.NodeService, logger *zap.SugaredLogger) *Serv
 
 // Search searches for the term and waits for the fastest node in each shard.
 func (s *Service) Search(term string) ([]nodeDomain.Result, error) {
+
+	// trim space either side of the term
+	term = strings.TrimSpace(term)
+	// remove duplicate spaces
+	term = strings.Join(strings.Fields(term), " ")
+
 	shardNodes, err := s.nodeService.ListGroupByShard()
 	if err != nil {
 		return nil, err

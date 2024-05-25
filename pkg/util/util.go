@@ -3,9 +3,17 @@ package util
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"regexp"
 
 	"github.com/google/uuid"
 )
+
+func ValidatePageID(pageID string) bool {
+	// regex for only alphanumeric characters
+	check := regexp.MustCompile(`^[a-zA-Z0-9]*$`)
+
+	return check.MatchString(pageID)
+}
 
 func UUID() string {
 	return uuid.New().String()
