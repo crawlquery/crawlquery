@@ -39,7 +39,7 @@ func TestIndex(t *testing.T) {
 
 			<body>
 				<h1>Test Page</h1>
-				<p>This is a test page</p>
+				<p>This is a test page, with some good english words.</p>
 			</body>
 		</html>
 	`))
@@ -78,7 +78,7 @@ func TestIndex(t *testing.T) {
 		t.Fatalf("Expected title to be Test Page, got %s", page.Title)
 	}
 
-	if page.Description != "This is a test page" {
+	if page.Description != "This is a test page, with some good english words." {
 		t.Fatalf("Expected meta description to be This is a test page, got %s", page.Description)
 	}
 
@@ -112,7 +112,7 @@ func TestGetIndex(t *testing.T) {
 
 			<body>
 				<h1>Test Page</h1>
-				<p>This is a test page</p>
+				<p>This is a test page, with some good english words.</p>
 			</body>
 		</html>
 	`)
@@ -182,7 +182,7 @@ func TestSearch(t *testing.T) {
 
 			<body>
 				<h1>Test Page</h1>
-				<p>This is a test page</p>
+				<p>This is a test page, with some good english words.</p>
 			</body>
 		</html>
 	`)
@@ -258,7 +258,7 @@ func TestSearch(t *testing.T) {
 
 			<body>
 				<h1>Test Page</h1>
-				<p>This is a test page</p>
+				<p>This is a test page, with some good english words.</p>
 			</body>
 		</html>
 	`))
@@ -311,7 +311,7 @@ func TestSearch(t *testing.T) {
 
 			<body>
 				<h1>Test Page</h1>
-				<p>This is a test page</p>
+				<p>This is a test page, with some good english words.</p>
 			</body>
 		</html>
 	`)
@@ -437,7 +437,7 @@ func TestHash(t *testing.T) {
 
 			<body>
 				<h1>Test Page</h1>
-				<p>This is a test page</p>
+				<p>This is a test page, with some good english words.</p>
 			</body>
 		</html>
 	`))

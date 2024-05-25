@@ -40,7 +40,7 @@ func (r *Repository) Update(j *domain.CrawlJob) error {
 func (r *Repository) Get(id string) (*domain.CrawlJob, error) {
 	job, ok := r.jobs[id]
 	if !ok {
-		return nil, nil
+		return nil, domain.ErrCrawlJobNotFound
 	}
 
 	return job, nil
@@ -53,7 +53,7 @@ func (r *Repository) GetByPageID(pageID string) (*domain.CrawlJob, error) {
 		}
 	}
 
-	return nil, nil
+	return nil, domain.ErrCrawlJobNotFound
 }
 
 func (r *Repository) First() (*domain.CrawlJob, error) {

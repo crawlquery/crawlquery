@@ -162,7 +162,8 @@ func TestProcessIndexJobs(t *testing.T) {
 
 		gock.New("http://node1.cluster.com:8080").
 			Post("/pages/page1/index").
-			Reply(200)
+			Reply(200).
+			JSON(`{"success": true,"message": "Page indexed"}`)
 
 		nodeRepo := nodeRepo.NewRepository()
 		nodeService := nodeService.NewService(nodeRepo, nil, nil, testutil.NewTestLogger())
