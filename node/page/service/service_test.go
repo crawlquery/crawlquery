@@ -53,7 +53,7 @@ func TestCreate(t *testing.T) {
 	t.Run("broadasts event to peers", func(t *testing.T) {
 		pageRepo := pageRepo.NewRepository()
 
-		peerService := peerService.NewService(nil, nil, nil, testutil.NewTestLogger())
+		peerService := peerService.NewService(nil, nil, testutil.NewTestLogger())
 
 		peerService.AddPeer(&domain.Peer{
 			ID:       "peer1",
@@ -182,7 +182,7 @@ func TestUpdate(t *testing.T) {
 	t.Run("broadasts event to peers", func(t *testing.T) {
 		pageRepo := pageRepo.NewRepository()
 
-		peerService := peerService.NewService(nil, nil, nil, testutil.NewTestLogger())
+		peerService := peerService.NewService(nil, nil, testutil.NewTestLogger())
 
 		peerService.AddPeer(&domain.Peer{
 			ID:       "peer1",
@@ -333,6 +333,45 @@ func TestHash(t *testing.T) {
 			t.Fatalf("Expected hashes to be different, got %s", hash1)
 		}
 	})
+}
+
+func TestUpdateQuietly(t *testing.T) {
+	pageRepo := pageRepo.NewRepository()
+	service := service.NewService(pageRepo, nil)
+
+	_, err := service.Create("1", "http://example.com", "hash1")
+
+	if err != nil {
+		t.Fatalf("Error saving page: %v", err)
+	}
+
+	page, err := service.Get("1")
+
+	if err != nil {
+		t.Fatalf("Error getting page: %v", err)
+	}
+
+	page.URL = "http://example2.com"
+
+	err = service.UpdateQuietly(page)
+
+	if err != nil {
+		t.Fatalf("Error updating page: %v", err)
+	}
+
+	check, err := service.Get("1")
+
+	if err != nil {
+		t.Fatalf("Error getting page: %v", err)
+	}
+
+	if check.ID != "1" {
+		t.Fatalf("Expected page ID to be '1', got '%s'", check.ID)
+	}
+
+	if check.URL != "http://example2.com" {
+		t.Fatalf("Expected page URL to be 'http://example2.com', got '%s'", check.URL)
+	}
 }
 
 func TestJSON(t *testing.T) {

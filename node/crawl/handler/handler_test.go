@@ -44,7 +44,7 @@ func TestCrawl(t *testing.T) {
 		pageRepo := pageRepo.NewRepository()
 		pageService := pageService.NewService(pageRepo, nil)
 
-		peerService := peerService.NewService(nil, pageService, nil, testutil.NewTestLogger())
+		peerService := peerService.NewService(nil, nil, testutil.NewTestLogger())
 
 		indexService := indexService.NewService(pageService, htmlService, peerService, testutil.NewTestLogger())
 

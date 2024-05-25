@@ -68,11 +68,79 @@ func TestPhraseParser(t *testing.T) {
 				for _, c := range tc.contains {
 					found := false
 					for _, p := range page.Phrases {
-						if len(p) != 2 {
+						if len(p) != len(c) {
 							continue
 						}
-						if p[0] == c[0] && p[1] == c[1] {
-							found = true
+						for i, w := range c {
+							if p[i] != w {
+								break
+							}
+							if i == len(c)-1 {
+								found = true
+							}
+						}
+					}
+
+					if !found {
+						t.Errorf("Expected to find %v in %v", c, page.Phrases)
+					}
+				}
+			})
+		}
+	})
+
+	t.Run("parses phrases from the heading", func(t *testing.T) {
+		cases := []struct {
+			html     []byte
+			contains [][]string
+		}{
+			{
+				html: testdataloader.GetTestFile("testdata/pages/stackoverflow/best-way-to-detect-bot-from-user-agent.html"),
+				contains: [][]string{
+					{"Best"},
+					{"way"},
+					{"detect"},
+					{"bot"},
+					{"from"},
+					{"Best", "way", "to", "detect", "bot", "from", "user", "agent"},
+					{"user", "agent"},
+				},
+			},
+		}
+
+		for _, tc := range cases {
+			t.Run("parses phrases from the page", func(t *testing.T) {
+				doc, err := goquery.NewDocumentFromReader(bytes.NewReader(tc.html))
+				if err != nil {
+					t.Fatalf("Error loading document: %v", err)
+				}
+
+				pp := parse.NewPhraseParser(doc)
+
+				page := &domain.Page{
+					URL:      "http://example.com",
+					Language: lingua.English.String(),
+				}
+
+				err = pp.Parse(page)
+
+				if err != nil {
+					t.Fatalf("Error parsing phrases: %v", err)
+				}
+
+				for _, c := range tc.contains {
+					found := false
+					for _, p := range page.Phrases {
+						if len(p) != len(c) {
+							continue
+						}
+						for i, w := range c {
+							if p[i] != w {
+								break
+							}
+							if i == len(c)-1 {
+								found = true
+							}
 						}
 					}
 

@@ -77,6 +77,14 @@ func TestParseNounPhrases(t *testing.T) {
 				sentence: "The bright red car flew over the magical rainbow.",
 				want:     [][]string{{"bright", "red", "car"}, {"red", "car"}, {"magical", "rainbow"}},
 			},
+			{
+				name:     "Adjective noun phrase",
+				sentence: "Best way to detect bot from user agent?",
+				want: [][]string{
+					{"Best", "way", "to", "detect", "bot", "from", "user", "agent"},
+					{"user", "agent"},
+				},
+			},
 		}
 
 		for _, tc := range cases {

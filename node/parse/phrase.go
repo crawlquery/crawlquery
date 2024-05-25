@@ -4,9 +4,9 @@ import (
 	"crawlquery/node/domain"
 	"crawlquery/node/phrase"
 	"errors"
+	"strings"
 
 	"github.com/PuerkitoBio/goquery"
-	"github.com/neurosnap/sentences/english"
 	"github.com/pemistahl/lingua-go"
 )
 
@@ -20,14 +20,25 @@ func NewPhraseParser(doc *goquery.Document) *PhraseParser {
 	}
 }
 
-func (pp *PhraseParser) HeadingPhrases() []string {
-	var phrases []string
-
-	pp.doc.Find("h1 h2 h3").Each(func(i int, s *goquery.Selection) {
-		phrases = append(phrases, s.Text())
+func (pp *PhraseParser) HeadingPhrases() ([][]string, error) {
+	var headings []string
+	pp.doc.Find("h1, h2, h3, h4, h5, h6").Each(func(i int, s *goquery.Selection) {
+		headings = append(headings, s.Text())
 	})
 
-	return phrases
+	var parsedPhrases [][]string
+
+	for _, h := range headings {
+		clean := strings.Join(strings.Fields(h), " ")
+
+		parsed, err := phrase.ParseText(clean)
+		if err != nil {
+			return nil, err
+		}
+		parsedPhrases = append(parsedPhrases, parsed...)
+	}
+
+	return parsedPhrases, nil
 }
 
 func (pp *PhraseParser) ParseParagraph() ([][]string, error) {
@@ -39,22 +50,14 @@ func (pp *PhraseParser) ParseParagraph() ([][]string, error) {
 
 	var phrases [][]string
 
-	tokenizer, err := english.NewSentenceTokenizer(nil)
-	if err != nil {
-		return nil, err
-	}
-
 	for _, p := range paragraphs {
-		sentences := tokenizer.Tokenize(p)
-		for _, s := range sentences {
-			parsedPhrases, err := phrase.ParseSentence(s.Text)
-
-			if err != nil {
-				return nil, err
-			}
-
-			phrases = append(phrases, parsedPhrases...)
+		clean := strings.Join(strings.Fields(p), " ")
+		parsedPhrases, err := phrase.ParseText(clean)
+		if err != nil {
+			return nil, err
 		}
+
+		phrases = append(phrases, parsedPhrases...)
 	}
 
 	return phrases, nil
@@ -66,14 +69,18 @@ func (kp *PhraseParser) Parse(page *domain.Page) error {
 		return errors.New("only english pages are supported")
 	}
 
-	var phrases [][]string
-
 	paragraphPhrases, err := kp.ParseParagraph()
 	if err != nil {
 		return err
 	}
 
-	page.Phrases = append(phrases, paragraphPhrases...)
+	headingPhrases, err := kp.HeadingPhrases()
+	if err != nil {
+		return err
+	}
+
+	page.Phrases = append(page.Phrases, paragraphPhrases...)
+	page.Phrases = append(page.Phrases, headingPhrases...)
 
 	return nil
 }

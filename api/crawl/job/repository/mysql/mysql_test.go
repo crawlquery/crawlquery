@@ -270,6 +270,72 @@ func TestGet(t *testing.T) {
 	})
 }
 
+func TestGetByPageID(t *testing.T) {
+	t.Run("can get a job by page ID", func(t *testing.T) {
+		// Arrange
+		db := testutil.CreateTestMysqlDB()
+		defer db.Close()
+		migration.Up(db)
+
+		repo := mysql.NewRepository(db)
+
+		job := &domain.CrawlJob{
+			ID:        util.UUID(),
+			URL:       "http://example.com",
+			PageID:    "hash",
+			CreatedAt: time.Now().UTC(),
+		}
+		_, err := db.Exec("INSERT INTO crawl_jobs (id, url, page_id, created_at) VALUES (?, ?, ?, ?)", job.ID, job.URL, job.PageID, job.CreatedAt)
+
+		if err != nil {
+			t.Fatalf("Error inserting job: %v", err)
+		}
+
+		defer db.Exec("DELETE FROM crawl_jobs WHERE id = ?", job.ID)
+
+		// Act
+		res, err := repo.GetByPageID(job.PageID)
+
+		// Assert
+		if err != nil {
+			t.Errorf("Error getting job by page ID: %v", err)
+		}
+
+		if res.ID != job.ID {
+			t.Errorf("Expected ID to be %s, got %s", job.ID, res.ID)
+		}
+
+		if res.URL != job.URL {
+			t.Errorf("Expected URL to be %s, got %s", job.URL, res.URL)
+		}
+
+		if res.CreatedAt.Sub(job.CreatedAt) > time.Second || job.CreatedAt.Sub(res.CreatedAt) > time.Second {
+			t.Errorf("Expected CreatedAt to be within one second of %v, got %v", job.CreatedAt, res.CreatedAt)
+		}
+	})
+
+	t.Run("returns error if job does not exist", func(t *testing.T) {
+		// Arrange
+		db := testutil.CreateTestMysqlDB()
+		defer db.Close()
+		migration.Up(db)
+
+		repo := mysql.NewRepository(db)
+
+		// Act
+		res, err := repo.GetByPageID("nonexistent")
+
+		// Assert
+		if err != domain.ErrCrawlJobNotFound {
+			t.Errorf("Expected error, got %v", err)
+		}
+
+		if res != nil {
+			t.Errorf("Expected nil, got %v", res)
+		}
+	})
+}
+
 func TestFirst(t *testing.T) {
 	t.Run("can get first job", func(t *testing.T) {
 		// Arrange

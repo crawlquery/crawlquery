@@ -2,6 +2,8 @@ package phrase
 
 var AdjectivePhraseTemplates = PhraseSubCategory{
 	{"RB", "JJ"},
+	{"JJ"},
+	{"JJS"},
 }
 
 func adjectivePhraseSubCategories() PhraseSubCategories {

@@ -17,6 +17,10 @@ var AdjectiveNounTemplates = PhraseSubCategory{
 
 	//quick brown fox
 	{"JJ", "NN", "NN"},
+
+	// Best way to detect bot from user agent
+	{"JJS", "NN", "TO", "VB", "NN", "IN", "NN", "NN"},
+	{"JJS", "NN", "TO", "VB", "NN", "IN", "JJ", "NN"},
 }
 
 func nounPhraseSubCategories() PhraseSubCategories {

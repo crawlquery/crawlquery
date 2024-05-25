@@ -46,6 +46,16 @@ func (r *Repository) Get(id string) (*domain.CrawlJob, error) {
 	return job, nil
 }
 
+func (r *Repository) GetByPageID(pageID string) (*domain.CrawlJob, error) {
+	for _, job := range r.jobs {
+		if job.PageID == pageID {
+			return job, nil
+		}
+	}
+
+	return nil, nil
+}
+
 func (r *Repository) First() (*domain.CrawlJob, error) {
 
 	var earliest *domain.CrawlJob

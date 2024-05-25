@@ -34,7 +34,7 @@ func TestSearch(t *testing.T) {
 		htmlRepo := htmlRepo.NewRepository()
 		htmlService := htmlService.NewService(htmlRepo, nil)
 
-		peerService := peerService.NewService(nil, pageService, nil, testutil.NewTestLogger())
+		peerService := peerService.NewService(nil, nil, testutil.NewTestLogger())
 
 		indexService := indexService.NewService(
 			pageService,
@@ -91,7 +91,7 @@ func TestSearch(t *testing.T) {
 		htmlRepo := htmlRepo.NewRepository()
 		htmlService := htmlService.NewService(htmlRepo, nil)
 
-		peerService := peerService.NewService(nil, pageService, nil, testutil.NewTestLogger())
+		peerService := peerService.NewService(nil, nil, testutil.NewTestLogger())
 
 		indexService := indexService.NewService(
 			pageService,
@@ -123,7 +123,7 @@ func TestIndex(t *testing.T) {
 		htmlRepo := htmlRepo.NewRepository()
 		htmlService := htmlService.NewService(htmlRepo, nil)
 
-		peerService := peerService.NewService(nil, pageService, nil, testutil.NewTestLogger())
+		peerService := peerService.NewService(nil, nil, testutil.NewTestLogger())
 
 		indexService := indexService.NewService(
 			pageService,
@@ -191,7 +191,7 @@ func TestGetIndex(t *testing.T) {
 		htmlRepo := htmlRepo.NewRepository()
 		htmlService := htmlService.NewService(htmlRepo, nil)
 
-		peerService := peerService.NewService(nil, pageService, nil, testutil.NewTestLogger())
+		peerService := peerService.NewService(nil, nil, testutil.NewTestLogger())
 
 		indexService := indexService.NewService(
 			pageService,
@@ -263,7 +263,7 @@ func TestEvent(t *testing.T) {
 		htmlRepo := htmlRepo.NewRepository()
 		htmlService := htmlService.NewService(htmlRepo, nil)
 
-		peerService := peerService.NewService(nil, pageService, nil, testutil.NewTestLogger())
+		peerService := peerService.NewService(nil, nil, testutil.NewTestLogger())
 
 		indexService := indexService.NewService(
 			pageService,

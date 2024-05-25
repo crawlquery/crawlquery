@@ -17,6 +17,7 @@ var ErrDomainLocked = errors.New("domain is locked")
 var ErrDomainNotLocked = errors.New("domain is not locked")
 var ErrCrawlRestrictionNotFound = errors.New("crawl restriction not found")
 var ErrCrawlRestrictionAlreadyExists = errors.New("crawl restriction already exists")
+var ErrCrawlJobAlreadyExists = errors.New("crawl job already exists")
 
 type CrawlJob struct {
 	ID            string         `validate:"required,uuid"`
@@ -35,6 +36,7 @@ func (j *CrawlJob) Validate() error {
 type CrawlJobRepository interface {
 	Create(*CrawlJob) error
 	Get(string) (*CrawlJob, error)
+	GetByPageID(string) (*CrawlJob, error)
 	Update(*CrawlJob) error
 	First() (*CrawlJob, error)
 	FirstProcessable() (*CrawlJob, error)

@@ -3,10 +3,35 @@ package util
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"fmt"
+	"net/url"
 	"regexp"
 
 	"github.com/google/uuid"
 )
+
+func MakeAbsoluteIfRelative(base, link string) (string, error) {
+	// Parse the base URL
+	baseParsed, err := url.Parse(base)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse base URL: %w", err)
+	}
+
+	// Parse the link
+	linkParsed, err := url.Parse(link)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse link: %w", err)
+	}
+
+	// If the link is already absolute, return it as is
+	if linkParsed.IsAbs() {
+		return link, nil
+	}
+
+	// Resolve the relative URL against the base URL
+	resolvedURL := baseParsed.ResolveReference(linkParsed)
+	return resolvedURL.String(), nil
+}
 
 func ValidatePageID(pageID string) bool {
 	// regex for only alphanumeric characters

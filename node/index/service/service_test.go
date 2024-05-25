@@ -44,7 +44,7 @@ func TestIndex(t *testing.T) {
 		</html>
 	`))
 
-	peerService := peerService.NewService(nil, pageService, nil, testutil.NewTestLogger())
+	peerService := peerService.NewService(nil, nil, testutil.NewTestLogger())
 
 	logger := testutil.NewTestLogger()
 
@@ -85,6 +85,10 @@ func TestIndex(t *testing.T) {
 	if len(page.Phrases) == 0 {
 		t.Fatalf("Expected phrases to be found, got none")
 	}
+
+	if page.LastIndexedAt.IsZero() {
+		t.Fatalf("Expected last indexed at to be set, got zero")
+	}
 }
 
 func TestGetIndex(t *testing.T) {
@@ -114,7 +118,7 @@ func TestGetIndex(t *testing.T) {
 	`)
 		htmlRepo.Save("page1", html)
 
-		peerService := peerService.NewService(nil, pageService, nil, testutil.NewTestLogger())
+		peerService := peerService.NewService(nil, nil, testutil.NewTestLogger())
 
 		logger := testutil.NewTestLogger()
 
@@ -184,7 +188,7 @@ func TestSearch(t *testing.T) {
 	`)
 		htmlRepo.Save("page1", html)
 
-		peerService := peerService.NewService(nil, pageService, nil, testutil.NewTestLogger())
+		peerService := peerService.NewService(nil, nil, testutil.NewTestLogger())
 
 		logger := testutil.NewTestLogger()
 
@@ -259,7 +263,7 @@ func TestSearch(t *testing.T) {
 		</html>
 	`))
 
-		peerService := peerService.NewService(nil, pageService, nil, testutil.NewTestLogger())
+		peerService := peerService.NewService(nil, nil, testutil.NewTestLogger())
 
 		logger := testutil.NewTestLogger()
 
@@ -313,7 +317,7 @@ func TestSearch(t *testing.T) {
 	`)
 		htmlRepo.Save("page1", html)
 
-		peerService := peerService.NewService(nil, pageService, nil, testutil.NewTestLogger())
+		peerService := peerService.NewService(nil, nil, testutil.NewTestLogger())
 
 		logger := testutil.NewTestLogger()
 
@@ -354,7 +358,7 @@ func TestApplyPageUpdatedEvent(t *testing.T) {
 		htmlRepo := htmlRepo.NewRepository()
 		htmlService := htmlService.NewService(htmlRepo, nil)
 
-		peerService := peerService.NewService(nil, pageService, nil, testutil.NewTestLogger())
+		peerService := peerService.NewService(nil, nil, testutil.NewTestLogger())
 
 		service := service.NewService(pageService, htmlService, peerService, testutil.NewTestLogger())
 
@@ -438,7 +442,7 @@ func TestHash(t *testing.T) {
 		</html>
 	`))
 
-	peerService := peerService.NewService(nil, pageService, nil, testutil.NewTestLogger())
+	peerService := peerService.NewService(nil, nil, testutil.NewTestLogger())
 
 	logger := testutil.NewTestLogger()
 

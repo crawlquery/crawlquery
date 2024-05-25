@@ -86,6 +86,10 @@ func (cs *Service) Create(url string) (*domain.CrawlJob, error) {
 		return nil, err
 	}
 
+	if _, err := cs.repo.GetByPageID(job.PageID); err == nil {
+		return nil, domain.ErrCrawlJobAlreadyExists
+	}
+
 	// Save the job in the repository
 	if err := cs.repo.Create(job); err != nil {
 		cs.logger.Errorw("Crawl.Service.AddJob: error creating job", "error", err)
@@ -95,7 +99,6 @@ func (cs *Service) Create(url string) (*domain.CrawlJob, error) {
 }
 
 func (cs *Service) pushBack(job *domain.CrawlJob, until time.Time, reason string) error {
-	cs.logger.Errorw("Crawl.Service.ProcessCrawlJobs: error processing job", "error", reason, "job", job)
 	job.BackoffUntil = sql.NullTime{
 		Time:  until,
 		Valid: true,

@@ -74,9 +74,18 @@ func (cs *CrawlService) Crawl(pageID, url string) (*domain.Page, error) {
 	})
 
 	c.OnHTML("a[href]", func(e *colly.HTMLElement) {
-		link := e.Attr("href")
-		if err := cs.api.CreateLink(url, link); err != nil {
-			cs.logger.Errorw("Error creating link", "error", err, "link", link)
+		dst := e.Attr("href")
+
+		// if link is relative, make it absolute
+		absoluteDst, err := util.MakeAbsoluteIfRelative(url, dst)
+
+		if err != nil {
+			cs.logger.Errorw("Error making link absolute", "error", err, "link", dst)
+			return
+		}
+
+		if err := cs.api.CreateLink(url, absoluteDst); err != nil {
+			cs.logger.Errorw("Error creating link", "error", err, "link", absoluteDst)
 		}
 	})
 

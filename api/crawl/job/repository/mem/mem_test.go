@@ -94,6 +94,43 @@ func TestGet(t *testing.T) {
 	}
 }
 
+func TestGetByPageID(t *testing.T) {
+	repo := NewRepository()
+
+	job1 := &domain.CrawlJob{
+		ID:     "job1",
+		URL:    "http://example.com",
+		PageID: "page1",
+	}
+
+	job2 := &domain.CrawlJob{
+		ID:     "job2",
+		URL:    "http://example.com",
+		PageID: "page2",
+	}
+
+	repo.jobs[job1.ID] = job1
+	repo.jobs[job2.ID] = job2
+
+	got, err := repo.GetByPageID("page2")
+
+	if err != nil {
+		t.Fatalf("Error getting job by page ID: %v", err)
+	}
+
+	if got.ID != job2.ID {
+		t.Errorf("Expected ID to be %s, got %s", job2.ID, got.ID)
+	}
+
+	if got.URL != job2.URL {
+		t.Errorf("Expected URL to be %s, got %s", job2.URL, got.URL)
+	}
+
+	if got.CreatedAt.Sub(job2.CreatedAt) > time.Second || job2.CreatedAt.Sub(got.CreatedAt) > time.Second {
+		t.Errorf("Expected CreatedAt to be within one second of %v, got %v", job2.CreatedAt, got.CreatedAt)
+	}
+}
+
 func TestFirst(t *testing.T) {
 	repo := NewRepository()
 

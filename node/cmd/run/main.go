@@ -87,13 +87,13 @@ func main() {
 	// services
 	htmlBackupService := htmlBackupService.NewService(htmlClient)
 	htmlService := htmlService.NewService(htmlRepo, htmlBackupService)
-	pageService := pageService.NewService(pageRepo, nil)
-	peerService := peerService.NewService(api, pageService, &domain.Peer{
+	peerService := peerService.NewService(api, &domain.Peer{
 		ID:       node.ID,
 		Hostname: node.Hostname,
 		Port:     node.Port,
 		ShardID:  node.ShardID,
 	}, sugar)
+	pageService := pageService.NewService(pageRepo, peerService)
 	indexService := indexService.NewService(pageService, htmlService, peerService, sugar)
 	crawlService := crawlService.NewService(htmlService, pageService, indexService, api, sugar)
 	dumpService := dumpService.NewService(pageService)

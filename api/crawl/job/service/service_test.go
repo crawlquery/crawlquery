@@ -118,6 +118,27 @@ func TestCreate(t *testing.T) {
 			t.Errorf("Expected job to be nil")
 		}
 	})
+
+	t.Run("cannot create job if it already exists", func(t *testing.T) {
+		// Arrange
+		repo := mem.NewRepository()
+		svc := service.NewService(repo, nil, nil, nil, nil, nil, testutil.NewTestLogger())
+		url := "http://example.com"
+
+		_, _ = svc.Create(url)
+
+		// Act
+		job, err := svc.Create(url)
+
+		// Assert
+		if err != domain.ErrCrawlJobAlreadyExists {
+			t.Errorf("Expected error, got %v", err)
+		}
+
+		if job != nil {
+			t.Errorf("Expected job to be nil")
+		}
+	})
 }
 
 func TestProcessCrawlJobs(t *testing.T) {

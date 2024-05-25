@@ -22,7 +22,7 @@ func TestParsePrepositionalPhrases(t *testing.T) {
 			{
 				name:     "prepositional phrase with determiner",
 				sentence: "The price of the eggs is rising.",
-				want:     [][]string{{"price", "of", "the", "eggs"}},
+				want:     [][]string{{"price", "of", "the", "eggs"}, {"of"}},
 			},
 			{
 				name:     "simple prepositional phrase",
@@ -46,6 +46,13 @@ func TestParsePrepositionalPhrases(t *testing.T) {
 					{"at", "the", "park"},
 					{"with", "friends"},
 					{"in", "London"},
+				},
+			},
+			{
+				name:     "IN (preposition)",
+				sentence: "Where are you from?",
+				want: [][]string{
+					{"from"},
 				},
 			},
 		}

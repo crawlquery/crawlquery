@@ -15,27 +15,23 @@ import (
 )
 
 type Service struct {
-	api            *api.Client
-	keywordService domain.KeywordService
-	pageService    domain.PageService
-	peers          []*domain.Peer
-	logger         *zap.SugaredLogger
-	host           *domain.Peer
-	lock           sync.Mutex
+	api    *api.Client
+	peers  []*domain.Peer
+	logger *zap.SugaredLogger
+	host   *domain.Peer
+	lock   sync.Mutex
 }
 
 func NewService(
 	api *api.Client,
-	pageService domain.PageService,
 	host *domain.Peer,
 	logger *zap.SugaredLogger,
 ) *Service {
 	return &Service{
-		api:         api,
-		pageService: pageService,
-		host:        host,
-		logger:      logger,
-		lock:        sync.Mutex{},
+		api:    api,
+		host:   host,
+		logger: logger,
+		lock:   sync.Mutex{},
 	}
 }
 

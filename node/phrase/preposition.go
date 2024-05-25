@@ -19,6 +19,9 @@ var PrepositionalPhraseTemplates = PhraseSubCategory{
 	{"IN", "DT", "NN"}, // in the park
 	{"IN", "NNS"},      // with friends
 	{"IN", "NNP"},      // in London
+
+	// From
+	{"IN"},
 }
 
 func prepositionalPhraseSubCategories() PhraseSubCategories {

@@ -27,6 +27,8 @@ func (h *Handler) Create(c *gin.Context) {
 
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, dto.NewErrorResponse(err))
+
+		h.logger.Errorw("Error binding request for create link", "error", err, "request", req)
 		return
 	}
 

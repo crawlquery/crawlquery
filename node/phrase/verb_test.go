@@ -39,6 +39,11 @@ func TestVerbPhrases(t *testing.T) {
 				sentence: "He runs quickly.",
 				want:     [][]string{{"runs"}},
 			},
+			{
+				name:     "VB (verb, base form)",
+				sentence: "I want to detect this.",
+				want:     [][]string{{"want"}, {"detect"}},
+			},
 		}
 
 		for _, tc := range cases {

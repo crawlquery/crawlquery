@@ -90,7 +90,7 @@ func (c *Client) Index(pageID string) error {
 	if res.StatusCode != http.StatusOK {
 
 		var errRes dto.ErrorResponse
-		if err := json.NewDecoder(res.Body).Decode(&errRes); err != nil {
+		if err := json.NewDecoder(res.Body).Decode(&errRes); err == nil {
 			return fmt.Errorf("unexpected status code: %d (%s)", res.StatusCode, errRes.Error)
 		}
 

@@ -97,6 +97,16 @@ func (s *Service) Update(page *domain.Page) error {
 	return s.UpdatePageHash(page)
 }
 
+func (s *Service) UpdateQuietly(page *domain.Page) error {
+	err := s.pageRepo.Save(page.ID, page)
+
+	if err != nil {
+		return err
+	}
+
+	return s.UpdatePageHash(page)
+}
+
 func (s *Service) Get(pageID string) (*domain.Page, error) {
 	return s.pageRepo.Get(pageID)
 }

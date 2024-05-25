@@ -5,6 +5,7 @@ var VerbTemplates = PhraseSubCategory{
 	{"VBZ"},
 	{"VBG"},
 	{"VBP"},
+	{"VB"},
 }
 
 var VerbAdverbTemplates = PhraseSubCategory{

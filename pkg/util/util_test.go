@@ -5,6 +5,52 @@ import (
 	"testing"
 )
 
+func TestMakeAbsoluteIfRelative(t *testing.T) {
+	tests := []struct {
+		base     string
+		link     string
+		expected string
+	}{
+		{
+			base:     "http://example.com/path/to/resource/",
+			link:     "/relative/path",
+			expected: "http://example.com/relative/path",
+		},
+		{
+			base:     "http://example.com/path/to/resource/",
+			link:     "relative/path",
+			expected: "http://example.com/path/to/resource/relative/path",
+		},
+		{
+			base:     "http://example.com/path/to/resource/",
+			link:     "http://another.com/absolute/path",
+			expected: "http://another.com/absolute/path",
+		},
+		{
+			base:     "http://example.com/path/to/resource/",
+			link:     "../up/one/level",
+			expected: "http://example.com/path/to/up/one/level",
+		},
+		{
+			base:     "https://espanol.yahoo.com/topics/",
+			link:     "/topics/",
+			expected: "https://espanol.yahoo.com/topics/",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.link, func(t *testing.T) {
+			result, err := util.MakeAbsoluteIfRelative(test.base, test.link)
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if result != test.expected {
+				t.Errorf("expected %s, got %s", test.expected, result)
+			}
+		})
+	}
+}
+
 func TestValidatePageID(t *testing.T) {
 
 	invalidPageIDs := []string{

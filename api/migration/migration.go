@@ -43,7 +43,7 @@ var migrations = []Migration{
 		page_id VARCHAR(32) NOT NULL UNIQUE,
 		backoff_until TIMESTAMP,
 		last_crawled_at TIMESTAMP,
-		failed_reason VARCHAR(255),
+		failed_reason TEXT,
 		created_at TIMESTAMP NOT NULL)`,
 	},
 	{
@@ -82,7 +82,7 @@ var migrations = []Migration{
 			page_id VARCHAR(32) NOT NULL UNIQUE,
 			backoff_until TIMESTAMP,
 			last_indexed_at TIMESTAMP,
-			failed_reason VARCHAR(255),
+			failed_reason TEXT,
 			created_at TIMESTAMP NOT NULL)`,
 	},
 }

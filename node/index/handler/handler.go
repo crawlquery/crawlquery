@@ -2,6 +2,7 @@ package handler
 
 import (
 	"crawlquery/node/domain"
+	"crawlquery/node/dto"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
@@ -45,22 +46,23 @@ func (sh *IndexHandler) Search(c *gin.Context) {
 func (ih *IndexHandler) Index(c *gin.Context) {
 	pageID := c.Param("pageID")
 	if pageID == "" {
-		c.JSON(400, gin.H{
-			"error": "missing pageID",
+		c.JSON(400, &dto.ErrorResponse{
+			Error: "missing pageID",
 		})
 		return
 	}
 
 	if err := ih.service.Index(pageID); err != nil {
 		ih.logger.Error(err)
-		c.JSON(500, gin.H{
-			"error": err.Error(),
+		c.JSON(422, &dto.ErrorResponse{
+			Error: err.Error(),
 		})
 		return
 	}
 
-	c.JSON(200, gin.H{
-		"message": "page reindexed",
+	c.JSON(200, &dto.IndexResponse{
+		Success: true,
+		Message: "indexing complete",
 	})
 }
 
@@ -76,8 +78,8 @@ func (ih *IndexHandler) GetIndex(c *gin.Context) {
 	index, err := ih.service.GetIndex(pageID)
 	if err != nil {
 		ih.logger.Error(err)
-		c.JSON(500, gin.H{
-			"error": err.Error(),
+		c.JSON(404, &dto.ErrorResponse{
+			Error: err.Error(),
 		})
 		return
 	}

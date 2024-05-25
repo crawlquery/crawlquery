@@ -14,6 +14,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/h2non/gock"
 )
 
@@ -26,6 +27,14 @@ func TestCreate(t *testing.T) {
 
 		if err != nil {
 			t.Errorf("Error creating index job: %v", err)
+		}
+
+		if job.ID == "" {
+			t.Errorf("Expected job ID to be set")
+		}
+
+		if uuid.Validate(job.ID) != nil {
+			t.Errorf("Expected job ID to be a valid UUID")
 		}
 
 		if job.PageID != "job1" {

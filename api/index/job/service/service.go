@@ -2,6 +2,7 @@ package service
 
 import (
 	"crawlquery/api/domain"
+	"crawlquery/pkg/util"
 	"database/sql"
 	"errors"
 	"time"
@@ -37,6 +38,7 @@ func (s *Service) Create(pageID string) (*domain.IndexJob, error) {
 	}
 
 	job := &domain.IndexJob{
+		ID:        util.UUID(),
 		PageID:    pageID,
 		CreatedAt: time.Now(),
 	}
@@ -86,7 +88,7 @@ func (s *Service) processJob(job *domain.IndexJob, shardID uint) error {
 		return err
 	}
 
-	s.logger.Infow("Crawl.Service.ProcessCrawlJobs: job sent to node", "node", nodes[0])
+	s.logger.Infow("Crawl.Service.ProcessCrawlJobs: job complete", "node", nodes[0])
 	return nil
 }
 
@@ -94,8 +96,8 @@ func (s *Service) ProcessIndexJobs() {
 	for {
 		job, err := s.Next()
 		if err != nil {
-			s.logger.Errorw("Error getting next index job", "error", err)
-			return
+			time.Sleep(1 * time.Second)
+			continue
 		}
 
 		if job == nil {
@@ -139,6 +141,8 @@ func (s *Service) ProcessIndexJobs() {
 			if err := s.Update(job); err != nil {
 				s.logger.Errorw("Error updating index job", "error", err)
 			}
+
+			continue
 		}
 
 		job.LastIndexedAt = sql.NullTime{

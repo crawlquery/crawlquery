@@ -69,13 +69,12 @@ func (s *Service) Create(src, dst string) (*domain.Link, error) {
 	err = s.linkRepo.Create(link)
 
 	if err != nil {
-		s.logger.Error(err)
 		return nil, err
 	}
 
 	_, err = s.crawlJobService.Create(normalizedDst)
 	if err != nil {
-		s.logger.Error(err)
+		return nil, err
 	}
 
 	return link, nil

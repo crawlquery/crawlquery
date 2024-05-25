@@ -9,15 +9,15 @@ var ErrPageNotFound = errors.New("page not found")
 var ErrHashNotFound = errors.New("hash not found")
 
 type Page struct {
-	ID          string     `json:"id"`
-	Hash        string     `json:"hash"`
-	URL         string     `json:"url"`
-	Title       string     `json:"title"`
-	Description string     `json:"description"`
-	Phrases     [][]string `json:"phrases"`
-	Language    string     `json:"language"`
-	LastIndexed *time.Time `json:"last_indexed"`
-	UpdatedAt   time.Time  `json:"updated_at"`
+	ID            string     `json:"id"`
+	Hash          string     `json:"hash"`
+	URL           string     `json:"url"`
+	Title         string     `json:"title"`
+	Description   string     `json:"description"`
+	Phrases       [][]string `json:"phrases"`
+	Language      string     `json:"language"`
+	LastIndexedAt *time.Time `json:"last_indexed"`
+	UpdatedAt     time.Time  `json:"updated_at"`
 }
 
 type PageRepository interface {
@@ -36,6 +36,7 @@ type PageService interface {
 	GetAll() (map[string]*Page, error)
 	Create(pageID, url, hash string) (*Page, error)
 	Update(page *Page) error
+	UpdateQuietly(page *Page) error
 	Hash() (string, error)
 	JSON() ([]byte, error)
 }

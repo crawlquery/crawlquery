@@ -8,6 +8,7 @@ import (
 	"crawlquery/pkg/util"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/PuerkitoBio/goquery"
 	"go.uber.org/zap"
@@ -64,20 +65,28 @@ func (s *Service) Index(pageID string) error {
 		parse.NewPhraseParser(doc),
 	}
 
+	var errors []error
+
 	for _, parser := range parsers {
 		err = parser.Parse(page)
 
 		if err != nil {
 			s.logger.Errorw("Error parsing page", "error", err, "pageID", pageID)
-			return err
+			errors = append(errors, err)
 		}
 	}
+	now := time.Now()
+	page.LastIndexedAt = &now
 
 	err = s.pageService.Update(page)
 
 	if err != nil {
 		s.logger.Errorw("Error saving page", "error", err, "pageID", pageID)
 		return err
+	}
+
+	if len(errors) > 0 {
+		return errors[0]
 	}
 
 	go s.peerService.BroadcastPageUpdatedEvent(&domain.PageUpdatedEvent{
@@ -159,7 +168,7 @@ func (s *Service) Search(query string) ([]domain.Result, error) {
 
 func (s *Service) ApplyPageUpdatedEvent(event *domain.PageUpdatedEvent) error {
 	// update the page
-	err := s.pageService.Update(event.Page)
+	err := s.pageService.UpdateQuietly(event.Page)
 
 	if err != nil {
 		s.logger.Errorf("Error updating page: %v", err)

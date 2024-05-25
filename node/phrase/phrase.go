@@ -24,8 +24,8 @@ func phraseCategories() PhraseCategories {
 	}
 }
 
-func ParseSentence(sentence string) ([][]string, error) {
-	doc, err := prose.NewDocument(sentence)
+func ParseText(text string) ([][]string, error) {
+	doc, err := prose.NewDocument(text, prose.WithSegmentation(false), prose.WithExtraction(false))
 	if err != nil {
 		return nil, err
 	}

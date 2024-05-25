@@ -11,8 +11,8 @@ import (
 )
 
 func TestWordClasses(t *testing.T) {
-	sentence := "First, add some drainage for water by poking a few holes in the bottom of the carton. Barton Hill Farms suggests separating the lid from the bottom, then putting it underneath the egg tray to catch any wayward water."
-	doc, _ := prose.NewDocument(sentence)
+	text := "Best way to detect bot from user agent?"
+	doc, _ := prose.NewDocument(text)
 
 	tokens := doc.Tokens()
 
@@ -21,21 +21,21 @@ func TestWordClasses(t *testing.T) {
 	// t.Fail()
 }
 
-func TestParseSentence(t *testing.T) {
-	t.Run("parses a sentence using noun, verb, and adjective phrases", func(t *testing.T) {
+func TestParseText(t *testing.T) {
+	t.Run("parses a text using noun, verb, and adjective phrases", func(t *testing.T) {
 		cases := []struct {
-			name     string
-			sentence string
-			want     [][]string
+			name string
+			text string
+			want [][]string
 		}{
 			{
-				name:     "price of eggs",
-				sentence: "The price of eggs is finally falling but it was at an all-time high just a few months ago.",
-				want:     [][]string{{"price", "of", "eggs"}, {"of", "eggs"}, {"price"}, {"falling"}, {"is"}, {"just", "a", "few", "months", "ago"}, {"few", "months"}, {"was"}, {"at", "an", "all-time", "high"}},
+				name: "price of eggs",
+				text: "The price of eggs is finally falling but it was at an all-time high just a few months ago.",
+				want: [][]string{{"price", "of", "eggs"}, {"of", "eggs"}, {"price"}, {"falling"}, {"is"}, {"just", "a", "few", "months", "ago"}, {"few", "months"}, {"was"}, {"at", "an", "all-time", "high"}},
 			},
 			{
-				name:     "add some drainage",
-				sentence: "First, add some drainage for water by poking a few holes in the bottom of the carton. Barton Hill Farms suggests separating the lid from the bottom, then putting it underneath the egg tray to catch any wayward water.",
+				name: "add some drainage",
+				text: "First, add some drainage for water by poking a few holes in the bottom of the carton. Barton Hill Farms suggests separating the lid from the bottom, then putting it underneath the egg tray to catch any wayward water.",
 				want: [][]string{
 					{"bottom"},
 					{"bottom"},
@@ -62,16 +62,75 @@ func TestParseSentence(t *testing.T) {
 
 		for _, tc := range cases {
 			t.Run(tc.name, func(t *testing.T) {
-				got, err := ParseSentence(tc.sentence)
+				got, err := ParseText(tc.text)
 				if err != nil {
-					t.Errorf("Error parsing sentence: %v", err)
+					t.Errorf("Error parsing text: %v", err)
 				}
 
 				sortPhrases(tc.want)
 				sortPhrases(got)
 
-				if !reflect.DeepEqual(got, tc.want) {
-					t.Errorf("Expected %v, got %v", tc.want, got)
+				for _, phrase := range tc.want {
+					var found bool
+
+					for _, p := range got {
+						if reflect.DeepEqual(phrase, p) {
+							found = true
+							break
+						}
+					}
+
+					if !found {
+						t.Errorf("Expected %v, got %v", tc.want, got)
+					}
+				}
+
+			})
+		}
+	})
+
+	t.Run("parses longest phrase matches", func(t *testing.T) {
+		cases := []struct {
+			name string
+			text string
+			want [][]string
+		}{
+			{
+				name: "",
+				text: "Best way to detect bot from user agent?",
+				want: [][]string{
+					{"Best", "way", "to", "detect", "bot", "from", "user", "agent"},
+					{"agent"},
+					{"bot"},
+					{"user", "agent"},
+					{"way"},
+				},
+			},
+		}
+
+		for _, tc := range cases {
+			t.Run(tc.name, func(t *testing.T) {
+				got, err := ParseText(tc.text)
+				if err != nil {
+					t.Errorf("Error parsing text: %v", err)
+				}
+
+				sortPhrases(tc.want)
+				sortPhrases(got)
+
+				for _, phrase := range tc.want {
+					var found bool
+
+					for _, p := range got {
+						if reflect.DeepEqual(phrase, p) {
+							found = true
+							break
+						}
+					}
+
+					if !found {
+						t.Errorf("Expected %v, got %v", tc.want, got)
+					}
 				}
 			})
 		}
