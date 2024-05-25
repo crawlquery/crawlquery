@@ -181,7 +181,7 @@ func TestProcessCrawlJobs(t *testing.T) {
 		pageService := pageService.NewService(pageRepo, nil, testutil.NewTestLogger())
 
 		indexJobRepo := indexJobRepo.NewRepository()
-		indexJobService := indexJobService.NewService(indexJobRepo, testutil.NewTestLogger())
+		indexJobService := indexJobService.NewService(indexJobRepo, nil, nil, testutil.NewTestLogger())
 
 		// Arrange
 		repo := mem.NewRepository()
@@ -347,7 +347,7 @@ func TestProcessCrawlJobs(t *testing.T) {
 		pageService := pageService.NewService(pageRepo, nil, testutil.NewTestLogger())
 
 		indexJobRepo := indexJobRepo.NewRepository()
-		indexJobService := indexJobService.NewService(indexJobRepo, testutil.NewTestLogger())
+		indexJobService := indexJobService.NewService(indexJobRepo, nil, nil, testutil.NewTestLogger())
 
 		// Arrange
 		repo := mem.NewRepository()

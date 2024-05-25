@@ -32,7 +32,7 @@ func TestCreate(t *testing.T) {
 		crawlRestrictionService := crawlRestrictionService.NewService(crawlRestrictionRepo, testutil.NewTestLogger())
 
 		crawlJobRepo := crawlJobRepo.NewRepository()
-		crawlJobService := crawlJobService.NewService(crawlJobRepo, nil, nil, crawlRestrictionService, nil, testutil.NewTestLogger())
+		crawlJobService := crawlJobService.NewService(crawlJobRepo, nil, nil, crawlRestrictionService, nil, nil, testutil.NewTestLogger())
 
 		linkService := linkService.NewService(linkRepo, crawlJobService, testutil.NewTestLogger())
 

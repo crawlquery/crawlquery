@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crawlquery/node/dto"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 )
@@ -69,4 +70,42 @@ func (c *Client) Crawl(pageID, url string) (*dto.Page, error) {
 	defer res.Body.Close()
 
 	return crawlRes.Page, nil
+}
+
+func (c *Client) Index(pageID string) error {
+
+	endpoint := fmt.Sprintf("%s/pages/%s/index", c.BaseURL, pageID)
+	res, err := http.Post(
+		endpoint,
+		"application/json",
+		nil,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	defer res.Body.Close()
+
+	if res.StatusCode != http.StatusOK {
+
+		var errRes dto.ErrorResponse
+		if err := json.NewDecoder(res.Body).Decode(&errRes); err != nil {
+			return fmt.Errorf("unexpected status code: %d (%s)", res.StatusCode, errRes.Error)
+		}
+
+		return fmt.Errorf("unexpected status code: %d", res.StatusCode)
+	}
+
+	var indexRes dto.IndexResponse
+
+	if err := json.NewDecoder(res.Body).Decode(&indexRes); err != nil {
+		return err
+	}
+
+	if indexRes.Success {
+		return nil
+	}
+
+	return errors.New("indexing returned success=false")
 }

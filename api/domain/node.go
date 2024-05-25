@@ -42,6 +42,7 @@ type NodeService interface {
 	ListByShardID(shardID uint) ([]*Node, error)
 	Randomize(nodes []*Node) []*Node
 	SendCrawlJob(node *Node, crawlJob *CrawlJob) (*dto.Page, error)
+	SendIndexJob(node *Node, indexJob *IndexJob) error
 	Auth(key string) (*Node, error)
 }
 

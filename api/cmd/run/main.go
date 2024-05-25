@@ -38,6 +38,9 @@ import (
 	pageMysqlRepo "crawlquery/api/page/repository/mysql"
 	pageService "crawlquery/api/page/service"
 
+	indexJobMySQLRepo "crawlquery/api/index/job/repository/mysql"
+	indexJobService "crawlquery/api/index/job/service"
+
 	_ "github.com/go-sql-driver/mysql"
 	"go.uber.org/zap"
 )
@@ -88,8 +91,19 @@ func main() {
 	pageRepo := pageMysqlRepo.NewRepository(db)
 	pageService := pageService.NewService(pageRepo, nil, sugar)
 
+	indexJobRepo := indexJobMySQLRepo.NewRepository(db)
+	indexJobService := indexJobService.NewService(indexJobRepo, pageService, nodeService, sugar)
+
 	crawlJobRepo := crawlJobMysqlRepo.NewRepository(db)
-	crawlJobService := crawlJobService.NewService(crawlJobRepo, shardService, nodeService, crawlRestrictionService, pageService, sugar)
+	crawlJobService := crawlJobService.NewService(
+		crawlJobRepo,
+		shardService,
+		nodeService,
+		crawlRestrictionService,
+		pageService,
+		indexJobService,
+		sugar,
+	)
 	crawlJobHandler := crawlHandler.NewHandler(crawlJobService)
 
 	linkRepo := linkMySQLRepo.NewRepository(db)

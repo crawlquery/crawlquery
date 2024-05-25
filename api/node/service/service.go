@@ -220,6 +220,12 @@ func (s *Service) SendCrawlJob(n *domain.Node, job *domain.CrawlJob) (*dto.Page,
 	return c.Crawl(job.PageID, job.URL)
 }
 
+func (s *Service) SendIndexJob(n *domain.Node, job *domain.IndexJob) error {
+	c := node.NewClient(fmt.Sprintf("http://%s:%d", n.Hostname, n.Port))
+
+	return c.Index(job.PageID)
+}
+
 func (s *Service) Auth(key string) (*domain.Node, error) {
 	node, err := s.repo.GetNodeByKey(key)
 

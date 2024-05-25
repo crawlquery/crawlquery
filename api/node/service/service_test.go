@@ -786,6 +786,67 @@ func TestSendCrawlJob(t *testing.T) {
 	})
 }
 
+func TestSendIndexJob(t *testing.T) {
+	t.Run("can send an index job", func(t *testing.T) {
+		node := &domain.Node{
+			ID:       "1",
+			Hostname: "testnode",
+			Port:     8080,
+		}
+
+		indexJob := &domain.IndexJob{
+			ID:     "1",
+			PageID: "1",
+		}
+
+		defer gock.Off()
+
+		indexResponse := &dto.IndexResponse{
+			Success: true,
+		}
+
+		gock.New("http://testnode:8080").
+			Post(fmt.Sprintf("/pages/%s/index", indexJob.PageID)).
+			Reply(200).
+			JSON(indexResponse)
+
+		nodeService := service.NewService(nil, nil, nil, testutil.NewTestLogger())
+
+		err := nodeService.SendIndexJob(node, indexJob)
+
+		if err != nil {
+			t.Fatalf("Error sending index job: %v", err)
+		}
+	})
+
+	t.Run("handles error sending index job", func(t *testing.T) {
+		node := &domain.Node{
+			ID:       "1",
+			Hostname: "testnode",
+			Port:     8080,
+		}
+
+		indexJob := &domain.IndexJob{
+			ID:     "1",
+			PageID: "1",
+		}
+
+		defer gock.Off()
+
+		gock.New("http://testnode:8080").
+			Post("/pages/1/index").
+			Reply(500)
+
+		nodeService := service.NewService(nil, nil, nil, testutil.NewTestLogger())
+
+		err := nodeService.SendIndexJob(node, indexJob)
+
+		if err == nil {
+			t.Fatalf("Expected error sending index job")
+		}
+	})
+}
+
 func TestRandomize(t *testing.T) {
 	t.Run("can randomize a list of nodes", func(t *testing.T) {
 		nodeRepo := nodeRepo.NewRepository()

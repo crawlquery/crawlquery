@@ -19,7 +19,7 @@ func TestCreate(t *testing.T) {
 	t.Run("should create a crawl job", func(t *testing.T) {
 		// Arrange
 		repo := mem.NewRepository()
-		svc := service.NewService(repo, nil, nil, nil, nil, testutil.NewTestLogger())
+		svc := service.NewService(repo, nil, nil, nil, nil, nil, testutil.NewTestLogger())
 		h := handler.NewHandler(svc)
 
 		// given
@@ -60,7 +60,7 @@ func TestCreate(t *testing.T) {
 	t.Run("should return 400 if URL is invalid", func(t *testing.T) {
 		// Arrange
 		repo := mem.NewRepository()
-		svc := service.NewService(repo, nil, nil, nil, nil, testutil.NewTestLogger())
+		svc := service.NewService(repo, nil, nil, nil, nil, nil, testutil.NewTestLogger())
 		h := handler.NewHandler(svc)
 
 		// given
@@ -90,7 +90,7 @@ func TestCreate(t *testing.T) {
 	t.Run("should return 400 if malformed JSON", func(t *testing.T) {
 		// Arrange
 		repo := mem.NewRepository()
-		svc := service.NewService(repo, nil, nil, nil, nil, testutil.NewTestLogger())
+		svc := service.NewService(repo, nil, nil, nil, nil, nil, testutil.NewTestLogger())
 		h := handler.NewHandler(svc)
 
 		// given

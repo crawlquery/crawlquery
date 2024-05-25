@@ -11,7 +11,7 @@ import (
 func TestCreate(t *testing.T) {
 	t.Run("can create index job", func(t *testing.T) {
 		indexJobRepo := indexJobRepo.NewRepository()
-		indexJobService := indexJobService.NewService(indexJobRepo, testutil.NewTestLogger())
+		indexJobService := indexJobService.NewService(indexJobRepo, nil, nil, testutil.NewTestLogger())
 
 		job, err := indexJobService.Create("job1")
 
@@ -44,7 +44,7 @@ func TestCreate(t *testing.T) {
 
 	t.Run("returns error if job already exists", func(t *testing.T) {
 		indexJobRepo := indexJobRepo.NewRepository()
-		indexJobService := indexJobService.NewService(indexJobRepo, testutil.NewTestLogger())
+		indexJobService := indexJobService.NewService(indexJobRepo, nil, nil, testutil.NewTestLogger())
 
 		job := &domain.IndexJob{
 			PageID: "job1",
@@ -63,7 +63,7 @@ func TestCreate(t *testing.T) {
 func TestGet(t *testing.T) {
 	t.Run("can get index job", func(t *testing.T) {
 		indexJobRepo := indexJobRepo.NewRepository()
-		indexJobService := indexJobService.NewService(indexJobRepo, testutil.NewTestLogger())
+		indexJobService := indexJobService.NewService(indexJobRepo, nil, nil, testutil.NewTestLogger())
 
 		job := &domain.IndexJob{
 			PageID: "job1",
@@ -86,7 +86,7 @@ func TestGet(t *testing.T) {
 func TestNext(t *testing.T) {
 	t.Run("can get next index job", func(t *testing.T) {
 		indexJobRepo := indexJobRepo.NewRepository()
-		indexJobService := indexJobService.NewService(indexJobRepo, testutil.NewTestLogger())
+		indexJobService := indexJobService.NewService(indexJobRepo, nil, nil, testutil.NewTestLogger())
 
 		job := &domain.IndexJob{
 			PageID: "job1",
@@ -109,7 +109,7 @@ func TestNext(t *testing.T) {
 func TestUpdate(t *testing.T) {
 	t.Run("can update index job", func(t *testing.T) {
 		indexJobRepo := indexJobRepo.NewRepository()
-		indexJobService := indexJobService.NewService(indexJobRepo, testutil.NewTestLogger())
+		indexJobService := indexJobService.NewService(indexJobRepo, nil, nil, testutil.NewTestLogger())
 
 		job := &domain.IndexJob{
 			PageID: "job1",
