@@ -7,6 +7,7 @@ import (
 )
 
 var ErrIndexJobNotFound = errors.New("index job not found")
+var ErrIndexJobAlreadyExists = errors.New("index job already exists")
 
 type IndexJob struct {
 	ID            string         `json:"id"`
@@ -26,6 +27,7 @@ type IndexJobService interface {
 
 type IndexJobRepository interface {
 	Get(id string) (*IndexJob, error)
+	GetByPageID(pageID string) (*IndexJob, error)
 	Next() (*IndexJob, error)
 	Create(*IndexJob) (*IndexJob, error)
 	Update(*IndexJob) error

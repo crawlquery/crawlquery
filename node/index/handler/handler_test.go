@@ -115,8 +115,8 @@ func TestSearch(t *testing.T) {
 	})
 }
 
-func TestReIndex(t *testing.T) {
-	t.Run("reindexes page", func(t *testing.T) {
+func TestIndex(t *testing.T) {
+	t.Run("indexes page", func(t *testing.T) {
 		pageRepo := pageRepo.NewRepository()
 		pageService := pageService.NewService(pageRepo)
 
@@ -157,7 +157,7 @@ func TestReIndex(t *testing.T) {
 			{Key: "pageID", Value: "home1"},
 		}
 
-		indexHandler.ReIndex(ctx)
+		indexHandler.Index(ctx)
 
 		if w.Code != http.StatusOK {
 			t.Errorf("expected status OK; got %v", w.Code)

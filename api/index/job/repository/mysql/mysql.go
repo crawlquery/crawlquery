@@ -40,6 +40,22 @@ func (r *Repository) Get(id string) (*domain.IndexJob, error) {
 	return &job, nil
 }
 
+func (r *Repository) GetByPageID(pageID string) (*domain.IndexJob, error) {
+	var job domain.IndexJob
+
+	err := r.db.QueryRow("SELECT id, page_id, backoff_until, last_indexed_at, failed_reason, created_at FROM index_jobs WHERE page_id = ?", pageID).
+		Scan(&job.ID, &job.PageID, &job.BackoffUntil, &job.LastIndexedAt, &job.FailedReason, &job.CreatedAt)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, domain.ErrIndexJobNotFound
+		}
+		return nil, err
+	}
+
+	return &job, nil
+}
+
 func (r *Repository) Update(job *domain.IndexJob) error {
 	_, err := r.db.Exec("UPDATE index_jobs SET page_id = ?, backoff_until = ?, last_indexed_at = ?, failed_reason = ? WHERE id = ?",
 		job.PageID, job.BackoffUntil, job.LastIndexedAt, job.FailedReason, job.ID)

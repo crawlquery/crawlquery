@@ -98,24 +98,6 @@ func (s *Service) GetIndex(pageID string) (*domain.Page, error) {
 	return page, nil
 }
 
-func (s *Service) ReIndex(pageID string) error {
-	page, err := s.pageService.Get(pageID)
-
-	if err != nil {
-		s.logger.Errorw("Error getting page", "error", err, "pageID", page)
-		return err
-	}
-
-	err = s.Index(pageID)
-
-	if err != nil {
-		s.logger.Errorw("Error indexing page", "error", err, "pageID", pageID)
-		return err
-	}
-
-	return nil
-}
-
 func (s *Service) Search(query string) ([]domain.Result, error) {
 
 	term := strings.Split(query, " ")

@@ -19,7 +19,7 @@ func TestCreate(t *testing.T) {
 		repo := mysql.NewRepository(db)
 
 		job := &domain.IndexJob{
-			ID:     "job1",
+			ID:     "job1-create-index-job",
 			PageID: "page1",
 			LastIndexedAt: sql.NullTime{
 				Time:  time.Now(),
@@ -143,6 +143,88 @@ func TestGet(t *testing.T) {
 	})
 }
 
+func TestGetByPageID(t *testing.T) {
+	t.Run("can get index job by page ID", func(t *testing.T) {
+		db := testutil.CreateTestMysqlDB()
+		defer db.Close()
+		migration.Up(db)
+
+		repo := mysql.NewRepository(db)
+
+		job := &domain.IndexJob{
+			ID:     "job1-get-index-job-by-page-id",
+			PageID: "page1",
+			LastIndexedAt: sql.NullTime{
+				Time:  time.Now(),
+				Valid: true,
+			},
+			BackoffUntil: sql.NullTime{
+				Time:  time.Now(),
+				Valid: true,
+			},
+			FailedReason: sql.NullString{
+				String: "error",
+				Valid:  true,
+			},
+			CreatedAt: time.Now(),
+		}
+
+		job2 := &domain.IndexJob{
+			ID:        "job2-get-index-job-by-page-id",
+			PageID:    "page2",
+			CreatedAt: time.Now(),
+		}
+
+		_, err := db.Exec("INSERT INTO index_jobs (id, page_id, backoff_until, last_indexed_at, failed_reason, created_at) VALUES (?, ?, ?, ?, ?, ?)",
+			job.ID, job.PageID, job.BackoffUntil, job.LastIndexedAt, job.FailedReason, job.CreatedAt)
+
+		if err != nil {
+			t.Fatalf("Error inserting index job: %v", err)
+		}
+
+		_, err = db.Exec("INSERT INTO index_jobs (id, page_id, backoff_until, last_indexed_at, failed_reason, created_at) VALUES (?, ?, ?, ?, ?, ?)",
+			job2.ID, job2.PageID, job2.BackoffUntil, job2.LastIndexedAt, job2.FailedReason, job2.CreatedAt)
+
+		if err != nil {
+			t.Fatalf("Error inserting index job: %v", err)
+		}
+
+		defer db.Exec("DELETE FROM index_jobs WHERE id = ?", job.ID)
+		defer db.Exec("DELETE FROM index_jobs WHERE id = ?", job2.ID)
+
+		result, err := repo.GetByPageID(job.PageID)
+
+		if err != nil {
+			t.Fatalf("Error getting index job: %v", err)
+		}
+
+		if result.ID != job.ID {
+			t.Errorf("Expected job ID to be %s, got %s", job.ID, result.ID)
+		}
+
+		if result.PageID != job.PageID {
+			t.Errorf("Expected job PageID to be %s, got %s", job.PageID, result.PageID)
+		}
+
+		if result.BackoffUntil.Time.UTC().Round(time.Second) != job.BackoffUntil.Time.UTC().Round(time.Second) {
+			t.Errorf("Expected job BackoffUntil to be %s, got %s", job.BackoffUntil.Time, result.BackoffUntil.Time)
+		}
+
+		if result.LastIndexedAt.Time.UTC().Round(time.Second) != job.LastIndexedAt.Time.UTC().Round(time.Second) {
+			t.Errorf("Expected job LastIndexedAt to be %s, got %s", job.LastIndexedAt.Time, result.LastIndexedAt.Time)
+		}
+
+		if result.FailedReason.String != job.FailedReason.String {
+			t.Errorf("Expected job FailedReason to be %s, got %s", job.FailedReason.String, result.FailedReason.String)
+		}
+
+		if result.CreatedAt.UTC().Round(time.Second) != job.CreatedAt.UTC().Round(time.Second) {
+			t.Errorf("Expected job CreatedAt to be %s, got %s", job.CreatedAt, result.CreatedAt)
+		}
+
+	})
+}
+
 func TestUpdate(t *testing.T) {
 	t.Run("can update index job", func(t *testing.T) {
 		db := testutil.CreateTestMysqlDB()
@@ -152,7 +234,7 @@ func TestUpdate(t *testing.T) {
 		repo := mysql.NewRepository(db)
 
 		job := &domain.IndexJob{
-			ID:     "job1",
+			ID:     "job1-can-update-index-job",
 			PageID: "page1",
 			LastIndexedAt: sql.NullTime{
 				Time:  time.Now(),
@@ -262,7 +344,7 @@ func TestNext(t *testing.T) {
 		repo := mysql.NewRepository(db)
 
 		job := &domain.IndexJob{
-			ID:        "job1",
+			ID:        "job1-does-not-return-job",
 			CreatedAt: time.Now(),
 		}
 

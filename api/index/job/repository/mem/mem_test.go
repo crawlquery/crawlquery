@@ -48,6 +48,29 @@ func TestGet(t *testing.T) {
 	})
 }
 
+func TestGetByPageID(t *testing.T) {
+	t.Run("can get index job by page ID", func(t *testing.T) {
+		repo := NewRepository()
+
+		job := &domain.IndexJob{
+			ID:     "job1",
+			PageID: "page1",
+		}
+
+		repo.jobs[job.ID] = job
+
+		result, err := repo.GetByPageID(job.PageID)
+
+		if err != nil {
+			t.Errorf("Error getting index job: %v", err)
+		}
+
+		if result.ID != job.ID {
+			t.Errorf("Expected job ID to be %s, got %s", job.ID, result.ID)
+		}
+	})
+}
+
 func TestNext(t *testing.T) {
 	t.Run("can get next index job", func(t *testing.T) {
 		repo := NewRepository()

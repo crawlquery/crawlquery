@@ -45,8 +45,8 @@ func NewRouter(
 	router.POST("/event", indexHandler.Event)
 	router.GET("/hash/index", indexHandler.Hash)
 
-	router.GET("/index/:pageID", indexHandler.GetIndex)
-	router.POST("/index/:pageID/reindex", indexHandler.ReIndex)
+	router.GET("/pages/:pageID/index", indexHandler.GetIndex)
+	router.POST("/pages/:pageID/index", indexHandler.Index)
 
 	router.GET("/dump/page", dumpHandler.Page)
 

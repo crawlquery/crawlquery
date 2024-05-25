@@ -14,13 +14,14 @@ import (
 
 func TestGet(t *testing.T) {
 	t.Run("returns page", func(t *testing.T) {
+
 		repo := mem.NewRepository()
 
 		backupService := backupService.NewService(html.NewClient("http://storage:8080"))
 
 		service := service.NewService(repo, backupService)
 
-		err := service.Save("test1", []byte("test-data"))
+		err := repo.Save("test1", []byte("test-data"))
 
 		if err != nil {
 			t.Fatalf("Error saving data: %v", err)

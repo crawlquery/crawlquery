@@ -25,6 +25,16 @@ func (r *Repository) Get(id string) (*domain.IndexJob, error) {
 	return job, nil
 }
 
+func (r *Repository) GetByPageID(pageID string) (*domain.IndexJob, error) {
+	for _, job := range r.jobs {
+		if job.PageID == pageID {
+			return job, nil
+		}
+	}
+
+	return nil, domain.ErrIndexJobNotFound
+}
+
 func (r *Repository) Next() (*domain.IndexJob, error) {
 	for _, job := range r.jobs {
 
