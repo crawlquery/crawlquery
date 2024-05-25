@@ -2,6 +2,7 @@ package service_test
 
 import (
 	"crawlquery/node/crawl/service"
+	htmlBackupService "crawlquery/node/html/backup/service"
 	htmlRepo "crawlquery/node/html/repository/mem"
 	htmlService "crawlquery/node/html/service"
 
@@ -13,6 +14,7 @@ import (
 	indexService "crawlquery/node/index/service"
 
 	"crawlquery/pkg/client/api"
+	"crawlquery/pkg/client/html"
 	"crawlquery/pkg/testutil"
 	"testing"
 
@@ -22,8 +24,15 @@ import (
 func TestCrawl(t *testing.T) {
 	t.Run("can crawl a page", func(t *testing.T) {
 
+		defer gock.Off()
 		htmlRepo := htmlRepo.NewRepository()
-		htmlService := htmlService.NewService(htmlRepo)
+		gock.New("http://storage:8080").
+			Post("/pages").
+			Reply(201)
+
+		htmlBackupService := htmlBackupService.NewService(html.NewClient("http://storage:8080"))
+
+		htmlService := htmlService.NewService(htmlRepo, htmlBackupService)
 		pageRepo := pageRepo.NewRepository()
 		pageService := pageService.NewService(pageRepo)
 
@@ -34,8 +43,6 @@ func TestCrawl(t *testing.T) {
 		api := api.NewClient("http://localhost:8080", testutil.NewTestLogger())
 
 		service := service.NewService(htmlService, pageService, indexService, api, testutil.NewTestLogger())
-
-		defer gock.Off()
 
 		expectedData := "<html><head><title>Example</title></head><body><h1>Hello, World!</h1><p>Welcome to my example website.</p></body></html>"
 
@@ -88,8 +95,15 @@ func TestCrawl(t *testing.T) {
 	})
 
 	t.Run("creates crawl jobs for links", func(t *testing.T) {
+		defer gock.Off()
+
+		gock.New("http://storage:8080").
+			Post("/pages").
+			Reply(201)
+
 		htmlRepo := htmlRepo.NewRepository()
-		htmlService := htmlService.NewService(htmlRepo)
+		htmlBackupService := htmlBackupService.NewService(html.NewClient("http://storage:8080"))
+		htmlService := htmlService.NewService(htmlRepo, htmlBackupService)
 		pageRepo := pageRepo.NewRepository()
 		pageService := pageService.NewService(pageRepo)
 
@@ -100,8 +114,6 @@ func TestCrawl(t *testing.T) {
 		api := api.NewClient("http://localhost:8080", testutil.NewTestLogger())
 
 		service := service.NewService(htmlService, pageService, indexService, api, testutil.NewTestLogger())
-
-		defer gock.Off()
 
 		expectedData := `<html><head><title>Example</title></head><body><h1>Hello, World! <a href="http://example.com/about">About us</a></h1><p>Welcome to my website.</p></body></html>`
 
@@ -165,7 +177,7 @@ func TestCrawl(t *testing.T) {
 
 	t.Run("handles 404", func(t *testing.T) {
 		htmlRepo := htmlRepo.NewRepository()
-		htmlService := htmlService.NewService(htmlRepo)
+		htmlService := htmlService.NewService(htmlRepo, nil)
 		pageRepo := pageRepo.NewRepository()
 		pageService := pageService.NewService(pageRepo)
 

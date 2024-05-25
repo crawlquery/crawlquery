@@ -4,8 +4,11 @@ import (
 	crawlHandler "crawlquery/node/crawl/handler"
 	crawlService "crawlquery/node/crawl/service"
 	"crawlquery/node/domain"
+	htmlBackupService "crawlquery/node/html/backup/service"
 	htmlRepo "crawlquery/node/html/repository/disk"
 	htmlService "crawlquery/node/html/service"
+	htmlClient "crawlquery/pkg/client/html"
+
 	"crawlquery/pkg/client/api"
 	"fmt"
 	"time"
@@ -44,10 +47,12 @@ func main() {
 	flag.StringVar(&apiURL, "api", "http://localhost:8080", "API BaseURL")
 
 	var htmlStoragePath string
+	var htmlBackupURL string
 	var pageDBPath string
 
 	flag.StringVar(&htmlStoragePath, "html", "/tmp/htmlstorage", "path to the html storage")
 	flag.StringVar(&pageDBPath, "pdb", "/tmp/pagedb.bolt", "path to the pagedb")
+	flag.StringVar(&htmlBackupURL, "htmlbackup", "http://crawlquery-html1.dxs.network", "URL to the html backup service")
 
 	flag.Parse()
 
@@ -76,8 +81,12 @@ func main() {
 	fmt.Printf("Node Port: %d\n", node.Port)
 	fmt.Printf("Node Shard ID: %d\n", node.ShardID)
 
-	// Create services
-	htmlService := htmlService.NewService(htmlRepo)
+	// clients
+	htmlClient := htmlClient.NewClient(htmlBackupURL)
+
+	// services
+	htmlBackupService := htmlBackupService.NewService(htmlClient)
+	htmlService := htmlService.NewService(htmlRepo, htmlBackupService)
 	pageService := pageService.NewService(pageRepo)
 	peerService := peerService.NewService(api, pageService, &domain.Peer{
 		ID:       node.ID,
@@ -90,7 +99,7 @@ func main() {
 	dumpService := dumpService.NewService(pageService)
 	statService := statService.NewService(pageService, dumpService)
 
-	// Create handlers
+	// handlers
 	indexHandler := indexHandler.NewHandler(indexService, sugar)
 	crawlHandler := crawlHandler.NewHandler(crawlService, sugar)
 	dumpHandler := dumpHandler.NewHandler(dumpService)

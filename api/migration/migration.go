@@ -70,8 +70,19 @@ var migrations = []Migration{
 		Name: "create_pages_table",
 		SQL: `CREATE TABLE pages (
 			id VARCHAR(32) PRIMARY KEY,
+			url TEXT NOT NULL,
 			shard_id INT NOT NULL,
 			hash VARCHAR(32) NOT NULL,
+			created_at TIMESTAMP NOT NULL)`,
+	},
+	{
+		Name: "create_index_jobs_table",
+		SQL: `CREATE TABLE index_jobs (
+			id VARCHAR(36) PRIMARY KEY,
+			page_id VARCHAR(32) NOT NULL UNIQUE,
+			backoff_until TIMESTAMP,
+			last_indexed_at TIMESTAMP,
+			failed_reason VARCHAR(255),
 			created_at TIMESTAMP NOT NULL)`,
 	},
 }

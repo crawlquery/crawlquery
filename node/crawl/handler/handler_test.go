@@ -3,6 +3,7 @@ package handler_test
 import (
 	"bytes"
 	"crawlquery/node/dto"
+	"crawlquery/pkg/client/html"
 	"crawlquery/pkg/testutil"
 	"crawlquery/pkg/util"
 	"encoding/json"
@@ -11,6 +12,7 @@ import (
 
 	crawlHandler "crawlquery/node/crawl/handler"
 
+	htmlBackupService "crawlquery/node/html/backup/service"
 	htmlRepo "crawlquery/node/html/repository/mem"
 	htmlService "crawlquery/node/html/service"
 
@@ -29,9 +31,16 @@ import (
 
 func TestCrawl(t *testing.T) {
 	t.Run("can crawl a page", func(t *testing.T) {
-
+		defer gock.Off()
 		htmlRepo := htmlRepo.NewRepository()
-		htmlService := htmlService.NewService(htmlRepo)
+
+		gock.New("http://storage:8080").
+			Post("/pages").
+			Reply(201)
+
+		htmlBackupService := htmlBackupService.NewService(html.NewClient("http://storage:8080"))
+
+		htmlService := htmlService.NewService(htmlRepo, htmlBackupService)
 		pageRepo := pageRepo.NewRepository()
 		pageService := pageService.NewService(pageRepo)
 
@@ -40,8 +49,6 @@ func TestCrawl(t *testing.T) {
 		indexService := indexService.NewService(pageService, htmlService, peerService, testutil.NewTestLogger())
 
 		crawlService := crawlService.NewService(htmlService, pageService, indexService, nil, testutil.NewTestLogger())
-
-		defer gock.Off()
 
 		expectedData := "<html><head><title>Example</title></head><body><h1>Hello, World!</h1><p>Website description</p></body></html>"
 
@@ -112,11 +119,15 @@ func TestCrawl(t *testing.T) {
 		if page.URL != "http://example.com" {
 			t.Fatalf("Expected page URL to be 'http://example.com', got '%s'", page.URL)
 		}
+
+		if !gock.IsDone() {
+			t.Fatalf("Expected all mocks to be called")
+		}
 	})
 
 	t.Run("handles 404", func(t *testing.T) {
 		htmlRepo := htmlRepo.NewRepository()
-		htmlService := htmlService.NewService(htmlRepo)
+		htmlService := htmlService.NewService(htmlRepo, nil)
 		pageRepo := pageRepo.NewRepository()
 		pageService := pageService.NewService(pageRepo)
 
