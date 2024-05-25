@@ -456,7 +456,7 @@ func TestHash(t *testing.T) {
 		t.Fatalf("Expected no error, got %v", err)
 	}
 
-	if pageHash != "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855" {
-		t.Fatalf("Expected page hash to be e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855, got %s", pageHash)
+	if pageHash != "721dfab278082371f7a17f5059bcf458d2852d99557cd6f033d0bacd0672b221" {
+		t.Fatalf("Expected page hash to be 721dfab278082371f7a17f5059bcf458d2852d99557cd6f033d0bacd0672b221, got %s", pageHash)
 	}
 }
