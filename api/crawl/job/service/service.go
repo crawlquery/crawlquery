@@ -20,6 +20,7 @@ type Service struct {
 	nodeService        domain.NodeService
 	restrictionService domain.CrawlRestrictionService
 	pageService        domain.PageService
+	indexJobService    domain.IndexJobService
 	logger             *zap.SugaredLogger
 }
 
@@ -29,6 +30,7 @@ func NewService(
 	nodeService domain.NodeService,
 	restrictionService domain.CrawlRestrictionService,
 	pageService domain.PageService,
+	indexJobService domain.IndexJobService,
 	logger *zap.SugaredLogger,
 ) *Service {
 	return &Service{
@@ -37,6 +39,7 @@ func NewService(
 		nodeService:        nodeService,
 		restrictionService: restrictionService,
 		pageService:        pageService,
+		indexJobService:    indexJobService,
 		logger:             logger,
 	}
 }
@@ -173,6 +176,15 @@ func (cs *Service) ProcessCrawlJobs() {
 			cs.logger.Errorw("Crawl.Service.ProcessCrawlJobs: error creating page", "error", err)
 			continue
 		}
+
+		indexJob, err := cs.indexJobService.Create(job.PageID)
+
+		if err != nil {
+			cs.logger.Errorw("Crawl.Service.ProcessCrawlJobs: error creating index job", "error", err)
+			continue
+		}
+
+		cs.logger.Infof("Crawl.Service.ProcessCrawlJobs: created index job %s", indexJob.ID)
 
 		cs.restrictionService.Restrict(pasedURL.Hostname())
 	}

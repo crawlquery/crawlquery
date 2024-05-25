@@ -24,6 +24,9 @@ import (
 	pageRepo "crawlquery/api/page/repository/mem"
 	pageService "crawlquery/api/page/service"
 
+	indexJobRepo "crawlquery/api/index/job/repository/mem"
+	indexJobService "crawlquery/api/index/job/service"
+
 	"errors"
 	"testing"
 
@@ -34,7 +37,7 @@ func TestCreate(t *testing.T) {
 	t.Run("can create a job", func(t *testing.T) {
 		// Arrange
 		repo := mem.NewRepository()
-		svc := service.NewService(repo, nil, nil, nil, nil, testutil.NewTestLogger())
+		svc := service.NewService(repo, nil, nil, nil, nil, nil, testutil.NewTestLogger())
 		url := "http://example.com"
 
 		// Act
@@ -61,7 +64,7 @@ func TestCreate(t *testing.T) {
 	t.Run("validates url", func(t *testing.T) {
 		// Arrange
 		repo := mem.NewRepository()
-		svc := service.NewService(repo, nil, nil, nil, nil, testutil.NewTestLogger())
+		svc := service.NewService(repo, nil, nil, nil, nil, nil, testutil.NewTestLogger())
 		url := "notaurl"
 
 		// Act
@@ -80,7 +83,7 @@ func TestCreate(t *testing.T) {
 	t.Run("normalizes url", func(t *testing.T) {
 		// Arrange
 		repo := mem.NewRepository()
-		svc := service.NewService(repo, nil, nil, nil, nil, testutil.NewTestLogger())
+		svc := service.NewService(repo, nil, nil, nil, nil, nil, testutil.NewTestLogger())
 		url := "http://example.com?utm_source=google&utm_medium=cpc&utm_campaign=summer-sale"
 
 		// Act
@@ -99,7 +102,7 @@ func TestCreate(t *testing.T) {
 	t.Run("handles repository error", func(t *testing.T) {
 		// Arrange
 		repo := mem.NewRepository()
-		svc := service.NewService(repo, nil, nil, nil, nil, testutil.NewTestLogger())
+		svc := service.NewService(repo, nil, nil, nil, nil, nil, testutil.NewTestLogger())
 		expectErr := errors.New("db locked")
 		repo.ForceError(expectErr)
 
@@ -177,9 +180,12 @@ func TestProcessCrawlJobs(t *testing.T) {
 		pageRepo := pageRepo.NewRepository()
 		pageService := pageService.NewService(pageRepo, nil, testutil.NewTestLogger())
 
+		indexJobRepo := indexJobRepo.NewRepository()
+		indexJobService := indexJobService.NewService(indexJobRepo, testutil.NewTestLogger())
+
 		// Arrange
 		repo := mem.NewRepository()
-		svc := service.NewService(repo, shardService, nodeService, resService, pageService, testutil.NewTestLogger())
+		svc := service.NewService(repo, shardService, nodeService, resService, pageService, indexJobService, testutil.NewTestLogger())
 		job, _ := svc.Create(url)
 
 		// Act
@@ -229,6 +235,16 @@ func TestProcessCrawlJobs(t *testing.T) {
 		if time.Until(res.Until.Time).Round(time.Minute) != time.Minute*5 {
 			t.Errorf("Expected restriction until to be 5 minutes from now")
 		}
+
+		indexJob, err := indexJobRepo.GetByPageID(pageID)
+
+		if err != nil {
+			t.Errorf("Error getting index job: %v", err)
+		}
+
+		if indexJob == nil {
+			t.Fatalf("Expected index job to be set")
+		}
 	})
 
 	t.Run("cannot process crawl job if restriction exists", func(t *testing.T) {
@@ -243,7 +259,7 @@ func TestProcessCrawlJobs(t *testing.T) {
 		url := "http://example.com/homepage"
 		// Arrange
 		repo := mem.NewRepository()
-		svc := service.NewService(repo, nil, nil, resService, nil, testutil.NewTestLogger())
+		svc := service.NewService(repo, nil, nil, resService, nil, nil, testutil.NewTestLogger())
 		job, _ := svc.Create(url)
 
 		// Act
@@ -330,9 +346,12 @@ func TestProcessCrawlJobs(t *testing.T) {
 		pageRepo := pageRepo.NewRepository()
 		pageService := pageService.NewService(pageRepo, nil, testutil.NewTestLogger())
 
+		indexJobRepo := indexJobRepo.NewRepository()
+		indexJobService := indexJobService.NewService(indexJobRepo, testutil.NewTestLogger())
+
 		// Arrange
 		repo := mem.NewRepository()
-		svc := service.NewService(repo, shardService, nodeService, resService, pageService, testutil.NewTestLogger())
+		svc := service.NewService(repo, shardService, nodeService, resService, pageService, indexJobService, testutil.NewTestLogger())
 		svc.Create(url)
 
 		// Act
@@ -367,7 +386,7 @@ func TestProcessCrawlJobs(t *testing.T) {
 	t.Run("handles repository error", func(t *testing.T) {
 		// Arrange
 		repo := mem.NewRepository()
-		svc := service.NewService(repo, nil, nil, nil, nil, testutil.NewTestLogger())
+		svc := service.NewService(repo, nil, nil, nil, nil, nil, testutil.NewTestLogger())
 		expectErr := errors.New("db locked")
 		repo.ForceError(expectErr)
 
