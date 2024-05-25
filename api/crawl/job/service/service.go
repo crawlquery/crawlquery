@@ -2,6 +2,7 @@ package service
 
 import (
 	"crawlquery/api/domain"
+	"crawlquery/node/dto"
 	"crawlquery/pkg/util"
 	"database/sql"
 	"errors"
@@ -148,7 +149,7 @@ func (cs *Service) ProcessCrawlJobs() {
 		}
 
 		// Process the job
-		pageHash, err := cs.processJob(job, shardID)
+		crawledPage, err := cs.processJob(job, shardID)
 
 		if err != nil {
 			cs.pushBack(job, time.Now().Add(time.Hour), err.Error())
@@ -166,7 +167,7 @@ func (cs *Service) ProcessCrawlJobs() {
 			time.Sleep(5 * time.Second)
 		}
 
-		_, err = cs.pageService.Create(job.PageID, shardID, pageHash)
+		_, err = cs.pageService.Create(job.PageID, shardID, crawledPage.Hash)
 
 		if err != nil {
 			cs.logger.Errorw("Crawl.Service.ProcessCrawlJobs: error creating page", "error", err)
@@ -177,7 +178,7 @@ func (cs *Service) ProcessCrawlJobs() {
 	}
 }
 
-func (cs *Service) processJob(job *domain.CrawlJob, shardID uint) (string, error) {
+func (cs *Service) processJob(job *domain.CrawlJob, shardID uint) (*dto.Page, error) {
 	// Process the job
 	cs.logger.Infow("Crawl.Service.ProcessCrawlJobs: processing job", "job", job)
 
@@ -185,7 +186,7 @@ func (cs *Service) processJob(job *domain.CrawlJob, shardID uint) (string, error
 
 	if err != nil {
 		cs.logger.Errorw("Crawl.Service.ProcessCrawlJobs: error getting nodes", "error", err)
-		return "", err
+		return nil, err
 	}
 
 	nodes = cs.nodeService.Randomize(nodes)
@@ -194,19 +195,19 @@ func (cs *Service) processJob(job *domain.CrawlJob, shardID uint) (string, error
 
 	if len(nodes) == 0 {
 		cs.logger.Errorw("Crawl.Service.ProcessCrawlJobs: no nodes available", "nodes", nodes)
-		return "", errors.New("no nodes available")
+		return nil, errors.New("no nodes available")
 	}
 
 	cs.logger.Infow("Crawl.Service.ProcessCrawlJobs: processing node", "node", nodes[0])
 
 	// Send the job to the node
-	pageHash, err := cs.nodeService.SendCrawlJob(nodes[0], job)
+	crawledPage, err := cs.nodeService.SendCrawlJob(nodes[0], job)
 
 	if err != nil {
 		cs.logger.Errorw("Crawl.Service.ProcessCrawlJobs: error sending job to node", "error", err)
-		return "", err
+		return nil, err
 	}
 
 	cs.logger.Infow("Crawl.Service.ProcessCrawlJobs: job sent to node", "node", nodes[0])
-	return pageHash, nil
+	return crawledPage, nil
 }

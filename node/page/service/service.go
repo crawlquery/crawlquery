@@ -2,6 +2,7 @@ package service
 
 import (
 	"crawlquery/node/domain"
+	"crawlquery/pkg/util"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -121,9 +122,7 @@ func (s *Service) Hash() (string, error) {
 		concatenatedHashes += hashes[key]
 	}
 
-	// Compute the global hash from the concatenated hashes
-	globalHash := sha256.Sum256([]byte(concatenatedHashes))
-	return hex.EncodeToString(globalHash[:]), nil
+	return util.Sha256Hex32([]byte(concatenatedHashes)), nil
 }
 
 func (s *Service) JSON() ([]byte, error) {

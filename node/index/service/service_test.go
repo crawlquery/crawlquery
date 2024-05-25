@@ -456,7 +456,13 @@ func TestHash(t *testing.T) {
 		t.Fatalf("Expected no error, got %v", err)
 	}
 
-	if pageHash != "721dfab278082371f7a17f5059bcf458d2852d99557cd6f033d0bacd0672b221" {
-		t.Fatalf("Expected page hash to be 721dfab278082371f7a17f5059bcf458d2852d99557cd6f033d0bacd0672b221, got %s", pageHash)
+	hash, err := pageRepo.GetHash("page1")
+
+	if err != nil {
+		t.Fatalf("Expected no error, got %v", err)
+	}
+
+	if pageHash != util.Sha256Hex32([]byte(hash)) {
+		t.Fatalf("Expected hash to be %s, got %s", util.Sha256Hex32([]byte(hash)), pageHash)
 	}
 }

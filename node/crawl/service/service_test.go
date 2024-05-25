@@ -16,6 +16,7 @@ import (
 	"crawlquery/pkg/client/api"
 	"crawlquery/pkg/client/html"
 	"crawlquery/pkg/testutil"
+	"crawlquery/pkg/util"
 	"testing"
 
 	"github.com/h2non/gock"
@@ -128,14 +129,20 @@ func TestCrawl(t *testing.T) {
 			JSON(`{"src":"http://example.com","dst":"http://example.com/about"}`).
 			Reply(200)
 
-		pageHash, err := service.Crawl("test1", "http://example.com")
+		pageCrawled, err := service.Crawl("test1", "http://example.com")
 
 		if err != nil {
 			t.Errorf("Error crawling page: %v", err)
 		}
 
-		if pageHash == "" {
-			t.Fatalf("Expected page hash to be set")
+		if pageCrawled == nil {
+			t.Fatalf("Expected page to be crawled")
+		}
+
+		expectedHash := util.Sha256Hex32([]byte(expectedData))
+
+		if pageCrawled.Hash != expectedHash {
+			t.Fatalf("Expected page hash to be %s, got %s", expectedHash, pageCrawled.Hash)
 		}
 
 		if err != nil {

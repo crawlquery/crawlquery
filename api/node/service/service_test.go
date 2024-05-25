@@ -731,7 +731,11 @@ func TestSendCrawlJob(t *testing.T) {
 		responseJson := fmt.Sprintf(`{"page_id":"%s","url":"%s"}`, crawlJob.PageID, crawlJob.URL)
 
 		crawlResponse := &dto.CrawlResponse{
-			PageHash: "pagehash1",
+			Page: &dto.Page{
+				ID:   "1",
+				URL:  "http://google.com",
+				Hash: "hash",
+			},
 		}
 
 		gock.New("http://testnode:8080").
@@ -742,14 +746,14 @@ func TestSendCrawlJob(t *testing.T) {
 
 		nodeService := service.NewService(nil, nil, nil, testutil.NewTestLogger())
 
-		pageHash, err := nodeService.SendCrawlJob(node, crawlJob)
+		crawledPage, err := nodeService.SendCrawlJob(node, crawlJob)
 
 		if err != nil {
 			t.Fatalf("Error sending crawl job: %v", err)
 		}
 
-		if pageHash != crawlResponse.PageHash {
-			t.Errorf("Expected page hash to be %s, got %s", crawlResponse.PageHash, pageHash)
+		if crawledPage.Hash != crawlResponse.Page.Hash {
+			t.Errorf("Expected page hash to be %s, got %s", crawlResponse.Page.Hash, crawledPage.Hash)
 		}
 	})
 

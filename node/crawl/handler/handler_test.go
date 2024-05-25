@@ -88,8 +88,8 @@ func TestCrawl(t *testing.T) {
 			t.Fatalf("Error decoding response: %v", err)
 		}
 
-		if resp.PageHash != expectedPageHash {
-			t.Fatalf("Expected page hash to be '%s', got '%s'", expectedPageHash, resp.PageHash)
+		if resp.Page.Hash != expectedPageHash {
+			t.Fatalf("Expected page hash to be '%s', got '%s'", expectedPageHash, resp.Page.Hash)
 		}
 
 		data, err := htmlRepo.Get("test1")

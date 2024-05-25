@@ -33,13 +33,14 @@ func NewService(
 	}
 }
 
-func (cs *CrawlService) Crawl(pageID, url string) (string, error) {
+func (cs *CrawlService) Crawl(pageID, url string) (*domain.Page, error) {
 
 	// Instantiate default collector
 	c := colly.NewCollector()
 
 	var failedErr error
 	var pageHash string
+	var pageCrawled *domain.Page
 
 	c.OnResponse(func(r *colly.Response) {
 		if r.StatusCode != 200 {
@@ -69,6 +70,7 @@ func (cs *CrawlService) Crawl(pageID, url string) (string, error) {
 		}
 
 		cs.logger.Infow("Page created", "pageID", page.ID, "url", page.URL)
+		pageCrawled = page
 	})
 
 	c.OnHTML("a[href]", func(e *colly.HTMLElement) {
@@ -85,5 +87,5 @@ func (cs *CrawlService) Crawl(pageID, url string) (string, error) {
 
 	c.Visit(url)
 
-	return pageHash, failedErr
+	return pageCrawled, failedErr
 }

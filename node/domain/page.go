@@ -17,6 +17,7 @@ type Page struct {
 	Phrases     [][]string `json:"phrases"`
 	Language    string     `json:"language"`
 	LastIndexed *time.Time `json:"last_indexed"`
+	UpdatedAt   time.Time  `json:"updated_at"`
 }
 
 type PageRepository interface {

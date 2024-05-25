@@ -54,7 +54,7 @@ func (ch *CrawlHandler) Crawl(c *gin.Context) {
 		return
 	}
 
-	pageHash, err := ch.crawlService.Crawl(req.PageID, req.URL)
+	page, err := ch.crawlService.Crawl(req.PageID, req.URL)
 
 	if err != nil {
 		ch.logger.Errorw("Error crawling page", "error", err)
@@ -66,6 +66,10 @@ func (ch *CrawlHandler) Crawl(c *gin.Context) {
 
 	ch.logger.Infow("Page crawled", "pageID", req.PageID, "url", req.URL)
 	c.JSON(200, &dto.CrawlResponse{
-		PageHash: pageHash,
+		Page: &dto.Page{
+			ID:   page.ID,
+			URL:  page.URL,
+			Hash: page.Hash,
+		},
 	})
 }

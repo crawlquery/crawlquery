@@ -14,7 +14,11 @@ func TestCrawl(t *testing.T) {
 		defer gock.Off()
 
 		expectedRes := &dto.CrawlResponse{
-			PageHash: "pagehash1",
+			Page: &dto.Page{
+				ID:   "page1",
+				URL:  "http://example.com",
+				Hash: "hash",
+			},
 		}
 
 		gock.New("http://node.com").
@@ -30,8 +34,8 @@ func TestCrawl(t *testing.T) {
 			t.Fatalf("Expected no error, got %v", err)
 		}
 
-		if res != expectedRes.PageHash {
-			t.Fatalf("Expected %s, got %s", expectedRes.PageHash, res)
+		if res.Hash != expectedRes.Page.Hash {
+			t.Fatalf("Expected %s, got %s", expectedRes.Page.Hash, res)
 		}
 
 		if !gock.IsDone() {

@@ -159,7 +159,11 @@ func TestProcessCrawlJobs(t *testing.T) {
 		responseJson := fmt.Sprintf(`{"page_id":"%s","url":"%s"}`, pageID, url)
 
 		crawlResponse := &dto.CrawlResponse{
-			PageHash: "hash123",
+			Page: &dto.Page{
+				ID:   pageID,
+				URL:  url,
+				Hash: "hash123",
+			},
 		}
 		gock.New("http://node1.cluster.com:8080").
 			Post("/crawl").
@@ -308,7 +312,11 @@ func TestProcessCrawlJobs(t *testing.T) {
 		responseJson := fmt.Sprintf(`{"page_id":"%s","url":"%s"}`, pageID, url)
 
 		crawlResponse := &dto.CrawlResponse{
-			PageHash: "hash123",
+			&dto.Page{
+				ID:   pageID,
+				URL:  url,
+				Hash: "hash123",
+			},
 		}
 		gock.New("http://node1.cluster.com:8080").
 			Post("/crawl").
@@ -351,8 +359,8 @@ func TestProcessCrawlJobs(t *testing.T) {
 			t.Errorf("Expected page ShardID to be 0, got %d", pageCheck.ShardID)
 		}
 
-		if pageCheck.Hash != crawlResponse.PageHash {
-			t.Errorf("Expected page Hash to be %s, got %s", crawlResponse.PageHash, pageCheck.Hash)
+		if pageCheck.Hash != crawlResponse.Page.Hash {
+			t.Errorf("Expected page Hash to be %s, got %s", crawlResponse.Page.Hash, pageCheck.Hash)
 		}
 	})
 

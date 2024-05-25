@@ -18,7 +18,7 @@ func NewClient(baseURL string) *Client {
 	}
 }
 
-func (c *Client) Crawl(pageID, url string) (string, error) {
+func (c *Client) Crawl(pageID, url string) (*dto.Page, error) {
 	req := dto.CrawlRequest{
 		PageID: pageID,
 		URL:    url,
@@ -27,7 +27,7 @@ func (c *Client) Crawl(pageID, url string) (string, error) {
 	jsonBody, err := json.Marshal(req)
 
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	res, err := http.Post(
@@ -37,7 +37,7 @@ func (c *Client) Crawl(pageID, url string) (string, error) {
 	)
 
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	if res.StatusCode == http.StatusBadRequest {
@@ -47,26 +47,26 @@ func (c *Client) Crawl(pageID, url string) (string, error) {
 		err = json.NewDecoder(res.Body).Decode(&errRes)
 
 		if err != nil {
-			return "", fmt.Errorf("unexpected status code: %d", res.StatusCode)
+			return nil, fmt.Errorf("unexpected status code: %d", res.StatusCode)
 		}
 
 		defer res.Body.Close()
 
-		return "", fmt.Errorf("unexpected status code: %d (%s)", res.StatusCode, errRes.Error)
+		return nil, fmt.Errorf("unexpected status code: %d (%s)", res.StatusCode, errRes.Error)
 	}
 
 	if res.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("unexpected status code: %d", res.StatusCode)
+		return nil, fmt.Errorf("unexpected status code: %d", res.StatusCode)
 	}
 
 	var crawlRes dto.CrawlResponse
 	err = json.NewDecoder(res.Body).Decode(&crawlRes)
 
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	defer res.Body.Close()
 
-	return crawlRes.PageHash, nil
+	return crawlRes.Page, nil
 }

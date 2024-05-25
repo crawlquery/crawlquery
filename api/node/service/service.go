@@ -2,6 +2,7 @@ package service
 
 import (
 	"crawlquery/api/domain"
+	"crawlquery/node/dto"
 	"crawlquery/pkg/client/api/node"
 	"crawlquery/pkg/util"
 	"fmt"
@@ -212,7 +213,7 @@ func (s *Service) ListByShardID(shardID uint) ([]*domain.Node, error) {
 	return filtered, nil
 }
 
-func (s *Service) SendCrawlJob(n *domain.Node, job *domain.CrawlJob) (string, error) {
+func (s *Service) SendCrawlJob(n *domain.Node, job *domain.CrawlJob) (*dto.Page, error) {
 
 	c := node.NewClient(fmt.Sprintf("http://%s:%d", n.Hostname, n.Port))
 
