@@ -34,7 +34,7 @@ func TestCrawl(t *testing.T) {
 
 		htmlService := htmlService.NewService(htmlRepo, htmlBackupService)
 		pageRepo := pageRepo.NewRepository()
-		pageService := pageService.NewService(pageRepo)
+		pageService := pageService.NewService(pageRepo, nil)
 
 		peerService := peerService.NewService(nil, pageService, nil, testutil.NewTestLogger())
 
@@ -105,7 +105,7 @@ func TestCrawl(t *testing.T) {
 		htmlBackupService := htmlBackupService.NewService(html.NewClient("http://storage:8080"))
 		htmlService := htmlService.NewService(htmlRepo, htmlBackupService)
 		pageRepo := pageRepo.NewRepository()
-		pageService := pageService.NewService(pageRepo)
+		pageService := pageService.NewService(pageRepo, nil)
 
 		peerService := peerService.NewService(nil, pageService, nil, testutil.NewTestLogger())
 
@@ -179,7 +179,7 @@ func TestCrawl(t *testing.T) {
 		htmlRepo := htmlRepo.NewRepository()
 		htmlService := htmlService.NewService(htmlRepo, nil)
 		pageRepo := pageRepo.NewRepository()
-		pageService := pageService.NewService(pageRepo)
+		pageService := pageService.NewService(pageRepo, nil)
 
 		service := service.NewService(htmlService, pageService, nil, nil, testutil.NewTestLogger())
 

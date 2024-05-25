@@ -23,7 +23,7 @@ import (
 func TestInfo(t *testing.T) {
 	t.Run("returns stat info", func(t *testing.T) {
 		pageRepo := pageRepo.NewRepository()
-		pageService := pageService.NewService(pageRepo)
+		pageService := pageService.NewService(pageRepo, nil)
 
 		dumpService := dumpService.NewService(pageService)
 

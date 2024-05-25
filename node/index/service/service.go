@@ -80,7 +80,7 @@ func (s *Service) Index(pageID string) error {
 		return err
 	}
 
-	go s.peerService.BroadcastIndexEvent(&domain.IndexEvent{
+	go s.peerService.BroadcastPageUpdatedEvent(&domain.PageUpdatedEvent{
 		Page: page,
 	})
 
@@ -157,7 +157,7 @@ func (s *Service) Search(query string) ([]domain.Result, error) {
 	return results, nil
 }
 
-func (s *Service) ApplyIndexEvent(event *domain.IndexEvent) error {
+func (s *Service) ApplyPageUpdatedEvent(event *domain.PageUpdatedEvent) error {
 	// update the page
 	err := s.pageService.Update(event.Page)
 

@@ -86,7 +86,7 @@ func main() {
 	crawlRestrictionService := crawlRestrictionService.NewService(crawlRestrictionRepo, sugar)
 
 	pageRepo := pageMysqlRepo.NewRepository(db)
-	pageService := pageService.NewService(pageRepo, sugar)
+	pageService := pageService.NewService(pageRepo, nil, sugar)
 
 	crawlJobRepo := crawlJobMysqlRepo.NewRepository(db)
 	crawlJobService := crawlJobService.NewService(crawlJobRepo, shardService, nodeService, crawlRestrictionService, pageService, sugar)

@@ -171,7 +171,7 @@ func TestProcessCrawlJobs(t *testing.T) {
 		resService := resService.NewService(resRepo, testutil.NewTestLogger())
 
 		pageRepo := pageRepo.NewRepository()
-		pageService := pageService.NewService(pageRepo, testutil.NewTestLogger())
+		pageService := pageService.NewService(pageRepo, nil, testutil.NewTestLogger())
 
 		// Arrange
 		repo := mem.NewRepository()
@@ -320,7 +320,7 @@ func TestProcessCrawlJobs(t *testing.T) {
 		resService := resService.NewService(resRepo, testutil.NewTestLogger())
 
 		pageRepo := pageRepo.NewRepository()
-		pageService := pageService.NewService(pageRepo, testutil.NewTestLogger())
+		pageService := pageService.NewService(pageRepo, nil, testutil.NewTestLogger())
 
 		// Arrange
 		repo := mem.NewRepository()

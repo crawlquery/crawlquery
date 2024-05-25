@@ -11,7 +11,7 @@ import (
 func TestGet(t *testing.T) {
 	t.Run("returns page", func(t *testing.T) {
 		pageRepo := pageRepo.NewRepository()
-		pageService := pageService.NewService(pageRepo, testutil.NewTestLogger())
+		pageService := pageService.NewService(pageRepo, nil, testutil.NewTestLogger())
 
 		page, err := pageService.Create("pageID", 0, "hash123")
 
@@ -32,7 +32,7 @@ func TestGet(t *testing.T) {
 
 	t.Run("returns err if page not found", func(t *testing.T) {
 		pageRepo := pageRepo.NewRepository()
-		pageService := pageService.NewService(pageRepo, testutil.NewTestLogger())
+		pageService := pageService.NewService(pageRepo, nil, testutil.NewTestLogger())
 
 		_, err := pageService.Get("pageID")
 
@@ -45,7 +45,7 @@ func TestGet(t *testing.T) {
 func TestCreate(t *testing.T) {
 	t.Run("creates page", func(t *testing.T) {
 		pageRepo := pageRepo.NewRepository()
-		pageService := pageService.NewService(pageRepo, testutil.NewTestLogger())
+		pageService := pageService.NewService(pageRepo, nil, testutil.NewTestLogger())
 
 		page, err := pageService.Create("pageID", 0, "hash123")
 
@@ -68,7 +68,7 @@ func TestCreate(t *testing.T) {
 
 	t.Run("returns error if page already exists", func(t *testing.T) {
 		pageRepo := pageRepo.NewRepository()
-		pageService := pageService.NewService(pageRepo, testutil.NewTestLogger())
+		pageService := pageService.NewService(pageRepo, nil, testutil.NewTestLogger())
 
 		_, err := pageService.Create("pageID", 0, "hash123")
 

@@ -29,7 +29,7 @@ func TestSearch(t *testing.T) {
 
 	t.Run("returns results", func(t *testing.T) {
 		pageRepo := pageRepo.NewRepository()
-		pageService := pageService.NewService(pageRepo)
+		pageService := pageService.NewService(pageRepo, nil)
 
 		htmlRepo := htmlRepo.NewRepository()
 		htmlService := htmlService.NewService(htmlRepo, nil)
@@ -86,7 +86,7 @@ func TestSearch(t *testing.T) {
 
 	t.Run("returns error if query is missing", func(t *testing.T) {
 		pageRepo := pageRepo.NewRepository()
-		pageService := pageService.NewService(pageRepo)
+		pageService := pageService.NewService(pageRepo, nil)
 
 		htmlRepo := htmlRepo.NewRepository()
 		htmlService := htmlService.NewService(htmlRepo, nil)
@@ -118,7 +118,7 @@ func TestSearch(t *testing.T) {
 func TestIndex(t *testing.T) {
 	t.Run("indexes page", func(t *testing.T) {
 		pageRepo := pageRepo.NewRepository()
-		pageService := pageService.NewService(pageRepo)
+		pageService := pageService.NewService(pageRepo, nil)
 
 		htmlRepo := htmlRepo.NewRepository()
 		htmlService := htmlService.NewService(htmlRepo, nil)
@@ -186,7 +186,7 @@ func TestIndex(t *testing.T) {
 func TestGetIndex(t *testing.T) {
 	t.Run("returns page", func(t *testing.T) {
 		pageRepo := pageRepo.NewRepository()
-		pageService := pageService.NewService(pageRepo)
+		pageService := pageService.NewService(pageRepo, nil)
 
 		htmlRepo := htmlRepo.NewRepository()
 		htmlService := htmlService.NewService(htmlRepo, nil)
@@ -258,7 +258,7 @@ func TestGetIndex(t *testing.T) {
 func TestEvent(t *testing.T) {
 	t.Run("can handle index event", func(t *testing.T) {
 		pageRepo := pageRepo.NewRepository()
-		pageService := pageService.NewService(pageRepo)
+		pageService := pageService.NewService(pageRepo, nil)
 
 		htmlRepo := htmlRepo.NewRepository()
 		htmlService := htmlService.NewService(htmlRepo, nil)
@@ -277,7 +277,7 @@ func TestEvent(t *testing.T) {
 		w := httptest.NewRecorder()
 		ctx, _ := gin.CreateTestContext(w)
 
-		indexEvent := domain.IndexEvent{
+		PageUpdatedEvent := domain.PageUpdatedEvent{
 			Page: &domain.Page{
 				URL:         "http://example.com",
 				ID:          "page1",
@@ -287,7 +287,7 @@ func TestEvent(t *testing.T) {
 			},
 		}
 
-		encoded, err := json.Marshal(indexEvent)
+		encoded, err := json.Marshal(PageUpdatedEvent)
 
 		if err != nil {
 			t.Fatalf("error encoding index event: %v", err)
@@ -341,7 +341,7 @@ func TestHash(t *testing.T) {
 	t.Run("returns hash", func(t *testing.T) {
 
 		pageRepo := pageRepo.NewRepository()
-		pageService := pageService.NewService(pageRepo)
+		pageService := pageService.NewService(pageRepo, nil)
 
 		indexService := indexService.NewService(pageService, nil, nil, testutil.NewTestLogger())
 

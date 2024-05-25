@@ -11,7 +11,7 @@ type PeerService interface {
 	AddPeer(peer *Peer)
 	GetPeers() []*Peer
 	GetPeer(id string) *Peer
-	SendIndexEvent(peer *Peer, event *IndexEvent) error
-	BroadcastIndexEvent(event *IndexEvent) error
+	SendPageUpdatedEvent(peer *Peer, event *PageUpdatedEvent) error
+	BroadcastPageUpdatedEvent(event *PageUpdatedEvent) error
 	SyncPeerList() error
 }

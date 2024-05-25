@@ -9,12 +9,14 @@ import (
 )
 
 type Service struct {
-	pageRepo domain.PageRepository
+	pageRepo    domain.PageRepository
+	peerService domain.PeerService
 }
 
-func NewService(pr domain.PageRepository) *Service {
+func NewService(pr domain.PageRepository, peerService domain.PeerService) *Service {
 	return &Service{
-		pageRepo: pr,
+		pageRepo:    pr,
+		peerService: peerService,
 	}
 }
 
@@ -55,6 +57,12 @@ func (s *Service) Create(pageID, url, hash string) (*domain.Page, error) {
 		return nil, err
 	}
 
+	if s.peerService != nil {
+		s.peerService.BroadcastPageUpdatedEvent(&domain.PageUpdatedEvent{
+			Page: page,
+		})
+	}
+
 	return page, nil
 }
 
@@ -73,7 +81,19 @@ func (s *Service) Delete(pageID string) error {
 }
 
 func (s *Service) Update(page *domain.Page) error {
-	return s.pageRepo.Save(page.ID, page)
+	err := s.pageRepo.Save(page.ID, page)
+
+	if err != nil {
+		return err
+	}
+
+	if s.peerService != nil {
+		s.peerService.BroadcastPageUpdatedEvent(&domain.PageUpdatedEvent{
+			Page: page,
+		})
+	}
+
+	return s.UpdatePageHash(page)
 }
 
 func (s *Service) Get(pageID string) (*domain.Page, error) {

@@ -1,5 +1,5 @@
 package domain
 
-type IndexEvent struct {
+type PageUpdatedEvent struct {
 	Page *Page `json:"page"`
 }

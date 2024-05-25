@@ -13,7 +13,7 @@ type IndexService interface {
 	Hash() (string, error)
 	Index(pageID string) error
 	GetIndex(pageID string) (*Page, error)
-	ApplyIndexEvent(event *IndexEvent) error
+	ApplyPageUpdatedEvent(event *PageUpdatedEvent) error
 }
 
 type IndexHandler interface {

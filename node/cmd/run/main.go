@@ -87,7 +87,7 @@ func main() {
 	// services
 	htmlBackupService := htmlBackupService.NewService(htmlClient)
 	htmlService := htmlService.NewService(htmlRepo, htmlBackupService)
-	pageService := pageService.NewService(pageRepo)
+	pageService := pageService.NewService(pageRepo, nil)
 	peerService := peerService.NewService(api, pageService, &domain.Peer{
 		ID:       node.ID,
 		Hostname: node.Hostname,

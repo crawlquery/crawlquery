@@ -12,7 +12,7 @@ type Service struct {
 	logger   *zap.SugaredLogger
 }
 
-func NewService(pageRepo domain.PageRepository, logger *zap.SugaredLogger) *Service {
+func NewService(pageRepo, nil domain.PageRepository, logger *zap.SugaredLogger) *Service {
 	return &Service{
 		pageRepo: pageRepo,
 		logger:   logger,

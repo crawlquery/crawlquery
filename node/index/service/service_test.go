@@ -20,7 +20,7 @@ import (
 func TestIndex(t *testing.T) {
 
 	pageRepo := pageRepo.NewRepository()
-	pageService := pageService.NewService(pageRepo)
+	pageService := pageService.NewService(pageRepo, nil)
 
 	pageRepo.Save("page1", &domain.Page{
 		ID:  "page1",
@@ -90,7 +90,7 @@ func TestIndex(t *testing.T) {
 func TestGetIndex(t *testing.T) {
 	t.Run("can get index", func(t *testing.T) {
 		pageRepo := pageRepo.NewRepository()
-		pageService := pageService.NewService(pageRepo)
+		pageService := pageService.NewService(pageRepo, nil)
 
 		pageRepo.Save("page1", &domain.Page{
 			ID:  "page1",
@@ -159,7 +159,7 @@ func TestGetIndex(t *testing.T) {
 func TestSearch(t *testing.T) {
 	t.Run("can search for keyword", func(t *testing.T) {
 		pageRepo := pageRepo.NewRepository()
-		pageService := pageService.NewService(pageRepo)
+		pageService := pageService.NewService(pageRepo, nil)
 
 		pageRepo.Save("page1", &domain.Page{
 			ID:  "page1",
@@ -235,7 +235,7 @@ func TestSearch(t *testing.T) {
 
 	t.Run("applies domain signal", func(t *testing.T) {
 		pageRepo := pageRepo.NewRepository()
-		pageService := pageService.NewService(pageRepo)
+		pageService := pageService.NewService(pageRepo, nil)
 
 		pageRepo.Save("page1", &domain.Page{
 			ID:  "page1",
@@ -288,7 +288,7 @@ func TestSearch(t *testing.T) {
 
 	t.Run("sets signal breakdown", func(t *testing.T) {
 		pageRepo := pageRepo.NewRepository()
-		pageService := pageService.NewService(pageRepo)
+		pageService := pageService.NewService(pageRepo, nil)
 
 		pageRepo.Save("page1", &domain.Page{
 			ID:  "page1",
@@ -345,11 +345,11 @@ func TestSearch(t *testing.T) {
 	})
 }
 
-func TestApplyIndexEvent(t *testing.T) {
+func TestApplyPageUpdatedEvent(t *testing.T) {
 	t.Run("can apply index event", func(t *testing.T) {
 
 		pageRepo := pageRepo.NewRepository()
-		pageService := pageService.NewService(pageRepo)
+		pageService := pageService.NewService(pageRepo, nil)
 
 		htmlRepo := htmlRepo.NewRepository()
 		htmlService := htmlService.NewService(htmlRepo, nil)
@@ -366,11 +366,11 @@ func TestApplyIndexEvent(t *testing.T) {
 			Phrases:     [][]string{{"distro"}, {"linux"}},
 		}
 
-		event := &domain.IndexEvent{
+		event := &domain.PageUpdatedEvent{
 			Page: page,
 		}
 
-		err := service.ApplyIndexEvent(event)
+		err := service.ApplyPageUpdatedEvent(event)
 
 		if err != nil {
 			t.Fatalf("Expected no error, got %v", err)
@@ -415,7 +415,7 @@ func TestApplyIndexEvent(t *testing.T) {
 
 func TestHash(t *testing.T) {
 	pageRepo := pageRepo.NewRepository()
-	pageService := pageService.NewService(pageRepo)
+	pageService := pageService.NewService(pageRepo, nil)
 
 	pageRepo.Save("page1", &domain.Page{
 		ID:  "page1",

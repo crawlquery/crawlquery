@@ -4,7 +4,6 @@ import (
 	"crawlquery/node/domain"
 	"crawlquery/pkg/client/api"
 	"crawlquery/pkg/util"
-	"fmt"
 
 	"github.com/gocolly/colly/v2"
 	"go.uber.org/zap"
@@ -70,13 +69,6 @@ func (cs *CrawlService) Crawl(pageID, url string) (string, error) {
 		}
 
 		cs.logger.Infow("Page created", "pageID", page.ID, "url", page.URL)
-
-		if err := cs.indexService.Index(pageID); err != nil {
-			cs.logger.Errorw("Error indexing page", "error", err, "pageID", pageID)
-			failedErr = fmt.Errorf("failed to index page: %w", err)
-		}
-
-		cs.logger.Infow("Page indexed", "pageID", page.ID)
 	})
 
 	c.OnHTML("a[href]", func(e *colly.HTMLElement) {

@@ -97,7 +97,7 @@ func TestRemovePeer(t *testing.T) {
 	}
 }
 
-func TestSendIndexEvent(t *testing.T) {
+func TestSendPageUpdatedEvent(t *testing.T) {
 	service := service.NewService(nil, nil, nil, testutil.NewTestLogger())
 
 	peer := &domain.Peer{
@@ -116,7 +116,7 @@ func TestSendIndexEvent(t *testing.T) {
 		Description: "An example page",
 	}
 
-	event := &domain.IndexEvent{
+	event := &domain.PageUpdatedEvent{
 		Page: page,
 	}
 
@@ -128,14 +128,14 @@ func TestSendIndexEvent(t *testing.T) {
 		Reply(200).
 		JSON(map[string]interface{}{})
 
-	service.SendIndexEvent(peer, event)
+	service.SendPageUpdatedEvent(peer, event)
 
 	if !gock.IsDone() {
 		t.Fatalf("Expected request to be made")
 	}
 }
 
-func TestBroadcastIndexEvent(t *testing.T) {
+func TestBroadcastPageUpdatedEvent(t *testing.T) {
 	service := service.NewService(nil, nil, nil, testutil.NewTestLogger())
 
 	peer1 := &domain.Peer{
@@ -162,7 +162,7 @@ func TestBroadcastIndexEvent(t *testing.T) {
 		Description: "An example page",
 	}
 
-	event := &domain.IndexEvent{
+	event := &domain.PageUpdatedEvent{
 		Page: page,
 	}
 
@@ -180,7 +180,7 @@ func TestBroadcastIndexEvent(t *testing.T) {
 		Reply(200).
 		JSON(map[string]interface{}{})
 
-	service.BroadcastIndexEvent(event)
+	service.BroadcastPageUpdatedEvent(event)
 
 	if !gock.IsDone() {
 		t.Fatalf("Expected requests to be made")

@@ -86,7 +86,7 @@ func (ih *IndexHandler) GetIndex(c *gin.Context) {
 }
 
 func (ih *IndexHandler) Event(c *gin.Context) {
-	var event domain.IndexEvent
+	var event domain.PageUpdatedEvent
 	if err := c.ShouldBindJSON(&event); err != nil {
 		ih.logger.Error(err)
 		c.JSON(400, gin.H{
@@ -95,7 +95,7 @@ func (ih *IndexHandler) Event(c *gin.Context) {
 		return
 	}
 
-	if err := ih.service.ApplyIndexEvent(&event); err != nil {
+	if err := ih.service.ApplyPageUpdatedEvent(&event); err != nil {
 		ih.logger.Error(err)
 		c.JSON(500, gin.H{
 			"error": err.Error(),

@@ -14,7 +14,7 @@ import (
 func TestPage(t *testing.T) {
 	t.Run("can get page dump", func(t *testing.T) {
 		pageRepo := pageRepo.NewRepository()
-		pageService := pageService.NewService(pageRepo)
+		pageService := pageService.NewService(pageRepo, nil)
 
 		dumpService := dumpService.NewService(pageService)
 

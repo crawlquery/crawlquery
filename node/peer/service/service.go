@@ -80,7 +80,7 @@ func (s *Service) RemovePeer(id string) {
 	}
 }
 
-func (s *Service) SendIndexEvent(peer *domain.Peer, event *domain.IndexEvent) error {
+func (s *Service) SendPageUpdatedEvent(peer *domain.Peer, event *domain.PageUpdatedEvent) error {
 
 	encoded, err := json.Marshal(event)
 
@@ -110,7 +110,7 @@ func (s *Service) SendIndexEvent(peer *domain.Peer, event *domain.IndexEvent) er
 
 	if resp.StatusCode != http.StatusOK {
 		s.logger.Errorf("Error sending event: %s", resp.Status)
-		return fmt.Errorf("Error sending event: %s", resp.Status)
+		return fmt.Errorf("error sending event: %s", resp.Status)
 	}
 
 	s.logger.Infof("Event sent to %s", peer.ID)
@@ -118,7 +118,7 @@ func (s *Service) SendIndexEvent(peer *domain.Peer, event *domain.IndexEvent) er
 	return nil
 }
 
-func (s *Service) BroadcastIndexEvent(event *domain.IndexEvent) error {
+func (s *Service) BroadcastPageUpdatedEvent(event *domain.PageUpdatedEvent) error {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 	var wg sync.WaitGroup
@@ -130,7 +130,7 @@ func (s *Service) BroadcastIndexEvent(event *domain.IndexEvent) error {
 		go func(peer *domain.Peer) {
 			defer wg.Done()
 			semaphore <- struct{}{}
-			err := s.SendIndexEvent(peer, event)
+			err := s.SendPageUpdatedEvent(peer, event)
 			<-semaphore
 			results <- err
 		}(peer)
