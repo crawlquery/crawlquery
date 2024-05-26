@@ -5,35 +5,57 @@ import (
 	"testing"
 
 	"crawlquery/node/domain"
-	"crawlquery/node/html/repository/mem"
 	pageRepo "crawlquery/node/page/repository/mem"
 	pageService "crawlquery/node/page/service"
+	"crawlquery/node/search/service"
+	"crawlquery/pkg/testutil"
 
 	keywordOccurrenceRepo "crawlquery/node/keyword/occurrence/repository/mem"
-	keywordService "crawlquery/node/keyword/occurrence/service"
+	keywordService "crawlquery/node/keyword/service"
 )
 
-func setupTestRepos() (*pageRepo.Repository, *mem.Repository, *pageService.Service, *service.KeywordService) {
+func setupTestRepos() (*pageRepo.Repository, *keywordOccurrenceRepo.Repository, *pageService.Service, *keywordService.Service) {
 	pageRepo := pageRepo.NewRepository()
 	pageService := pageService.NewService(pageRepo, nil)
 
 	keywordOccurrenceRepo := keywordOccurrenceRepo.NewRepository()
-	keywordService := keywordService.NewKeywordService(keywordRepo)
+	keywordService := keywordService.NewService(keywordOccurrenceRepo)
 
-	return pageRepo, keywordRepo, pageService, keywordService
+	return pageRepo, keywordOccurrenceRepo, pageService, keywordService
 }
 
-func savePage(t *testing.T, pageRepo *pageRepo.Repository, keywordRepo *mem.Repository, page domain.Page, keywordOccurrences map[domain.Keyword]domain.KeywordOccurrence) {
+func savePage(t *testing.T, pageRepo *pageRepo.Repository, keywordOccurrenceRepo *keywordOccurrenceRepo.Repository, page domain.Page, keywordOccurrences map[domain.Keyword]domain.KeywordOccurrence) {
 	err := pageRepo.Save(page.ID, &page)
 	if err != nil {
 		t.Fatalf("Error saving page: %v", err)
 	}
 
 	for keyword, occurrence := range keywordOccurrences {
-		err := keywordRepo.Add(keyword, occurrence)
+		err := keywordOccurrenceRepo.Add(keyword, occurrence)
 		if err != nil {
 			t.Fatalf("Error adding keyword occurrence: %v", err)
 		}
+	}
+}
+
+func checkResult(t *testing.T, result, expected domain.Result) {
+	if result.PageID != expected.PageID {
+		t.Errorf("Expected PageID %s, got %s", expected.PageID, result.PageID)
+	}
+	if result.Page.ID != expected.Page.ID {
+		t.Errorf("Expected Page ID %s, got %s", expected.Page.ID, result.Page.ID)
+	}
+	if result.Page.URL != expected.Page.URL {
+		t.Errorf("Expected Page URL %s, got %s", expected.Page.URL, result.Page.URL)
+	}
+	if result.Page.Title != expected.Page.Title {
+		t.Errorf("Expected Page Title %s, got %s", expected.Page.Title, result.Page.Title)
+	}
+	if result.Score != expected.Score {
+		t.Errorf("Expected Score %f, got %f", expected.Score, result.Score)
+	}
+	if !reflect.DeepEqual(result.KeywordOccurences, expected.KeywordOccurences) {
+		t.Errorf("Expected KeywordOccurences %v, got %v", expected.KeywordOccurences, result.KeywordOccurences)
 	}
 }
 
@@ -66,12 +88,12 @@ func TestService_Search(t *testing.T) {
 		t.Fatalf("Expected 2 results, got %d", len(results))
 	}
 
-	expectedResults := []*domain.Result{
+	expectedResults := []domain.Result{
 		{
 			PageID: "page1",
-			Page: &domain.ResultPage{
+			Page: domain.ResultPage{
 				ID:    "page1",
-				Hash:  "",
+				Hash:  "", // Assuming Hash is not being set for the test
 				URL:   "http://example.com",
 				Title: "Example",
 			},
@@ -82,9 +104,9 @@ func TestService_Search(t *testing.T) {
 		},
 		{
 			PageID: "page2",
-			Page: &domain.ResultPage{
+			Page: domain.ResultPage{
 				ID:    "page2",
-				Hash:  "",
+				Hash:  "", // Assuming Hash is not being set for the test
 				URL:   "http://example.com/contact",
 				Title: "Contact",
 			},
@@ -96,7 +118,8 @@ func TestService_Search(t *testing.T) {
 		},
 	}
 
-	if !reflect.DeepEqual(results, expectedResults) {
-		t.Errorf("Expected results %v, got %v", expectedResults, results)
+	testutil.PrettyPrint(results)
+	for i, result := range results {
+		checkResult(t, result, expectedResults[i])
 	}
 }

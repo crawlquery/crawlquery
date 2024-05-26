@@ -13,7 +13,7 @@ import (
 	pageRepo "crawlquery/node/page/repository/mem"
 	pageService "crawlquery/node/page/service"
 
-	keywordRepo "crawlquery/node/keyword/repository/mem"
+	keywordOccurrenceRepo "crawlquery/node/keyword/occurrence/repository/mem"
 	keywordService "crawlquery/node/keyword/service"
 
 	searchService "crawlquery/node/search/service"
@@ -27,7 +27,7 @@ func TestSearch(t *testing.T) {
 		pageRepo := pageRepo.NewRepository()
 		pageService := pageService.NewService(pageRepo, nil)
 
-		keywordRepo := keywordRepo.NewRepository()
+		keywordRepo := keywordOccurrenceRepo.NewRepository()
 		keywordService := keywordService.NewService(keywordRepo)
 
 		searchService := searchService.NewService(pageService, keywordService)
@@ -42,7 +42,9 @@ func TestSearch(t *testing.T) {
 			t.Errorf("Error saving page: %v", err)
 		}
 
-		err = keywordRepo.AddPageKeywords("page1", []string{"market"})
+		err = keywordRepo.Add("keyword", domain.KeywordOccurrence{
+			PageID: "page1", Frequency: 1, Positions: []int{1},
+		})
 		if err != nil {
 			t.Errorf("Error adding keywords: %v", err)
 		}
@@ -57,7 +59,9 @@ func TestSearch(t *testing.T) {
 			t.Errorf("Error saving page: %v", err)
 		}
 
-		err = keywordRepo.AddPageKeywords("page2", []string{"data"})
+		err = keywordRepo.Add("keyword", domain.KeywordOccurrence{
+			PageID: "page2", Frequency: 1, Positions: []int{1},
+		})
 
 		if err != nil {
 			t.Errorf("Error adding keywords: %v", err)

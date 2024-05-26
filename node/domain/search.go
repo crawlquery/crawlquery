@@ -5,7 +5,7 @@ import "github.com/gin-gonic/gin"
 type Result struct {
 	PageID            string                       `json:"id"`
 	Score             float64                      `json:"score"`
-	Page              *ResultPage                  `json:"page"`
+	Page              ResultPage                   `json:"page"`
 	KeywordOccurences map[string]KeywordOccurrence `json:"keyword_occurrences"`
 }
 
@@ -19,7 +19,7 @@ type ResultPage struct {
 }
 
 type SearchService interface {
-	Search(query string) ([]*Result, error)
+	Search(query string) ([]Result, error)
 }
 
 type SearchHandler interface {

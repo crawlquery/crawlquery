@@ -21,14 +21,14 @@ func NewService(
 	}
 }
 
-func sortResults(results []*domain.Result) {
+func sortResults(results []domain.Result) {
 	sort.Slice(results, func(i, j int) bool {
 		return results[i].Score > results[j].Score
 	})
 }
 
-func (s *Service) getResultsForKeywords(keywords []domain.Keyword) ([]*domain.Result, error) {
-	unsortedResults := map[string]*domain.Result{}
+func (s *Service) getResultsForKeywords(keywords []domain.Keyword) ([]domain.Result, error) {
+	unsortedResults := map[string]domain.Result{}
 
 	matches, err := s.keywordService.GetKeywordMatches(keywords)
 	if err != nil {
@@ -43,8 +43,9 @@ func (s *Service) getResultsForKeywords(keywords []domain.Keyword) ([]*domain.Re
 			}
 
 			if _, ok := unsortedResults[page.ID]; !ok {
-				unsortedResults[page.ID] = &domain.Result{
-					Page: &domain.ResultPage{
+				unsortedResults[page.ID] = domain.Result{
+					PageID: page.ID,
+					Page: domain.ResultPage{
 						ID:    page.ID,
 						Hash:  page.Hash,
 						URL:   page.URL,
@@ -55,15 +56,17 @@ func (s *Service) getResultsForKeywords(keywords []domain.Keyword) ([]*domain.Re
 				}
 			}
 
-			unsortedResults[page.ID].KeywordOccurences[string(match.Keyword)] = occurrence
-
-			unsortedResults[page.ID].Score += float64(occurrence.Frequency)
+			// Extract the result from the map, modify it, and put it back
+			result := unsortedResults[page.ID]
+			result.KeywordOccurences[string(match.Keyword)] = occurrence
+			result.Score += float64(occurrence.Frequency)
+			unsortedResults[page.ID] = result
 		}
 	}
 
-	results := []*domain.Result{}
+	results := []domain.Result{}
 
-	for _, result := range results {
+	for _, result := range unsortedResults {
 		results = append(results, result)
 	}
 
@@ -72,7 +75,7 @@ func (s *Service) getResultsForKeywords(keywords []domain.Keyword) ([]*domain.Re
 	return results, nil
 }
 
-func (s *Service) Search(query string) ([]*domain.Result, error) {
+func (s *Service) Search(query string) ([]domain.Result, error) {
 	queryGroups := splitQueryIntoCombinations(query)
 
 	results, err := s.getResultsForKeywords(queryGroups)
