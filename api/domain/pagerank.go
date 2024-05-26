@@ -12,6 +12,7 @@ type PageRank struct {
 type PageRankService interface {
 	UpdatePageRanks() error
 	GetPageRank(pageID string) (float64, error)
+	UpdatePageRanksEvery(duration time.Duration)
 }
 
 type PageRankRepository interface {

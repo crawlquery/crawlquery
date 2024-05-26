@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	"fmt"
 	"os"
+	"time"
 
 	authHandler "crawlquery/api/auth/handler"
 	authService "crawlquery/api/auth/service"
@@ -118,6 +119,7 @@ func main() {
 
 	go crawlJobService.ProcessCrawlJobs()
 	go indexJobService.ProcessIndexJobs()
+	go pageRankService.UpdatePageRanksEvery(time.Minute)
 
 	r := router.NewRouter(
 		accountService,
