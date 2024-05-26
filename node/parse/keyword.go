@@ -31,7 +31,7 @@ func (pp *KeywordParser) HeadingKeywords() ([][]string, error) {
 	var parsedKeywords [][]string
 
 	for _, h := range headings {
-		clean := strings.Join(strings.Fields(h), " ")
+		clean := strings.ToLower(strings.Join(strings.Fields(h), " "))
 
 		parsed, err := keyword.ParseText(clean)
 		if err != nil {
@@ -53,7 +53,7 @@ func (pp *KeywordParser) ParseParagraph() ([][]string, error) {
 	var keywords [][]string
 
 	for _, p := range paragraphs {
-		clean := strings.Join(strings.Fields(p), " ")
+		clean := strings.ToLower(strings.Join(strings.Fields(p), " "))
 		parsedKeywords, err := keyword.ParseText(clean)
 		if err != nil {
 			return nil, err

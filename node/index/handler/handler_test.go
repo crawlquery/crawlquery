@@ -9,7 +9,6 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
 
 	pageRepo "crawlquery/node/page/repository/mem"
@@ -27,104 +26,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 )
-
-func TestSearch(t *testing.T) {
-
-	t.Run("returns results", func(t *testing.T) {
-		pageRepo := pageRepo.NewRepository()
-		pageService := pageService.NewService(pageRepo, nil)
-
-		htmlRepo := htmlRepo.NewRepository()
-		htmlService := htmlService.NewService(htmlRepo, nil)
-
-		peerService := peerService.NewService(nil, nil, testutil.NewTestLogger())
-
-		keywordRepo := keywordRepo.NewRepository()
-		keywordService := keywordService.NewService(keywordRepo)
-
-		indexService := indexService.NewService(
-			pageService,
-			htmlService,
-			peerService,
-			keywordService,
-			testutil.NewTestLogger(),
-		)
-
-		for k, dummy := range factory.ThreePages {
-
-			page, err := pageService.Create(k, dummy.URL, "hash1")
-
-			if err != nil {
-				t.Fatalf("error saving page: %v", err)
-			}
-
-			err = htmlRepo.Save(page.ID, []byte(dummy.HTML))
-
-			if err != nil {
-				t.Fatalf("error saving html: %v", err)
-			}
-
-			err = indexService.Index(page.ID)
-
-			if err != nil {
-				t.Fatalf("error indexing page: %v", err)
-			}
-		}
-
-		indexHandler := indexHandler.NewHandler(indexService, testutil.NewTestLogger())
-
-		w := httptest.NewRecorder()
-		ctx, _ := gin.CreateTestContext(w)
-
-		ctx.Request, _ = http.NewRequest(http.MethodGet, "/search?q=example+website", nil)
-
-		indexHandler.Search(ctx)
-
-		body := w.Body.String()
-
-		if w.Code != http.StatusOK {
-			t.Errorf("expected status OK; got %v", w.Code)
-		}
-
-		if !strings.Contains(body, "home1") {
-			t.Errorf("expected body to contain 'home1'; got %s", body)
-		}
-	})
-
-	t.Run("returns error if query is missing", func(t *testing.T) {
-		pageRepo := pageRepo.NewRepository()
-		pageService := pageService.NewService(pageRepo, nil)
-
-		htmlRepo := htmlRepo.NewRepository()
-		htmlService := htmlService.NewService(htmlRepo, nil)
-
-		peerService := peerService.NewService(nil, nil, testutil.NewTestLogger())
-
-		keywordRepo := keywordRepo.NewRepository()
-		keywordService := keywordService.NewService(keywordRepo)
-
-		indexService := indexService.NewService(
-			pageService,
-			htmlService,
-			peerService,
-			keywordService,
-			testutil.NewTestLogger(),
-		)
-
-		indexHandler := indexHandler.NewHandler(indexService, testutil.NewTestLogger())
-
-		w := httptest.NewRecorder()
-		ctx, _ := gin.CreateTestContext(w)
-
-		ctx.Request, _ = http.NewRequest(http.MethodGet, "/search", nil)
-
-		indexHandler.Search(ctx)
-
-		if w.Code != http.StatusBadRequest {
-			t.Errorf("expected status BadRequest; got %v", w.Code)
-		}
-	})
-}
 
 func TestIndex(t *testing.T) {
 	t.Run("indexes page", func(t *testing.T) {

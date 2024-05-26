@@ -4,9 +4,7 @@ import (
 	"bytes"
 	"crawlquery/node/domain"
 	"crawlquery/node/parse"
-	"crawlquery/node/signal"
 	"crawlquery/pkg/util"
-	"sort"
 	"strings"
 	"time"
 
@@ -149,69 +147,6 @@ func (s *Service) keywordPages(terms [][]string) (map[string]*domain.Page, error
 	}
 
 	return pages, nil
-}
-
-func (s *Service) Search(query string) ([]domain.Result, error) {
-
-	terms := strings.Split(query, " ")
-
-	groups := make([][]string, len(terms)*(len(terms)+1)/2)
-
-	for i := 0; i < len(terms); i++ {
-		for j := i; j < len(terms); j++ {
-			groups = append(groups, terms[i:j+1])
-		}
-	}
-
-	pages, err := s.keywordPages(groups)
-
-	if err != nil {
-		s.logger.Errorw("Error getting pages", "error", err)
-		return nil, err
-	}
-
-	results := make([]domain.Result, 0)
-
-	signals := []domain.Signal{
-		&signal.Domain{},
-		&signal.Title{},
-	}
-
-	for _, page := range pages {
-
-		var breakdown map[string]domain.SignalBreakdown = make(map[string]domain.SignalBreakdown)
-
-		totalScore := 0.0
-
-		for _, signal := range signals {
-			val, sigs := signal.Level(page, terms)
-			breakdown[signal.Name()] = sigs
-			totalScore += float64(val)
-		}
-
-		results = append(results, domain.Result{
-			PageID: page.ID,
-			Page: &domain.ResultPage{
-				ID:          page.ID,
-				Hash:        page.Hash,
-				URL:         page.URL,
-				Title:       page.Title,
-				Description: page.Description,
-			},
-			Signals: breakdown,
-			Score:   totalScore,
-		})
-	}
-
-	sort.Slice(results, func(i, j int) bool {
-		return results[i].Score > results[j].Score
-	})
-
-	if len(results) > 10 {
-		results = results[:10]
-	}
-
-	return results, nil
 }
 
 func (s *Service) ApplyPageUpdatedEvent(event *domain.PageUpdatedEvent) error {

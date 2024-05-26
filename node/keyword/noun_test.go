@@ -126,6 +126,11 @@ func TestParseNounKeywords(t *testing.T) {
 				sentence: "I walked past a bright red car, and saw a lazy dog.",
 				want:     [][]string{{"bright", "red", "car"}, {"lazy", "dog"}, {"red", "car"}, {"dog"}, {"car"}},
 			},
+			{
+				name:     "Noun keyword",
+				sentence: "The Nasdaq closes at record high.",
+				want:     [][]string{{"Nasdaq"}, {"record", "high"}, {"Nasdaq", "closes"}, {"high"}},
+			},
 		}
 
 		for _, tc := range cases {
@@ -138,6 +143,45 @@ func TestParseNounKeywords(t *testing.T) {
 
 				got, err := parseKeywords(doc.Tokens(), KeywordCategories{
 					"noun": nounKeywordSubCategories(),
+				})
+				if err != nil {
+					t.Errorf("Error parsing sentence: %v", err)
+				}
+
+				sortKeywords(tc.want)
+				sortKeywords(got)
+
+				if !reflect.DeepEqual(got, tc.want) {
+					t.Errorf("Expected %v, got %v", tc.want, got)
+				}
+			})
+		}
+	})
+
+	t.Run("parses noun verb keywords", func(t *testing.T) {
+		cases := []struct {
+			name     string
+			sentence string
+			want     [][]string
+		}{
+			// Noun verb keywords
+			{
+				name:     "Nasdaq closes at record high.",
+				sentence: "Nasdaq closes at record high.",
+				want:     [][]string{{"Nasdaq", "closes"}},
+			},
+		}
+
+		for _, tc := range cases {
+			t.Run(tc.name, func(t *testing.T) {
+				doc, err := prose.NewDocument(tc.sentence, prose.WithSegmentation(false), prose.WithExtraction(false))
+
+				if err != nil {
+					t.Errorf("Error parsing sentence: %v", err)
+				}
+
+				got := parseSubCategories(doc.Tokens(), KeywordSubCategories{
+					"noun_verb": NounVerbTemplates,
 				})
 				if err != nil {
 					t.Errorf("Error parsing sentence: %v", err)

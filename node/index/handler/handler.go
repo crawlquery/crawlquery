@@ -20,29 +20,6 @@ func NewHandler(service domain.IndexService, logger *zap.SugaredLogger) *IndexHa
 	}
 }
 
-func (sh *IndexHandler) Search(c *gin.Context) {
-	q := c.Query("q")
-	if q == "" {
-		c.JSON(400, gin.H{
-			"error": "missing query",
-		})
-		return
-	}
-
-	res, err := sh.service.Search(q)
-
-	if err != nil {
-		c.JSON(500, gin.H{
-			"error": err.Error(),
-		})
-		return
-	}
-
-	c.JSON(200, gin.H{
-		"results": res,
-	})
-}
-
 func (ih *IndexHandler) Index(c *gin.Context) {
 	pageID := c.Param("pageID")
 	if pageID == "" {

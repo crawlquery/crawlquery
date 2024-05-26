@@ -26,6 +26,7 @@ func CORSMiddleware() gin.HandlerFunc {
 
 func NewRouter(
 	indexHandler domain.IndexHandler,
+	searchHandler domain.SearchHandler,
 	crawlHandler domain.CrawlHandler,
 	dumpHandler domain.DumpHandler,
 	statHandler domain.StatHandler,
@@ -39,7 +40,7 @@ func NewRouter(
 		AllowCredentials: true,
 		MaxAge:           12 * time.Hour,
 	}))
-	router.GET("/search", indexHandler.Search)
+	router.GET("/search", searchHandler.Search)
 	router.POST("/crawl", crawlHandler.Crawl)
 
 	router.POST("/event", indexHandler.Event)

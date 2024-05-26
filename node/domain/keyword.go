@@ -1,19 +1,31 @@
 package domain
 
-// Posting lists entry
-type Posting struct {
+import "errors"
+
+var ErrKeywordNotFound = errors.New("keyword not found")
+
+type Keyword string
+
+// Occurrence represents a keyword occurrence in a page.
+type Occurrence struct {
 	PageID    string `json:"page_id"`
 	Frequency int    `json:"frequency"`
-	Positions []int  `json:"positions"` // Optional, depending on whether you need positional index
+	Positions []int  `json:"positions"`
 }
 
-type KeywordRepository interface {
-	GetPages(keyword string) ([]string, error)
-	AddPageKeywords(pageID string, keywords []string) error
-	RemovePageKeywords(pageID string) error
+type KeywordMatch struct {
+	Keyword     Keyword      `json:"keyword"`
+	Occurrences []Occurrence `json:"occurrences"`
 }
 
-type KeywordService interface {
-	UpdatePageKeywords(pageID string, keywords [][]string) error
-	GetPageIDsByKeyword(keyword string) ([]string, error)
+type KeywordOccurrenceService interface {
+	GetKeywordMatches(keywords []Keyword) ([]KeywordMatch, error)
+	UpdateKeywordOccurrences(pageID string, keywordOccurrences map[Keyword]Occurrence) error
+	RemovePageOccurrences(pageID string) error
+}
+
+type KeywordOccurrenceRepository interface {
+	GetAll(keyword Keyword) ([]Occurrence, error)
+	Add(keyword Keyword, occurrence Occurrence) error
+	RemoveForPageID(pageID string) error
 }

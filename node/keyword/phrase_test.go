@@ -11,14 +11,14 @@ import (
 )
 
 func TestWordClasses(t *testing.T) {
-	text := "Best way to detect bot from user agent?"
+	text := "Nasdaq closes at record high."
 	doc, _ := prose.NewDocument(text)
 
 	tokens := doc.Tokens()
 
 	fmt.Printf("Tokens: %v\n", tokens)
 
-	// t.Fail()
+	t.Fail()
 }
 
 func TestParseText(t *testing.T) {
@@ -122,6 +122,48 @@ func TestParseText(t *testing.T) {
 					var found bool
 
 					for _, p := range got {
+						if reflect.DeepEqual(keyword, p) {
+							found = true
+							break
+						}
+					}
+
+					if !found {
+						t.Errorf("Expected %v, got %v", tc.want, got)
+					}
+				}
+			})
+		}
+	})
+
+	t.Run("parses noun keywords", func(t *testing.T) {
+		cases := []struct {
+			name     string
+			sentence string
+			want     [][]string
+		}{
+			// Noun keywords
+			{
+				name:     "Noun keyword",
+				sentence: "Nasdaq closes Friday at record high as Nvidia and the AI trade rallies on",
+				want:     [][]string{{"Nasdaq", "closes"}},
+			},
+		}
+
+		for _, tc := range cases {
+			t.Run(tc.name, func(t *testing.T) {
+
+				got, err := ParseText(tc.sentence)
+
+				if err != nil {
+					t.Errorf("Error parsing sentence: %v", err)
+				}
+
+				for _, keyword := range tc.want {
+					var found bool
+
+					for _, p := range got {
+
 						if reflect.DeepEqual(keyword, p) {
 							found = true
 							break
