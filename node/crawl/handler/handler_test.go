@@ -57,7 +57,8 @@ func TestCrawl(t *testing.T) {
 		gock.New("http://example.com").
 			Get("/").
 			Reply(200).
-			BodyString(expectedData)
+			BodyString(expectedData).
+			Header.Set("Content-Type", "text/html")
 
 		req := dto.CrawlRequest{
 			PageID: "test1",
