@@ -3,9 +3,10 @@ package domain
 import "github.com/gin-gonic/gin"
 
 type StatInfo struct {
-	TotalPages    int
-	TotalKeywords int
-	SizeOfIndex   int
+	TotalPages        int
+	TotalIndexedPages int
+	TotalKeywords     int
+	SizeOfPages       int
 }
 
 type StatService interface {

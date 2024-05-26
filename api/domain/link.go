@@ -17,10 +17,12 @@ type Link struct {
 
 type LinkRepository interface {
 	Create(*Link) error
+	GetAll() ([]*Link, error)
 }
 
 type LinkService interface {
 	Create(srcID, dstID string) (*Link, error)
+	GetAll() ([]*Link, error)
 }
 
 type LinkHandler interface {

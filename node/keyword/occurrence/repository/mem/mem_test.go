@@ -3,6 +3,8 @@ package mem_test
 import (
 	"crawlquery/node/domain"
 	"crawlquery/node/keyword/occurrence/repository/mem"
+	"crawlquery/pkg/util"
+	"fmt"
 	"reflect"
 	"testing"
 )
@@ -108,5 +110,36 @@ func TestRemoveOccurencesForPageID(t *testing.T) {
 	occ, err := repo.GetAll(keyword)
 	if err != domain.ErrKeywordNotFound {
 		t.Errorf("Expected no occurrences, got %v", occ)
+	}
+}
+
+func TestCount(t *testing.T) {
+	repo := mem.NewRepository()
+
+	keywords := []domain.Keyword{"example1", "example2", "example3", "example4", "example5"}
+
+	for i, keyword := range keywords {
+		for j := 0; j < i+1; j++ {
+			occurrence := domain.KeywordOccurrence{
+				PageID:    util.PageID(fmt.Sprintf("page%d", i+1)),
+				Frequency: 1,
+				Positions: []int{1},
+			}
+
+			err := repo.Add(keyword, occurrence)
+
+			if err != nil {
+				t.Fatalf("Error adding occurrence: %v", err)
+			}
+		}
+	}
+
+	count, err := repo.Count()
+	if err != nil {
+		t.Fatalf("Error counting occurrences: %v", err)
+	}
+
+	if count != 5 {
+		t.Errorf("Expected count 5, got %d", count)
 	}
 }

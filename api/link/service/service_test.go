@@ -51,7 +51,7 @@ func TestCreate(t *testing.T) {
 			t.Errorf("Expected CreatedAt to be set")
 		}
 
-		repoCheck := linkRepo.GetAllBySrcID(link.SrcID)
+		repoCheck, _ := linkRepo.GetAllBySrcID(link.SrcID)
 
 		if len(repoCheck) != 1 {
 			t.Errorf("Expected 1 link, got %d", len(repoCheck))

@@ -60,7 +60,7 @@ func TestCreate(t *testing.T) {
 
 		linkHandler.Create(ctx)
 
-		repoCheck := linkRepo.GetAllBySrcID(util.PageID(src))
+		repoCheck, _ := linkRepo.GetAllBySrcID(util.PageID(src))
 
 		if len(repoCheck) != 1 {
 			t.Errorf("Expected 1 link, got %d", len(repoCheck))

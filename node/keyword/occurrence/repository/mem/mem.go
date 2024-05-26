@@ -45,3 +45,7 @@ func (r *Repository) RemoveForPageID(pageID string) error {
 
 	return nil
 }
+
+func (r *Repository) Count() (int, error) {
+	return len(r.occurrences), nil
+}

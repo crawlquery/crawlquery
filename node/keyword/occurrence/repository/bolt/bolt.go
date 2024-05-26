@@ -111,3 +111,25 @@ func (r *Repository) RemoveForPageID(pageID string) error {
 		return err
 	})
 }
+
+func (r *Repository) Count() (int, error) {
+	var count int
+
+	err := r.db.View(func(tx *bolt.Tx) error {
+		bucket := tx.Bucket(occurrencesBucket)
+		if bucket == nil {
+			return nil
+		}
+
+		return bucket.ForEach(func(k, v []byte) error {
+			count++
+			return nil
+		})
+	})
+
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}

@@ -1,12 +1,14 @@
 package bolt_test
 
 import (
+	"fmt"
 	"os"
 	"reflect"
 	"testing"
 
 	"crawlquery/node/domain"
 	occRepo "crawlquery/node/keyword/occurrence/repository/bolt"
+	"crawlquery/pkg/util"
 
 	"github.com/boltdb/bolt"
 )
@@ -141,5 +143,42 @@ func TestRemoveOccurencesForPageID(t *testing.T) {
 
 	if err != domain.ErrKeywordNotFound {
 		t.Errorf("Expected error %v, got %v", domain.ErrKeywordNotFound, err)
+	}
+}
+
+func TestCount(t *testing.T) {
+	db := setupTestDB(t)
+	defer teardownTestDB(db)
+
+	repo, err := occRepo.NewRepository(db)
+	if err != nil {
+		t.Fatalf("Failed to create repository: %v", err)
+	}
+
+	keywords := []domain.Keyword{"example1", "example2", "example3", "example4", "example5"}
+
+	for i, keyword := range keywords {
+		for j := 0; j < i+1; j++ {
+			occurrence := domain.KeywordOccurrence{
+				PageID:    util.PageID(fmt.Sprintf("page%d", i+1)),
+				Frequency: 1,
+				Positions: []int{1},
+			}
+
+			err := repo.Add(keyword, occurrence)
+
+			if err != nil {
+				t.Fatalf("Error adding occurrence: %v", err)
+			}
+		}
+	}
+
+	count, err := repo.Count()
+	if err != nil {
+		t.Fatalf("Error counting occurrences: %v", err)
+	}
+
+	if count != 5 {
+		t.Errorf("Expected count 5, got %d", count)
 	}
 }

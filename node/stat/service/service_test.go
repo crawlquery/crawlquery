@@ -7,6 +7,9 @@ import (
 	"encoding/json"
 	"testing"
 
+	keywordOccurrenceRepo "crawlquery/node/keyword/occurrence/repository/mem"
+	keywordService "crawlquery/node/keyword/service"
+
 	dumpService "crawlquery/node/dump/service"
 
 	statService "crawlquery/node/stat/service"
@@ -19,7 +22,16 @@ func TestInfo(t *testing.T) {
 
 		dumpService := dumpService.NewService(pageService)
 
-		statService := statService.NewService(pageService, dumpService)
+		keywordOccurrenceRepo := keywordOccurrenceRepo.NewRepository()
+		keywordService := keywordService.NewService(keywordOccurrenceRepo)
+
+		keywordOccurrenceRepo.Add(domain.Keyword("example"), domain.KeywordOccurrence{
+			PageID:    "1",
+			Frequency: 1,
+			Positions: []int{1},
+		})
+
+		statService := statService.NewService(pageService, keywordService, dumpService)
 
 		pages := map[string]*domain.Page{
 			"1": {
@@ -65,12 +77,12 @@ func TestInfo(t *testing.T) {
 			t.Errorf("expected 3 pages, got %d", info.TotalPages)
 		}
 
-		if info.TotalKeywords != 0 {
-			t.Errorf("expected 0 keywords, got %d", info.TotalKeywords)
+		if info.TotalKeywords != 1 {
+			t.Errorf("expected 1 keyword, got %d", info.TotalKeywords)
 		}
 
-		if info.SizeOfIndex != len(encoded) {
-			t.Errorf("expected %d index size, got %d", len(encoded), info.SizeOfIndex)
+		if info.SizeOfPages != len(encoded) {
+			t.Errorf("expected %d page size, got %d", len(encoded), info.SizeOfPages)
 		}
 	})
 }

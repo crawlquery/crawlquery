@@ -46,6 +46,36 @@ func TestCreate(t *testing.T) {
 	})
 }
 
+func TestGetAll(t *testing.T) {
+	t.Run("can get all links", func(t *testing.T) {
+		// Arrange
+		repo := NewRepository()
+		link1 := &domain.Link{
+			SrcID: util.UUID(),
+			DstID: util.UUID(),
+		}
+		link2 := &domain.Link{
+			SrcID: util.UUID(),
+			DstID: util.UUID(),
+		}
+		link3 := &domain.Link{
+			SrcID: util.UUID(),
+			DstID: util.UUID(),
+		}
+		repo.Create(link1)
+		repo.Create(link2)
+		repo.Create(link3)
+
+		// Act
+		links, _ := repo.GetAll()
+
+		// Assert
+		if len(links) != 3 {
+			t.Errorf("Expected 3 links, got %d", len(links))
+		}
+	})
+}
+
 func TestGetAllBySrcID(t *testing.T) {
 	t.Run("can get all links by srcID", func(t *testing.T) {
 		// Arrange
@@ -72,7 +102,7 @@ func TestGetAllBySrcID(t *testing.T) {
 		repo.Create(link4)
 
 		// Act
-		links := repo.GetAllBySrcID("srcID")
+		links, _ := repo.GetAllBySrcID("srcID")
 
 		// Assert
 		if len(links) != 3 {

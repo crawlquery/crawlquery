@@ -46,10 +46,11 @@ func (s *Service) getResultsForKeywords(keywords []domain.Keyword) ([]domain.Res
 				unsortedResults[page.ID] = domain.Result{
 					PageID: page.ID,
 					Page: domain.ResultPage{
-						ID:    page.ID,
-						Hash:  page.Hash,
-						URL:   page.URL,
-						Title: page.Title,
+						ID:          page.ID,
+						Hash:        page.Hash,
+						URL:         page.URL,
+						Title:       page.Title,
+						Description: page.Description,
 					},
 					Score:             0,
 					KeywordOccurences: map[string]domain.KeywordOccurrence{},

@@ -12,6 +12,10 @@ func NewService(repo domain.KeywordOccurrenceRepository) *Service {
 	return &Service{repo: repo}
 }
 
+func (s *Service) Count() (int, error) {
+	return s.repo.Count()
+}
+
 func (s *Service) GetKeywordMatches(keywords []domain.Keyword) ([]domain.KeywordMatch, error) {
 	var matches []domain.KeywordMatch
 

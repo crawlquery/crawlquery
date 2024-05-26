@@ -13,20 +13,23 @@ import (
 	"time"
 
 	nodeDomain "crawlquery/node/domain"
+
 	"crawlquery/pkg/dto"
 
 	"go.uber.org/zap"
 )
 
 type Service struct {
-	nodeService domain.NodeService
-	logger      *zap.SugaredLogger
+	nodeService     domain.NodeService
+	pageRankService domain.PageRankService
+	logger          *zap.SugaredLogger
 }
 
-func NewService(nodeService domain.NodeService, logger *zap.SugaredLogger) *Service {
+func NewService(nodeService domain.NodeService, pageRankService domain.PageRankService, logger *zap.SugaredLogger) *Service {
 	return &Service{
-		nodeService: nodeService,
-		logger:      logger,
+		nodeService:     nodeService,
+		pageRankService: pageRankService,
+		logger:          logger,
 	}
 }
 
@@ -99,6 +102,13 @@ func (s *Service) Search(term string) ([]nodeDomain.Result, error) {
 	}
 
 	wg.Wait()
+
+	results, err = s.pageRankService.ApplyPageRankToResults(results)
+
+	if err != nil {
+		s.logger.Errorf("Error applying PageRank to results: %v", err)
+		return nil, err
+	}
 
 	// filter out duplicate results
 	uniqueResults := make(map[string]nodeDomain.Result)

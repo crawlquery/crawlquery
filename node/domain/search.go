@@ -7,6 +7,7 @@ type Result struct {
 	Score             float64                      `json:"score"`
 	Page              ResultPage                   `json:"page"`
 	KeywordOccurences map[string]KeywordOccurrence `json:"keyword_occurrences"`
+	PageRank          float64                      `json:"page_rank"`
 }
 
 // Page represents a web page with metadata. Note this does not include the keywords.

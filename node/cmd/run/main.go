@@ -118,7 +118,7 @@ func main() {
 	indexService := indexService.NewService(pageService, htmlService, peerService, keywordService, sugar)
 	crawlService := crawlService.NewService(htmlService, pageService, indexService, api, sugar)
 	dumpService := dumpService.NewService(pageService)
-	statService := statService.NewService(pageService, dumpService)
+	statService := statService.NewService(pageService, keywordService, dumpService)
 	searchService := searchService.NewService(pageService, keywordService)
 
 	// handlers

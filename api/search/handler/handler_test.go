@@ -3,9 +3,7 @@ package handler_test
 import (
 	"crawlquery/api/domain"
 	"crawlquery/api/dto"
-	"crawlquery/api/node/repository/mem"
 	"crawlquery/api/search/handler"
-	"crawlquery/api/search/service"
 	"crawlquery/pkg/testutil"
 	"encoding/json"
 	"net/http"
@@ -16,18 +14,36 @@ import (
 	nodeDomain "crawlquery/node/domain"
 	nodeDto "crawlquery/pkg/dto"
 
+	nodeRepo "crawlquery/api/node/repository/mem"
 	nodeService "crawlquery/api/node/service"
+
+	linkRepo "crawlquery/api/link/repository/mem"
+	linkService "crawlquery/api/link/service"
+
+	pageRankService "crawlquery/api/pagerank/service"
+
+	searchService "crawlquery/api/search/service"
 
 	"github.com/gin-gonic/gin"
 	"github.com/h2non/gock"
 )
 
+func setupServices() (*nodeRepo.Repository, *nodeService.Service, *linkService.Service, *pageRankService.Service, *searchService.Service) {
+	nodeRepo := nodeRepo.NewRepository()
+	nodeService := nodeService.NewService(nodeRepo, nil, nil, testutil.NewTestLogger())
+	linkRepo := linkRepo.NewRepository()
+	linkService := linkService.NewService(linkRepo, nil, testutil.NewTestLogger())
+	pageRankService := pageRankService.NewService(linkService, testutil.NewTestLogger())
+	searchService := searchService.NewService(nodeService, pageRankService, testutil.NewTestLogger())
+
+	return nodeRepo, nodeService, linkService, pageRankService, searchService
+}
 func TestSearch(t *testing.T) {
 	t.Run("should return results", func(t *testing.T) {
 
-		repo := mem.NewRepository()
+		nodeRepo, _, _, _, searchService := setupServices()
 
-		repo.Create(&domain.Node{
+		nodeRepo.Create(&domain.Node{
 			ID:        "node1",
 			ShardID:   0,
 			Hostname:  "node1.cluster.com",
@@ -35,7 +51,7 @@ func TestSearch(t *testing.T) {
 			CreatedAt: time.Now(),
 		})
 
-		repo.Create(&domain.Node{
+		nodeRepo.Create(&domain.Node{
 			ID:        "node2",
 			ShardID:   1,
 			Hostname:  "node2.cluster.com",
@@ -81,10 +97,7 @@ func TestSearch(t *testing.T) {
 				},
 			})
 
-		nodeService := nodeService.NewService(repo, nil, nil, testutil.NewTestLogger())
-
-		svc := service.NewService(nodeService, testutil.NewTestLogger())
-		handler := handler.NewHandler(svc)
+		handler := handler.NewHandler(searchService)
 
 		responseWriter := httptest.NewRecorder()
 		ctx, _ := gin.CreateTestContext(responseWriter)

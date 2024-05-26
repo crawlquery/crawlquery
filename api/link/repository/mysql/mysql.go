@@ -24,6 +24,27 @@ func (r *Repository) Create(link *domain.Link) error {
 	return nil
 }
 
+func (r *Repository) GetAll() ([]*domain.Link, error) {
+	rows, err := r.db.Query("SELECT src_id, dst_id, created_at FROM links")
+
+	if err != nil {
+		return nil, err
+	}
+
+	var links []*domain.Link
+	for rows.Next() {
+		var link domain.Link
+		err = rows.Scan(&link.SrcID, &link.DstID, &link.CreatedAt)
+		if err != nil {
+			return nil, err
+		}
+
+		links = append(links, &link)
+	}
+
+	return links, nil
+}
+
 func (r *Repository) GetAllBySrcID(srcID string) ([]*domain.Link, error) {
 	rows, err := r.db.Query("SELECT src_id, dst_id, created_at FROM links WHERE src_id = ?", srcID)
 	if err != nil {

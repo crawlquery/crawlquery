@@ -79,3 +79,7 @@ func (s *Service) Create(src, dst string) (*domain.Link, error) {
 
 	return link, nil
 }
+
+func (s *Service) GetAll() ([]*domain.Link, error) {
+	return s.linkRepo.GetAll()
+}

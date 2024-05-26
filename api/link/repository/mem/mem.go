@@ -1,6 +1,8 @@
 package mem
 
-import "crawlquery/api/domain"
+import (
+	"crawlquery/api/domain"
+)
 
 type Repository struct {
 	links []*domain.Link
@@ -24,7 +26,11 @@ func (r *Repository) Create(link *domain.Link) error {
 	return nil
 }
 
-func (r *Repository) GetAllBySrcID(srcID string) []*domain.Link {
+func (r *Repository) GetAll() ([]*domain.Link, error) {
+	return r.links, nil
+}
+
+func (r *Repository) GetAllBySrcID(srcID string) ([]*domain.Link, error) {
 	var links []*domain.Link
 
 	for _, l := range r.links {
@@ -33,5 +39,5 @@ func (r *Repository) GetAllBySrcID(srcID string) []*domain.Link {
 		}
 	}
 
-	return links
+	return links, nil
 }

@@ -1,16 +1,25 @@
 package service
 
-import "crawlquery/node/domain"
+import (
+	"crawlquery/node/domain"
+	"time"
+)
 
 type Service struct {
-	pageService domain.PageService
-	dumpService domain.DumpService
+	pageService    domain.PageService
+	keywordService domain.KeywordService
+	dumpService    domain.DumpService
 }
 
-func NewService(pageService domain.PageService, dumpService domain.DumpService) *Service {
+func NewService(
+	pageService domain.PageService,
+	keywordService domain.KeywordService,
+	dumpService domain.DumpService,
+) *Service {
 	return &Service{
-		pageService: pageService,
-		dumpService: dumpService,
+		pageService:    pageService,
+		keywordService: keywordService,
+		dumpService:    dumpService,
 	}
 }
 
@@ -20,20 +29,34 @@ func (s *Service) Info() (*domain.StatInfo, error) {
 		return nil, err
 	}
 
+	keywordCount, err := s.keywordService.Count()
+
+	if err != nil {
+		return nil, err
+	}
+
 	totalPages := len(pages)
-	totalKeywords := 0
-	sizeOfIndex := 0
+	totalIndexedPages := 0
+	totalKeywords := keywordCount
+	sizeOfPages := 0
 	bytes, err := s.dumpService.Page()
 
 	if err != nil {
 		return nil, err
 	}
 
-	sizeOfIndex = len(bytes)
+	sizeOfPages = len(bytes)
+
+	for _, page := range pages {
+		if page.LastIndexedAt != nil && page.LastIndexedAt.After(time.Now().Add(-4*time.Hour)) {
+			totalIndexedPages++
+		}
+	}
 
 	return &domain.StatInfo{
-		TotalPages:    totalPages,
-		TotalKeywords: totalKeywords,
-		SizeOfIndex:   sizeOfIndex,
+		TotalPages:        totalPages,
+		TotalIndexedPages: totalIndexedPages,
+		TotalKeywords:     totalKeywords,
+		SizeOfPages:       sizeOfPages,
 	}, nil
 }
