@@ -111,8 +111,7 @@ func (s *Service) Search(term string) ([]nodeDomain.Result, error) {
 			rank, err := s.pageRankService.GetPageRank(res.PageID)
 
 			if err != nil {
-				s.logger.Errorf("Error applying PageRank to results: %v", err)
-				return nil, err
+				s.logger.Errorf("No pagerank found for %s: %v", res.PageID, err)
 			}
 			res.PageRank = rank
 			uniqueResults[res.PageID] = res

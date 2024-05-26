@@ -7,7 +7,6 @@ import (
 	nodeRepo "crawlquery/api/node/repository/mem"
 	nodeService "crawlquery/api/node/service"
 	nodeDomain "crawlquery/node/domain"
-	"math"
 
 	pageRankRepo "crawlquery/api/pagerank/repository/mem"
 	pageRankService "crawlquery/api/pagerank/service"
@@ -21,7 +20,7 @@ import (
 	"github.com/h2non/gock"
 )
 
-func setupServices() (*nodeRepo.Repository, *nodeService.Service, *linkService.Service, *linkRepo.Repository, *pageRankService.Service, *searchService.Service) {
+func setupServices() (*nodeRepo.Repository, *nodeService.Service, *linkService.Service, *linkRepo.Repository, *pageRankRepo.Repository, *pageRankService.Service, *searchService.Service) {
 	nodeRepo := nodeRepo.NewRepository()
 	nodeService := nodeService.NewService(nodeRepo, nil, nil, testutil.NewTestLogger())
 	linkRepo := linkRepo.NewRepository()
@@ -30,12 +29,12 @@ func setupServices() (*nodeRepo.Repository, *nodeService.Service, *linkService.S
 	pageRankService := pageRankService.NewService(linkService, pageRankRepo, testutil.NewTestLogger())
 	searchService := searchService.NewService(nodeService, pageRankService, testutil.NewTestLogger())
 
-	return nodeRepo, nodeService, linkService, linkRepo, pageRankService, searchService
+	return nodeRepo, nodeService, linkService, linkRepo, pageRankRepo, pageRankService, searchService
 }
 
 func TestSearch(t *testing.T) {
 	t.Run("returns results", func(t *testing.T) {
-		nodeRepo, _, _, _, _, searchService := setupServices()
+		nodeRepo, _, _, _, _, _, searchService := setupServices()
 
 		nodeRepo.Create(&domain.Node{
 			ID:        "node1",
@@ -106,7 +105,7 @@ func TestSearch(t *testing.T) {
 	})
 
 	t.Run("cleans term", func(t *testing.T) {
-		nodeRepo, _, _, _, _, searchService := setupServices()
+		nodeRepo, _, _, _, _, _, searchService := setupServices()
 
 		nodeRepo.Create(&domain.Node{
 			ID:        "node1",
@@ -172,7 +171,7 @@ func TestSearch(t *testing.T) {
 		}
 	})
 	t.Run("removes duplicate results", func(t *testing.T) {
-		nodeRepo, _, _, _, _, searchService := setupServices()
+		nodeRepo, _, _, _, _, _, searchService := setupServices()
 
 		nodeRepo.Create(&domain.Node{
 			ID:        "node1",
@@ -239,7 +238,7 @@ func TestSearch(t *testing.T) {
 	})
 
 	t.Run("applies page rank", func(t *testing.T) {
-		nodeRepo, _, _, linkRepo, _, searchService := setupServices()
+		nodeRepo, _, _, _, pageRankRepo, _, searchService := setupServices()
 
 		nodeRepo.Create(&domain.Node{
 			ID:        "node1",
@@ -293,15 +292,7 @@ func TestSearch(t *testing.T) {
 				},
 			})
 
-		linkRepo.Create(&domain.Link{
-			SrcID: "page3",
-			DstID: "page1",
-		})
-
-		linkRepo.Create(&domain.Link{
-			SrcID: "page3",
-			DstID: "page1",
-		})
+		pageRankRepo.Update("page1", 0.5, time.Now())
 
 		results, err := searchService.Search("term")
 		if err != nil {
@@ -316,12 +307,10 @@ func TestSearch(t *testing.T) {
 			t.Errorf("Expected page ID to be page2, got %s and %s", results[0].PageID, results[1].PageID)
 		}
 
-		expectedRank := 0.1387
-
 		for _, result := range results {
 			if result.PageID == "page1" {
-				if math.Abs(result.PageRank-expectedRank) > 0.01 {
-					t.Errorf("Unexpected PageRank for page1. Expected %f, got %f", expectedRank, result.PageRank)
+				if result.PageRank != 0.5 {
+					t.Errorf("Unexpected PageRank for page1. Expected %f, got %f", 0.5, result.PageRank)
 				}
 			}
 		}

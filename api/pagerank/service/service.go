@@ -50,21 +50,13 @@ func (s *Service) UpdatePageRanks() error {
 
 func (s *Service) GetPageRank(pageID string) (float64, error) {
 
-	pages, links, err := s.fetchPagesAndLinks()
+	rank, err := s.pageRankRepo.Get(pageID)
 	if err != nil {
-		s.logger.Errorw("Error fetching pages and links", "error", err)
+		s.logger.Errorw("Error getting page rank", "error", err)
 		return 0, err
 	}
 
-	pageRanks := calculatePageRank(pages, links)
-
-	if rank, ok := pageRanks[pageID]; ok {
-		return rank, nil
-	}
-
-	s.logger.Errorw("Page not found", "pageID", pageID)
-
-	return 0, nil
+	return rank, nil
 }
 
 func (s *Service) fetchPagesAndLinks() (map[string]*domain.PageRank, map[string][]string, error) {
