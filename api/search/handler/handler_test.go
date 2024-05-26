@@ -54,7 +54,7 @@ func TestSearch(t *testing.T) {
 					{
 						PageID: "page1",
 						Score:  0.5,
-						Page: &nodeDomain.ResultPage{
+						Page: nodeDomain.ResultPage{
 							ID:    "page1",
 							URL:   "http://google.com",
 							Title: "Google",
@@ -72,7 +72,7 @@ func TestSearch(t *testing.T) {
 					{
 						PageID: "page2",
 						Score:  0.6,
-						Page: &nodeDomain.ResultPage{
+						Page: nodeDomain.ResultPage{
 							ID:    "page2",
 							URL:   "http://facebook.com",
 							Title: "Facebook",

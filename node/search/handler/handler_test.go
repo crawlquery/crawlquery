@@ -1,7 +1,6 @@
 package handler_test
 
 import (
-	"crawlquery/pkg/testutil"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -10,93 +9,99 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"crawlquery/node/domain"
-	pageRepo "crawlquery/node/page/repository/mem"
-	pageService "crawlquery/node/page/service"
-
 	keywordOccurrenceRepo "crawlquery/node/keyword/occurrence/repository/mem"
 	keywordService "crawlquery/node/keyword/service"
-
-	searchService "crawlquery/node/search/service"
-
+	pageRepo "crawlquery/node/page/repository/mem"
+	pageService "crawlquery/node/page/service"
 	searchHandler "crawlquery/node/search/handler"
+	searchService "crawlquery/node/search/service"
+	"crawlquery/pkg/testutil"
 )
+
+func setupTestRepos() (*pageRepo.Repository, *keywordOccurrenceRepo.Repository, *pageService.Service, *keywordService.Service) {
+	pageRepo := pageRepo.NewRepository()
+	pageService := pageService.NewService(pageRepo, nil)
+
+	keywordOccurrenceRepo := keywordOccurrenceRepo.NewRepository()
+	keywordService := keywordService.NewService(keywordOccurrenceRepo)
+
+	return pageRepo, keywordOccurrenceRepo, pageService, keywordService
+}
+
+func savePage(t *testing.T, pageRepo *pageRepo.Repository, keywordRepo *keywordOccurrenceRepo.Repository, page domain.Page, keywordOccurrences map[domain.Keyword]domain.KeywordOccurrence) {
+	err := pageRepo.Save(page.ID, &page)
+	if err != nil {
+		t.Fatalf("Error saving page: %v", err)
+	}
+
+	for keyword, occurrence := range keywordOccurrences {
+		err := keywordRepo.Add(keyword, occurrence)
+		if err != nil {
+			t.Fatalf("Error adding keyword occurrence: %v", err)
+		}
+	}
+}
+
+func checkResponseBody(t *testing.T, body string, expectedPageIDs []string) {
+	for _, pageID := range expectedPageIDs {
+		if !strings.Contains(body, pageID) {
+			t.Errorf("expected body to contain '%s'; got %s", pageID, body)
+		}
+	}
+}
 
 func TestSearch(t *testing.T) {
 
 	t.Run("returns results", func(t *testing.T) {
-		pageRepo := pageRepo.NewRepository()
-		pageService := pageService.NewService(pageRepo, nil)
+		pageRepo, keywordRepo, pageService, keywordService := setupTestRepos()
+		searchSvc := searchService.NewService(pageService, keywordService)
 
-		keywordRepo := keywordOccurrenceRepo.NewRepository()
-		keywordService := keywordService.NewService(keywordRepo)
-
-		searchService := searchService.NewService(pageService, keywordService)
-
-		err := pageRepo.Save("page1", &domain.Page{
+		page1 := domain.Page{
 			ID:    "page1",
 			URL:   "http://example.com",
 			Title: "Example",
-		})
-
-		if err != nil {
-			t.Errorf("Error saving page: %v", err)
 		}
-
-		err = keywordRepo.Add("keyword", domain.KeywordOccurrence{
-			PageID: "page1", Frequency: 1, Positions: []int{1},
-		})
-		if err != nil {
-			t.Errorf("Error adding keywords: %v", err)
-		}
-
-		err = pageRepo.Save("page2", &domain.Page{
+		page2 := domain.Page{
 			ID:    "page2",
-			URL:   "http://example.com",
-			Title: "Example",
-		})
-
-		if err != nil {
-			t.Errorf("Error saving page: %v", err)
+			URL:   "http://example.com/contact",
+			Title: "Contact",
 		}
 
-		err = keywordRepo.Add("keyword", domain.KeywordOccurrence{
-			PageID: "page2", Frequency: 1, Positions: []int{1},
-		})
-
-		if err != nil {
-			t.Errorf("Error adding keywords: %v", err)
+		keywordOccurrences1 := map[domain.Keyword]domain.KeywordOccurrence{
+			"keyword": {PageID: "page1", Frequency: 1, Positions: []int{1}},
+		}
+		keywordOccurrences2 := map[domain.Keyword]domain.KeywordOccurrence{
+			"keyword": {PageID: "page2", Frequency: 1, Positions: []int{1}},
 		}
 
-		indexHandler := searchHandler.NewHandler(searchService, testutil.NewTestLogger())
+		savePage(t, pageRepo, keywordRepo, page1, keywordOccurrences1)
+		savePage(t, pageRepo, keywordRepo, page2, keywordOccurrences2)
+
+		searchHandler := searchHandler.NewHandler(searchSvc, testutil.NewTestLogger())
 
 		w := httptest.NewRecorder()
 		ctx, _ := gin.CreateTestContext(w)
 
-		ctx.Request, _ = http.NewRequest(http.MethodGet, "/search?q=market data", nil)
+		ctx.Request, _ = http.NewRequest(http.MethodGet, "/search?q=keyword", nil)
 
-		indexHandler.Search(ctx)
-
-		body := w.Body.String()
+		searchHandler.Search(ctx)
 
 		if w.Code != http.StatusOK {
 			t.Errorf("expected status OK; got %v", w.Code)
 		}
 
-		if !strings.Contains(body, "page1") {
-			t.Errorf("expected body to contain 'home1'; got %s", body)
-		}
+		checkResponseBody(t, w.Body.String(), []string{"page1", "page2"})
 	})
 
 	t.Run("returns error if query is missing", func(t *testing.T) {
-
-		indexHandler := searchHandler.NewHandler(nil, testutil.NewTestLogger())
+		searchHandler := searchHandler.NewHandler(nil, testutil.NewTestLogger())
 
 		w := httptest.NewRecorder()
 		ctx, _ := gin.CreateTestContext(w)
 
 		ctx.Request, _ = http.NewRequest(http.MethodGet, "/search", nil)
 
-		indexHandler.Search(ctx)
+		searchHandler.Search(ctx)
 
 		if w.Code != http.StatusBadRequest {
 			t.Errorf("expected status BadRequest; got %v", w.Code)

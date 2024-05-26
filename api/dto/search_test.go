@@ -13,7 +13,7 @@ func TestNewSearchResponse(t *testing.T) {
 			{
 				PageID: "page1",
 				Score:  0.5,
-				Page: &domain.ResultPage{
+				Page: domain.ResultPage{
 					ID:          "page1",
 					URL:         "http://google.com",
 					Title:       "Google",
