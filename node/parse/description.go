@@ -1,51 +1,37 @@
 package parse
 
 import (
-	"crawlquery/node/domain"
 	"errors"
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
 )
 
-type DescriptionParser struct {
-	doc *goquery.Document
-}
+func Description(doc *goquery.Document) (string, error) {
 
-func NewDescriptionParser(doc *goquery.Document) *DescriptionParser {
-	return &DescriptionParser{
-		doc: doc,
-	}
-}
-
-func (dp *DescriptionParser) Parse(page *domain.Page) error {
-
-	ogDescription := dp.doc.Find("meta[property='og:description']").AttrOr("content", "")
+	ogDescription := doc.Find("meta[property='og:description']").AttrOr("content", "")
 
 	if ogDescription != "" {
-		page.Description = ogDescription
-		return nil
+		return ogDescription, nil
 	}
 
-	metaDescription := dp.doc.Find("meta[name='description']").AttrOr("content", "")
+	metaDescription := doc.Find("meta[name='description']").AttrOr("content", "")
 
 	if metaDescription != "" {
-		page.Description = metaDescription
-		return nil
+		return metaDescription, nil
 	}
 
 	// first paragraph
-	firstParagraph := dp.doc.Find("p").First().Text()
+	firstParagraph := doc.Find("p").First().Text()
 
 	// check string isn't just whitespace
 	if strings.TrimSpace(firstParagraph) == "" {
-		return errors.New("no description found")
+		firstParagraph = ""
 	}
 
 	if firstParagraph != "" {
-		page.Description = firstParagraph
-		return nil
+		return firstParagraph, nil
 	}
 
-	return errors.New("no description found")
+	return "", errors.New("no description found")
 }

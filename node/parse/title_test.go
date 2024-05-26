@@ -2,7 +2,6 @@ package parse_test
 
 import (
 	"bytes"
-	"crawlquery/node/domain"
 	"crawlquery/node/parse"
 	"testing"
 
@@ -32,10 +31,6 @@ func TestTitleParser(t *testing.T) {
 			html: testdataloader.GetTestFile("testdata/pages/info/ways-to-reuse-egg-cartons.html"),
 			want: "Get Cracking! 10 Ways to Reuse Egg Cartons",
 		},
-		{
-			html: testdataloader.GetTestFile("testdata/pages/dummy/no-title.html"),
-			want: "example.com",
-		},
 	}
 
 	for _, tc := range cases {
@@ -45,15 +40,14 @@ func TestTitleParser(t *testing.T) {
 				t.Errorf("Error parsing html: %v", err)
 			}
 
-			tp := parse.NewTitleParser(doc)
+			title, err := parse.Title(doc)
 
-			page := &domain.Page{
-				URL: "http://example.com",
+			if err != nil {
+				t.Errorf("Error parsing title: %v", err)
 			}
-			tp.Parse(page)
 
-			if page.Title != tc.want {
-				t.Errorf("Expected %s, got %s", tc.want, page.Title)
+			if title != tc.want {
+				t.Errorf("Expected %s, got %s", tc.want, title)
 			}
 		})
 	}

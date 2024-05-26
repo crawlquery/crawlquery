@@ -3,16 +3,16 @@ package mem
 import "crawlquery/node/domain"
 
 type Repository struct {
-	occurrences map[domain.Keyword][]domain.Occurrence
+	occurrences map[domain.Keyword][]domain.KeywordOccurrence
 }
 
 func NewRepository() *Repository {
 	return &Repository{
-		occurrences: make(map[domain.Keyword][]domain.Occurrence),
+		occurrences: make(map[domain.Keyword][]domain.KeywordOccurrence),
 	}
 }
 
-func (r *Repository) GetAll(keyword domain.Keyword) ([]domain.Occurrence, error) {
+func (r *Repository) GetAll(keyword domain.Keyword) ([]domain.KeywordOccurrence, error) {
 	occurrences, ok := r.occurrences[keyword]
 	if !ok {
 		return nil, domain.ErrKeywordNotFound
@@ -21,14 +21,14 @@ func (r *Repository) GetAll(keyword domain.Keyword) ([]domain.Occurrence, error)
 	return occurrences, nil
 }
 
-func (r *Repository) Add(keyword domain.Keyword, occurrence domain.Occurrence) error {
+func (r *Repository) Add(keyword domain.Keyword, occurrence domain.KeywordOccurrence) error {
 	r.occurrences[keyword] = append(r.occurrences[keyword], occurrence)
 	return nil
 }
 
 func (r *Repository) RemoveForPageID(pageID string) error {
 	for keyword, occurrences := range r.occurrences {
-		var newOccurrences []domain.Occurrence
+		var newOccurrences []domain.KeywordOccurrence
 
 		for _, occurrence := range occurrences {
 			if occurrence.PageID != pageID {

@@ -33,7 +33,7 @@ func (s *KeywordOccurrenceService) GetKeywordMatches(keywords []domain.Keyword) 
 	return matches, nil
 }
 
-func (s *KeywordOccurrenceService) UpdateKeywordOccurrences(pageID string, keywordOccurrences map[domain.Keyword]domain.Occurrence) error {
+func (s *KeywordOccurrenceService) Update(pageID string, keywordOccurrences map[domain.Keyword]domain.KeywordOccurrence) error {
 	for keyword, occurrence := range keywordOccurrences {
 		err := s.repo.Add(keyword, occurrence)
 		if err != nil {
@@ -43,6 +43,6 @@ func (s *KeywordOccurrenceService) UpdateKeywordOccurrences(pageID string, keywo
 	return nil
 }
 
-func (s *KeywordOccurrenceService) RemovePageOccurrences(pageID string) error {
+func (s *KeywordOccurrenceService) RemoveForPageID(pageID string) error {
 	return s.repo.RemoveForPageID(pageID)
 }

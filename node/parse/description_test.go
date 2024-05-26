@@ -2,7 +2,6 @@ package parse_test
 
 import (
 	"bytes"
-	"crawlquery/node/domain"
 	"crawlquery/node/parse"
 	"testing"
 
@@ -45,13 +44,14 @@ func TestDescriptionParser(t *testing.T) {
 					t.Errorf("Error parsing html: %v", err)
 				}
 
-				dp := parse.NewDescriptionParser(doc)
+				description, err := parse.Description(doc)
 
-				page := &domain.Page{}
-				dp.Parse(page)
+				if err != nil {
+					t.Errorf("Error parsing description: %v", err)
+				}
 
-				if page.Description != tc.want {
-					t.Errorf("Expected %s, got %s", tc.want, page.Description)
+				if description != tc.want {
+					t.Errorf("Expected %s, got %s", tc.want, description)
 				}
 			})
 		}

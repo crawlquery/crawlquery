@@ -13,26 +13,26 @@ import (
 )
 
 type Service struct {
-	pageService    domain.PageService
-	htmlService    domain.HTMLService
-	peerService    domain.PeerService
-	keywordService domain.KeywordService
-	logger         *zap.SugaredLogger
+	pageService              domain.PageService
+	htmlService              domain.HTMLService
+	peerService              domain.PeerService
+	keywordOccurrenceService domain.KeywordOccurrenceService
+	logger                   *zap.SugaredLogger
 }
 
 func NewService(
 	pageService domain.PageService,
 	htmlService domain.HTMLService,
 	peerService domain.PeerService,
-	keywordService domain.KeywordService,
+	keywordOccurrenceService domain.KeywordOccurrenceService,
 	logger *zap.SugaredLogger,
 ) *Service {
 	return &Service{
-		pageService:    pageService,
-		htmlService:    htmlService,
-		peerService:    peerService,
-		keywordService: keywordService,
-		logger:         logger,
+		pageService:              pageService,
+		htmlService:              htmlService,
+		peerService:              peerService,
+		keywordOccurrenceService: keywordOccurrenceService,
+		logger:                   logger,
 	}
 }
 
@@ -92,11 +92,35 @@ func (s *Service) Index(pageID string) error {
 		return errors[0]
 	}
 
+	// Update occurrences
+	keywordOccurrences := make(map[domain.Keyword]domain.KeywordOccurrence, 0)
+
+	for i, termSplit := range keywords {
+		term := strings.Join(termSplit, " ")
+
+		// Get the current occurrence or initialize a new one
+		occurrence, ok := keywordOccurrences[domain.Keyword(term)]
+		if !ok {
+			occurrence = domain.KeywordOccurrence{
+				PageID:    page.ID,
+				Frequency: 1,
+				Positions: []int{i},
+			}
+		} else {
+			// Update the existing occurrence
+			occurrence.Frequency += 1
+			occurrence.Positions = append(occurrence.Positions, i)
+		}
+
+		// Put the updated occurrence back into the map
+		keywordOccurrences[domain.Keyword(term)] = occurrence
+	}
+
 	// Update keywords
-	err = s.keywordService.UpdatePageKeywords(page.ID, keywords)
+	err = s.keywordOccurrenceService.Update(page.ID, keywordOccurrences)
 
 	if err != nil {
-		s.logger.Errorw("Error updating keywords", "error", err, "pageID", pageID)
+		s.logger.Errorw("Error updating keyword occurrences", "error", err, "pageID", pageID)
 		return err
 	}
 
@@ -116,37 +140,6 @@ func (s *Service) GetIndex(pageID string) (*domain.Page, error) {
 	}
 
 	return page, nil
-}
-
-func (s *Service) keywordPages(terms [][]string) (map[string]*domain.Page, error) {
-	var pages map[string]*domain.Page = make(map[string]*domain.Page)
-
-	for _, termSplit := range terms {
-
-		term := strings.Join(termSplit, " ")
-		pageIDs, err := s.keywordService.GetPageIDsByKeyword(term)
-
-		if err != nil {
-			continue
-		}
-
-		for _, pageID := range pageIDs {
-
-			if _, ok := pages[pageID]; ok {
-				continue
-			}
-			page, err := s.pageService.Get(pageID)
-
-			if err != nil {
-				s.logger.Errorw("Error getting page", "error", err, "pageID", pageID)
-				return nil, err
-			}
-
-			pages[pageID] = page
-		}
-	}
-
-	return pages, nil
 }
 
 func (s *Service) ApplyPageUpdatedEvent(event *domain.PageUpdatedEvent) error {

@@ -34,7 +34,7 @@ func TestGet(t *testing.T) {
 	}
 
 	keyword := domain.Keyword("example")
-	occurrences := []domain.Occurrence{
+	occurrences := []domain.KeywordOccurrence{
 		{PageID: "page1", Frequency: 3, Positions: []int{1, 2, 3}},
 		{PageID: "page2", Frequency: 2, Positions: []int{4, 5}},
 	}
@@ -71,7 +71,7 @@ func TestAddOccurence(t *testing.T) {
 	}
 
 	keyword := domain.Keyword("example")
-	occurrence := domain.Occurrence{PageID: "page1", Frequency: 1, Positions: []int{1}}
+	occurrence := domain.KeywordOccurrence{PageID: "page1", Frequency: 1, Positions: []int{1}}
 
 	err = repo.Add(keyword, occurrence)
 	if err != nil {
@@ -102,7 +102,7 @@ func TestRemoveOccurencesForPageID(t *testing.T) {
 	}
 
 	keyword := domain.Keyword("example")
-	occurrences := []domain.Occurrence{
+	occurrences := []domain.KeywordOccurrence{
 		{PageID: "page1", Frequency: 3, Positions: []int{1, 2, 3}},
 		{PageID: "page2", Frequency: 2, Positions: []int{4, 5}},
 	}
@@ -124,7 +124,7 @@ func TestRemoveOccurencesForPageID(t *testing.T) {
 		t.Fatalf("Error getting occurrences: %v", err)
 	}
 
-	expectedOccurrences := []domain.Occurrence{
+	expectedOccurrences := []domain.KeywordOccurrence{
 		{PageID: "page2", Frequency: 2, Positions: []int{4, 5}},
 	}
 

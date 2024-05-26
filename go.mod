@@ -16,6 +16,7 @@ require (
 	github.com/jdkato/prose/v2 v2.0.0
 	github.com/jpillora/go-tld v1.2.1
 	github.com/pemistahl/lingua-go v1.4.0
+	github.com/peteole/testdata-loader v0.3.0
 	go.uber.org/zap v1.27.0
 	golang.org/x/crypto v0.23.0
 )
@@ -65,7 +66,6 @@ require (
 	github.com/neurosnap/sentences v1.1.2 // indirect
 	github.com/olekukonko/tablewriter v0.0.0-20180506121414-d4647c9c7a84 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.2 // indirect
-	github.com/peteole/testdata-loader v0.3.0 // indirect
 	github.com/pkg/errors v0.8.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/saintfish/chardet v0.0.0-20230101081208-5e3ef4b5456d // indirect

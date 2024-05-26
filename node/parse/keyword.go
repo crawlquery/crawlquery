@@ -1,30 +1,15 @@
 package parse
 
 import (
-	"crawlquery/node/domain"
 	"crawlquery/node/keyword"
-	"errors"
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
-	"github.com/pemistahl/lingua-go"
 )
 
-type KeywordParser struct {
-	doc      *goquery.Document
-	keywords *[][]string
-}
-
-func NewKeywordParser(doc *goquery.Document, keywords *[][]string) *KeywordParser {
-	return &KeywordParser{
-		doc:      doc,
-		keywords: keywords,
-	}
-}
-
-func (pp *KeywordParser) HeadingKeywords() ([][]string, error) {
+func HeadingKeywords(doc *goquery.Document) ([][]string, error) {
 	var headings []string
-	pp.doc.Find("h1, h2, h3, h4, h5, h6").Each(func(i int, s *goquery.Selection) {
+	doc.Find("h1, h2, h3, h4, h5, h6").Each(func(i int, s *goquery.Selection) {
 		headings = append(headings, s.Text())
 	})
 
@@ -43,10 +28,10 @@ func (pp *KeywordParser) HeadingKeywords() ([][]string, error) {
 	return parsedKeywords, nil
 }
 
-func (pp *KeywordParser) ParseParagraph() ([][]string, error) {
+func ParseParagraph(doc *goquery.Document) ([][]string, error) {
 
 	var paragraphs []string
-	pp.doc.Find("p").Each(func(i int, s *goquery.Selection) {
+	doc.Find("p").Each(func(i int, s *goquery.Selection) {
 		paragraphs = append(paragraphs, s.Text())
 	})
 
@@ -65,20 +50,16 @@ func (pp *KeywordParser) ParseParagraph() ([][]string, error) {
 	return keywords, nil
 }
 
-func (kp *KeywordParser) Parse(page *domain.Page) error {
+func Keywords(doc *goquery.Document) ([][]string, error) {
 
-	if page.Language != lingua.English.String() {
-		return errors.New("only english pages are supported")
+	paragraphKeywords, err := ParseParagraph(doc)
+	if err != nil {
+		return nil, err
 	}
 
-	paragraphKeywords, err := kp.ParseParagraph()
+	headingKeywords, err := HeadingKeywords(doc)
 	if err != nil {
-		return err
-	}
-
-	headingKeywords, err := kp.HeadingKeywords()
-	if err != nil {
-		return err
+		return nil, err
 	}
 
 	var keywords [][]string
@@ -86,7 +67,5 @@ func (kp *KeywordParser) Parse(page *domain.Page) error {
 	keywords = append(keywords, paragraphKeywords...)
 	keywords = append(keywords, headingKeywords...)
 
-	*kp.keywords = keywords
-
-	return nil
+	return keywords, nil
 }

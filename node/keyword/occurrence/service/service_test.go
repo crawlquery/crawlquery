@@ -15,7 +15,7 @@ func TestGetKeywordMatches(t *testing.T) {
 
 	// Add occurrences to the repository
 	keyword := domain.Keyword("example")
-	occurrences := []domain.Occurrence{
+	occurrences := []domain.KeywordOccurrence{
 		{PageID: "page1", Frequency: 3, Positions: []int{1, 2, 3}},
 		{PageID: "page2", Frequency: 2, Positions: []int{4, 5}},
 	}
@@ -44,14 +44,14 @@ func TestGetKeywordMatches(t *testing.T) {
 	}
 }
 
-func TestUpdateKeywordOccurrences(t *testing.T) {
+func TestUpdate(t *testing.T) {
 	repo := mem.NewRepository()
 	svc := service.NewKeywordOccurrenceService(repo)
 
 	keyword := domain.Keyword("example")
-	occurrence := domain.Occurrence{PageID: "page1", Frequency: 1, Positions: []int{1}}
+	occurrence := domain.KeywordOccurrence{PageID: "page1", Frequency: 1, Positions: []int{1}}
 
-	err := svc.UpdateKeywordOccurrences("page1", map[domain.Keyword]domain.Occurrence{keyword: occurrence})
+	err := svc.Update("page1", map[domain.Keyword]domain.KeywordOccurrence{keyword: occurrence})
 	if err != nil {
 		t.Fatalf("Error updating keyword occurrences: %v", err)
 	}
@@ -75,7 +75,7 @@ func TestRemovePageOccurrences(t *testing.T) {
 	svc := service.NewKeywordOccurrenceService(repo)
 
 	keyword := domain.Keyword("example")
-	occurrences := []domain.Occurrence{
+	occurrences := []domain.KeywordOccurrence{
 		{PageID: "page1", Frequency: 3, Positions: []int{1, 2, 3}},
 		{PageID: "page2", Frequency: 2, Positions: []int{4, 5}},
 	}
@@ -86,7 +86,7 @@ func TestRemovePageOccurrences(t *testing.T) {
 		}
 	}
 
-	err := svc.RemovePageOccurrences("page1")
+	err := svc.RemoveForPageID("page1")
 	if err != nil {
 		t.Fatalf("Error removing occurrences: %v", err)
 	}
@@ -96,7 +96,7 @@ func TestRemovePageOccurrences(t *testing.T) {
 		t.Fatalf("Error getting occurrences: %v", err)
 	}
 
-	expectedOccurrences := []domain.Occurrence{
+	expectedOccurrences := []domain.KeywordOccurrence{
 		{PageID: "page2", Frequency: 2, Positions: []int{4, 5}},
 	}
 
@@ -104,7 +104,7 @@ func TestRemovePageOccurrences(t *testing.T) {
 		t.Errorf("Expected occurrences %v, got %v", expectedOccurrences, gotOccurrences)
 	}
 
-	err = svc.RemovePageOccurrences("page2")
+	err = svc.RemoveForPageID("page2")
 	if err != nil {
 		t.Fatalf("Error removing occurrences: %v", err)
 	}

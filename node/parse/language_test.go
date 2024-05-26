@@ -2,7 +2,6 @@ package parse_test
 
 import (
 	"bytes"
-	"crawlquery/node/domain"
 	"crawlquery/node/parse"
 	"testing"
 
@@ -44,13 +43,17 @@ func TestLanguageParser(t *testing.T) {
 				if err != nil {
 					t.Errorf("Error parsing html: %v", err)
 				}
-				lp := parse.NewLanguageParser(doc)
-				page := &domain.Page{}
-				lp.Parse(page)
 
-				if page.Language != tc.want {
-					t.Errorf("Expected %s, got %s", tc.want, page.Language)
+				got, reliable := parse.Language(doc)
+
+				if !reliable {
+					t.Errorf("Expected reliable language detection")
 				}
+
+				if got != tc.want {
+					t.Errorf("Expected %v, got %v", tc.want, got)
+				}
+
 			})
 		}
 	})

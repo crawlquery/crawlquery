@@ -26,8 +26,8 @@ func NewRepository(db *bolt.DB) (*Repository, error) {
 	return &Repository{db: db}, nil
 }
 
-func (r *Repository) GetAll(keyword domain.Keyword) ([]domain.Occurrence, error) {
-	var occurrences []domain.Occurrence
+func (r *Repository) GetAll(keyword domain.Keyword) ([]domain.KeywordOccurrence, error) {
+	var occurrences []domain.KeywordOccurrence
 
 	err := r.db.View(func(tx *bolt.Tx) error {
 		bucket := tx.Bucket(occurrencesBucket)
@@ -50,14 +50,14 @@ func (r *Repository) GetAll(keyword domain.Keyword) ([]domain.Occurrence, error)
 	return occurrences, nil
 }
 
-func (r *Repository) Add(keyword domain.Keyword, occurrence domain.Occurrence) error {
+func (r *Repository) Add(keyword domain.Keyword, occurrence domain.KeywordOccurrence) error {
 	return r.db.Update(func(tx *bolt.Tx) error {
 		bucket := tx.Bucket(occurrencesBucket)
 		if bucket == nil {
 			return errors.New("bucket not found")
 		}
 
-		var occurrences []domain.Occurrence
+		var occurrences []domain.KeywordOccurrence
 		data := bucket.Get([]byte(keyword))
 		if data != nil {
 			err := json.Unmarshal(data, &occurrences)
@@ -84,13 +84,13 @@ func (r *Repository) RemoveForPageID(pageID string) error {
 		}
 
 		err := bucket.ForEach(func(k, v []byte) error {
-			var occurrences []domain.Occurrence
+			var occurrences []domain.KeywordOccurrence
 			err := json.Unmarshal(v, &occurrences)
 			if err != nil {
 				return err
 			}
 
-			var newOccurrences []domain.Occurrence
+			var newOccurrences []domain.KeywordOccurrence
 			for _, occ := range occurrences {
 				if occ.PageID != pageID {
 					newOccurrences = append(newOccurrences, occ)

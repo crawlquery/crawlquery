@@ -2,37 +2,14 @@ package parse_test
 
 import (
 	"bytes"
-	"crawlquery/node/domain"
 	"crawlquery/node/parse"
 	"testing"
 
 	"github.com/PuerkitoBio/goquery"
-	"github.com/pemistahl/lingua-go"
 	testdataloader "github.com/peteole/testdata-loader"
 )
 
 func TestKeywordParser(t *testing.T) {
-	t.Run("only parses english pages", func(t *testing.T) {
-		doc, err := goquery.NewDocumentFromReader(bytes.NewReader(testdataloader.GetTestFile("testdata/pages/recipe/how-to-make-bolognese-sauce.html")))
-		if err != nil {
-			t.Fatalf("Error loading document: %v", err)
-		}
-
-		var keywords [][]string
-		pp := parse.NewKeywordParser(doc, &keywords)
-
-		page := &domain.Page{
-			URL:      "http://example.com",
-			Language: lingua.Italian.String(),
-		}
-
-		pp.Parse(page)
-
-		if len(keywords) > 0 {
-			t.Errorf("Expected no keywords to be found, got %v", keywords)
-		}
-	})
-
 	t.Run("parses keywords from the page", func(t *testing.T) {
 		cases := []struct {
 			html     []byte
@@ -53,15 +30,7 @@ func TestKeywordParser(t *testing.T) {
 					t.Fatalf("Error loading document: %v", err)
 				}
 
-				var keywords [][]string
-				pp := parse.NewKeywordParser(doc, &keywords)
-
-				page := &domain.Page{
-					URL:      "http://example.com",
-					Language: lingua.English.String(),
-				}
-
-				err = pp.Parse(page)
+				keywords, err := parse.Keywords(doc)
 
 				if err != nil {
 					t.Fatalf("Error parsing keywords: %v", err)
@@ -99,12 +68,12 @@ func TestKeywordParser(t *testing.T) {
 			{
 				html: testdataloader.GetTestFile("testdata/pages/stackoverflow/best-way-to-detect-bot-from-user-agent.html"),
 				contains: [][]string{
-					{"Best"},
+					{"best"},
 					{"way"},
 					{"detect"},
 					{"bot"},
 					{"from"},
-					{"Best", "way", "to", "detect", "bot", "from", "user", "agent"},
+					{"best", "way", "to", "detect", "bot", "from", "user", "agent"},
 					{"user", "agent"},
 				},
 			},
@@ -117,15 +86,11 @@ func TestKeywordParser(t *testing.T) {
 					t.Fatalf("Error loading document: %v", err)
 				}
 
-				var keywords [][]string
-				pp := parse.NewKeywordParser(doc, &keywords)
+				keywords, err := parse.Keywords(doc)
 
-				page := &domain.Page{
-					URL:      "http://example.com",
-					Language: lingua.English.String(),
+				if err != nil {
+					t.Fatalf("Error parsing keywords: %v", err)
 				}
-
-				err = pp.Parse(page)
 
 				if err != nil {
 					t.Fatalf("Error parsing keywords: %v", err)
