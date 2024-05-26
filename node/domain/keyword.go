@@ -8,21 +8,12 @@ type Posting struct {
 }
 
 type KeywordRepository interface {
-	GetPostings(keyword string) ([]*Posting, error)
-	SavePosting(token string, posting *Posting) error
-	FuzzySearch(token string) []string
-	RemovePostingsByPageID(pageID string) error
-	UpdateHash(keyword, hash string) error
-	GetHashes() (map[string]string, error)
-	GetHash(token string) (string, error)
-	GetAll() (map[string][]*Posting, error)
+	GetPages(keyword string) ([]string, error)
+	AddPageKeywords(pageID string, keywords []string) error
+	RemovePageKeywords(pageID string) error
 }
 
 type KeywordService interface {
-	GetPostings(keyword string) ([]*Posting, error)
-	SavePostings(postings map[string]*Posting) error
-	FuzzySearch(token string) ([]string, error)
-	RemovePostingsByPageID(pageID string) error
-	Hash() (string, error)
-	JSON() ([]byte, error)
+	UpdatePageKeywords(pageID string, keywords [][]string) error
+	GetPageIDsByKeyword(keyword string) ([]string, error)
 }

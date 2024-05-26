@@ -13,6 +13,9 @@ import (
 
 	indexService "crawlquery/node/index/service"
 
+	keywordRepo "crawlquery/node/keyword/repository/mem"
+	keywordService "crawlquery/node/keyword/service"
+
 	"crawlquery/pkg/client/api"
 	"crawlquery/pkg/client/html"
 	"crawlquery/pkg/testutil"
@@ -39,7 +42,10 @@ func TestCrawl(t *testing.T) {
 
 		peerService := peerService.NewService(nil, nil, testutil.NewTestLogger())
 
-		indexService := indexService.NewService(pageService, htmlService, peerService, testutil.NewTestLogger())
+		keywordRepo := keywordRepo.NewRepository()
+		keywordService := keywordService.NewService(keywordRepo)
+
+		indexService := indexService.NewService(pageService, htmlService, peerService, keywordService, testutil.NewTestLogger())
 
 		api := api.NewClient("http://localhost:8080", testutil.NewTestLogger())
 
@@ -110,7 +116,10 @@ func TestCrawl(t *testing.T) {
 
 		peerService := peerService.NewService(nil, nil, testutil.NewTestLogger())
 
-		indexService := indexService.NewService(pageService, htmlService, peerService, testutil.NewTestLogger())
+		keywordRepo := keywordRepo.NewRepository()
+		keywordService := keywordService.NewService(keywordRepo)
+
+		indexService := indexService.NewService(pageService, htmlService, peerService, keywordService, testutil.NewTestLogger())
 
 		api := api.NewClient("http://localhost:8080", testutil.NewTestLogger())
 
@@ -197,7 +206,10 @@ func TestCrawl(t *testing.T) {
 
 		peerService := peerService.NewService(nil, nil, testutil.NewTestLogger())
 
-		indexService := indexService.NewService(pageService, htmlService, peerService, testutil.NewTestLogger())
+		keywordRepo := keywordRepo.NewRepository()
+		keywordService := keywordService.NewService(keywordRepo)
+
+		indexService := indexService.NewService(pageService, htmlService, peerService, keywordService, testutil.NewTestLogger())
 
 		api := api.NewClient("http://localhost:8080", testutil.NewTestLogger())
 
@@ -301,7 +313,10 @@ func TestCrawl(t *testing.T) {
 
 		peerService := peerService.NewService(nil, nil, testutil.NewTestLogger())
 
-		indexService := indexService.NewService(pageService, htmlService, peerService, testutil.NewTestLogger())
+		keywordRepo := keywordRepo.NewRepository()
+		keywordService := keywordService.NewService(keywordRepo)
+
+		indexService := indexService.NewService(pageService, htmlService, peerService, keywordService, testutil.NewTestLogger())
 
 		api := api.NewClient("http://localhost:8080", testutil.NewTestLogger())
 

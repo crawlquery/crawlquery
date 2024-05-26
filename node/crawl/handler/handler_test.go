@@ -19,6 +19,9 @@ import (
 	pageRepo "crawlquery/node/page/repository/mem"
 	pageService "crawlquery/node/page/service"
 
+	keywordRepo "crawlquery/node/keyword/repository/mem"
+	keywordService "crawlquery/node/keyword/service"
+
 	peerService "crawlquery/node/peer/service"
 
 	indexService "crawlquery/node/index/service"
@@ -46,7 +49,10 @@ func TestCrawl(t *testing.T) {
 
 		peerService := peerService.NewService(nil, nil, testutil.NewTestLogger())
 
-		indexService := indexService.NewService(pageService, htmlService, peerService, testutil.NewTestLogger())
+		keywordRepo := keywordRepo.NewRepository()
+		keywordService := keywordService.NewService(keywordRepo)
+
+		indexService := indexService.NewService(pageService, htmlService, peerService, keywordService, testutil.NewTestLogger())
 
 		crawlService := crawlService.NewService(htmlService, pageService, indexService, nil, testutil.NewTestLogger())
 

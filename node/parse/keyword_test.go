@@ -18,7 +18,8 @@ func TestKeywordParser(t *testing.T) {
 			t.Fatalf("Error loading document: %v", err)
 		}
 
-		pp := parse.NewKeywordParser(doc)
+		var keywords [][]string
+		pp := parse.NewKeywordParser(doc, &keywords)
 
 		page := &domain.Page{
 			URL:      "http://example.com",
@@ -27,8 +28,8 @@ func TestKeywordParser(t *testing.T) {
 
 		pp.Parse(page)
 
-		if len(page.Keywords) != 0 {
-			t.Errorf("Expected no keywords, got %v", page.Keywords)
+		if len(keywords) > 0 {
+			t.Errorf("Expected no keywords to be found, got %v", keywords)
 		}
 	})
 
@@ -52,7 +53,8 @@ func TestKeywordParser(t *testing.T) {
 					t.Fatalf("Error loading document: %v", err)
 				}
 
-				pp := parse.NewKeywordParser(doc)
+				var keywords [][]string
+				pp := parse.NewKeywordParser(doc, &keywords)
 
 				page := &domain.Page{
 					URL:      "http://example.com",
@@ -67,7 +69,7 @@ func TestKeywordParser(t *testing.T) {
 
 				for _, c := range tc.contains {
 					found := false
-					for _, p := range page.Keywords {
+					for _, p := range keywords {
 						if len(p) != len(c) {
 							continue
 						}
@@ -82,7 +84,7 @@ func TestKeywordParser(t *testing.T) {
 					}
 
 					if !found {
-						t.Errorf("Expected to find %v in %v", c, page.Keywords)
+						t.Errorf("Expected to find %v in %v", c, keywords)
 					}
 				}
 			})
@@ -115,7 +117,8 @@ func TestKeywordParser(t *testing.T) {
 					t.Fatalf("Error loading document: %v", err)
 				}
 
-				pp := parse.NewKeywordParser(doc)
+				var keywords [][]string
+				pp := parse.NewKeywordParser(doc, &keywords)
 
 				page := &domain.Page{
 					URL:      "http://example.com",
@@ -130,7 +133,7 @@ func TestKeywordParser(t *testing.T) {
 
 				for _, c := range tc.contains {
 					found := false
-					for _, p := range page.Keywords {
+					for _, p := range keywords {
 						if len(p) != len(c) {
 							continue
 						}
@@ -145,7 +148,7 @@ func TestKeywordParser(t *testing.T) {
 					}
 
 					if !found {
-						t.Errorf("Expected to find %v in %v", c, page.Keywords)
+						t.Errorf("Expected to find %v in %v", c, keywords)
 					}
 				}
 			})

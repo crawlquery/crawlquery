@@ -11,12 +11,14 @@ import (
 )
 
 type KeywordParser struct {
-	doc *goquery.Document
+	doc      *goquery.Document
+	keywords *[][]string
 }
 
-func NewKeywordParser(doc *goquery.Document) *KeywordParser {
+func NewKeywordParser(doc *goquery.Document, keywords *[][]string) *KeywordParser {
 	return &KeywordParser{
-		doc: doc,
+		doc:      doc,
+		keywords: keywords,
 	}
 }
 
@@ -79,8 +81,12 @@ func (kp *KeywordParser) Parse(page *domain.Page) error {
 		return err
 	}
 
-	page.Keywords = append(page.Keywords, paragraphKeywords...)
-	page.Keywords = append(page.Keywords, headingKeywords...)
+	var keywords [][]string
+
+	keywords = append(keywords, paragraphKeywords...)
+	keywords = append(keywords, headingKeywords...)
+
+	*kp.keywords = keywords
 
 	return nil
 }

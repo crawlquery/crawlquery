@@ -16,6 +16,9 @@ import (
 	pageRepo "crawlquery/node/page/repository/bolt"
 	pageService "crawlquery/node/page/service"
 
+	keywordRepo "crawlquery/node/keyword/repository/bolt"
+	keywordService "crawlquery/node/keyword/service"
+
 	peerService "crawlquery/node/peer/service"
 
 	indexHandler "crawlquery/node/index/handler"
@@ -49,9 +52,11 @@ func main() {
 	var htmlStoragePath string
 	var htmlBackupURL string
 	var pageDBPath string
+	var keywordDBPath string
 
 	flag.StringVar(&htmlStoragePath, "html", "/tmp/htmlstorage", "path to the html storage")
 	flag.StringVar(&pageDBPath, "pdb", "/tmp/pagedb.bolt", "path to the pagedb")
+	flag.StringVar(&keywordDBPath, "kdb", "/tmp/keyworddb.bolt", "path to the keyworddb")
 	flag.StringVar(&htmlBackupURL, "htmlbackup", "http://crawlquery-html1.dxs.network", "URL to the html backup service")
 
 	flag.Parse()
@@ -65,6 +70,11 @@ func main() {
 	pageRepo, err := pageRepo.NewRepository(pageDBPath)
 	if err != nil {
 		sugar.Fatalf("Error creating page repository: %v", err)
+	}
+
+	keywordRepo, err := keywordRepo.NewRepository(keywordDBPath)
+	if err != nil {
+		sugar.Fatalf("Error creating keyword repository: %v", err)
 	}
 
 	api := api.NewClient(apiURL, sugar)
@@ -94,7 +104,8 @@ func main() {
 		ShardID:  node.ShardID,
 	}, sugar)
 	pageService := pageService.NewService(pageRepo, peerService)
-	indexService := indexService.NewService(pageService, htmlService, peerService, sugar)
+	keywordService := keywordService.NewService(keywordRepo)
+	indexService := indexService.NewService(pageService, htmlService, peerService, keywordService, sugar)
 	crawlService := crawlService.NewService(htmlService, pageService, indexService, api, sugar)
 	dumpService := dumpService.NewService(pageService)
 	statService := statService.NewService(pageService, dumpService)

@@ -18,6 +18,9 @@ import (
 	htmlRepo "crawlquery/node/html/repository/mem"
 	htmlService "crawlquery/node/html/service"
 
+	keywordRepo "crawlquery/node/keyword/repository/mem"
+	keywordService "crawlquery/node/keyword/service"
+
 	indexService "crawlquery/node/index/service"
 
 	peerService "crawlquery/node/peer/service"
@@ -36,10 +39,14 @@ func TestSearch(t *testing.T) {
 
 		peerService := peerService.NewService(nil, nil, testutil.NewTestLogger())
 
+		keywordRepo := keywordRepo.NewRepository()
+		keywordService := keywordService.NewService(keywordRepo)
+
 		indexService := indexService.NewService(
 			pageService,
 			htmlService,
 			peerService,
+			keywordService,
 			testutil.NewTestLogger(),
 		)
 
@@ -93,10 +100,14 @@ func TestSearch(t *testing.T) {
 
 		peerService := peerService.NewService(nil, nil, testutil.NewTestLogger())
 
+		keywordRepo := keywordRepo.NewRepository()
+		keywordService := keywordService.NewService(keywordRepo)
+
 		indexService := indexService.NewService(
 			pageService,
 			htmlService,
 			peerService,
+			keywordService,
 			testutil.NewTestLogger(),
 		)
 
@@ -125,10 +136,14 @@ func TestIndex(t *testing.T) {
 
 		peerService := peerService.NewService(nil, nil, testutil.NewTestLogger())
 
+		keywordRepo := keywordRepo.NewRepository()
+		keywordService := keywordService.NewService(keywordRepo)
+
 		indexService := indexService.NewService(
 			pageService,
 			htmlService,
 			peerService,
+			keywordService,
 			testutil.NewTestLogger(),
 		)
 
@@ -193,10 +208,14 @@ func TestGetIndex(t *testing.T) {
 
 		peerService := peerService.NewService(nil, nil, testutil.NewTestLogger())
 
+		keywordRepo := keywordRepo.NewRepository()
+		keywordService := keywordService.NewService(keywordRepo)
+
 		indexService := indexService.NewService(
 			pageService,
 			htmlService,
 			peerService,
+			keywordService,
 			testutil.NewTestLogger(),
 		)
 
@@ -265,10 +284,14 @@ func TestEvent(t *testing.T) {
 
 		peerService := peerService.NewService(nil, nil, testutil.NewTestLogger())
 
+		keywordRepo := keywordRepo.NewRepository()
+		keywordService := keywordService.NewService(keywordRepo)
+
 		indexService := indexService.NewService(
 			pageService,
 			htmlService,
 			peerService,
+			keywordService,
 			testutil.NewTestLogger(),
 		)
 
@@ -283,7 +306,6 @@ func TestEvent(t *testing.T) {
 				ID:          "page1",
 				Title:       "Example",
 				Description: "An example page",
-				Keywords:    [][]string{{"distro"}, {"linux"}},
 			},
 		}
 
@@ -323,17 +345,6 @@ func TestEvent(t *testing.T) {
 			t.Fatalf("expected meta description to be An example page, got %s", page.Description)
 		}
 
-		if len(page.Keywords) != 2 {
-			t.Fatalf("expected 2 keywords, got %d", len(page.Keywords))
-		}
-
-		if page.Keywords[0][0] != "distro" {
-			t.Fatalf("expected keyword to be distro, got %s", page.Keywords[0][0])
-		}
-
-		if page.Keywords[1][0] != "linux" {
-			t.Fatalf("expected keyword to be linux, got %s", page.Keywords[1][0])
-		}
 	})
 }
 
@@ -343,7 +354,7 @@ func TestHash(t *testing.T) {
 		pageRepo := pageRepo.NewRepository()
 		pageService := pageService.NewService(pageRepo, nil)
 
-		indexService := indexService.NewService(pageService, nil, nil, testutil.NewTestLogger())
+		indexService := indexService.NewService(pageService, nil, nil, nil, testutil.NewTestLogger())
 
 		indexHandler := indexHandler.NewHandler(indexService, testutil.NewTestLogger())
 

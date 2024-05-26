@@ -15,23 +15,26 @@ import (
 )
 
 type Service struct {
-	pageService domain.PageService
-	htmlService domain.HTMLService
-	peerService domain.PeerService
-	logger      *zap.SugaredLogger
+	pageService    domain.PageService
+	htmlService    domain.HTMLService
+	peerService    domain.PeerService
+	keywordService domain.KeywordService
+	logger         *zap.SugaredLogger
 }
 
 func NewService(
 	pageService domain.PageService,
 	htmlService domain.HTMLService,
 	peerService domain.PeerService,
+	keywordService domain.KeywordService,
 	logger *zap.SugaredLogger,
 ) *Service {
 	return &Service{
-		pageService: pageService,
-		htmlService: htmlService,
-		peerService: peerService,
-		logger:      logger,
+		pageService:    pageService,
+		htmlService:    htmlService,
+		peerService:    peerService,
+		keywordService: keywordService,
+		logger:         logger,
 	}
 }
 
@@ -58,11 +61,13 @@ func (s *Service) Index(pageID string) error {
 		return err
 	}
 
+	var keywords [][]string
+
 	parsers := []domain.Parser{
 		parse.NewLanguageParser(doc),
 		parse.NewTitleParser(doc),
 		parse.NewDescriptionParser(doc),
-		parse.NewKeywordParser(doc),
+		parse.NewKeywordParser(doc, &keywords),
 	}
 
 	var errors []error
@@ -89,6 +94,14 @@ func (s *Service) Index(pageID string) error {
 		return errors[0]
 	}
 
+	// Update keywords
+	err = s.keywordService.UpdatePageKeywords(page.ID, keywords)
+
+	if err != nil {
+		s.logger.Errorw("Error updating keywords", "error", err, "pageID", pageID)
+		return err
+	}
+
 	go s.peerService.BroadcastPageUpdatedEvent(&domain.PageUpdatedEvent{
 		Page: page,
 	})
@@ -107,14 +120,50 @@ func (s *Service) GetIndex(pageID string) (*domain.Page, error) {
 	return page, nil
 }
 
+func (s *Service) keywordPages(terms [][]string) (map[string]*domain.Page, error) {
+	var pages map[string]*domain.Page = make(map[string]*domain.Page)
+
+	for _, termSplit := range terms {
+
+		term := strings.Join(termSplit, " ")
+		pageIDs, err := s.keywordService.GetPageIDsByKeyword(term)
+
+		if err != nil {
+			continue
+		}
+
+		for _, pageID := range pageIDs {
+
+			if _, ok := pages[pageID]; ok {
+				continue
+			}
+			page, err := s.pageService.Get(pageID)
+
+			if err != nil {
+				s.logger.Errorw("Error getting page", "error", err, "pageID", pageID)
+				return nil, err
+			}
+
+			pages[pageID] = page
+		}
+	}
+
+	return pages, nil
+}
+
 func (s *Service) Search(query string) ([]domain.Result, error) {
 
-	term := strings.Split(query, " ")
-	// Get all pages
-	// Apply signal level to each page
-	// Sort by signal level
+	terms := strings.Split(query, " ")
 
-	pages, err := s.pageService.GetAll()
+	groups := make([][]string, len(terms)*(len(terms)+1)/2)
+
+	for i := 0; i < len(terms); i++ {
+		for j := i; j < len(terms); j++ {
+			groups = append(groups, terms[i:j+1])
+		}
+	}
+
+	pages, err := s.keywordPages(groups)
 
 	if err != nil {
 		s.logger.Errorw("Error getting pages", "error", err)
@@ -126,33 +175,32 @@ func (s *Service) Search(query string) ([]domain.Result, error) {
 	signals := []domain.Signal{
 		&signal.Domain{},
 		&signal.Title{},
-		&signal.Keyword{},
 	}
 
 	for _, page := range pages {
 
 		var breakdown map[string]domain.SignalBreakdown = make(map[string]domain.SignalBreakdown)
+
 		totalScore := 0.0
+
 		for _, signal := range signals {
-			val, sigs := signal.Level(page, term)
+			val, sigs := signal.Level(page, terms)
 			breakdown[signal.Name()] = sigs
 			totalScore += float64(val)
 		}
 
-		if totalScore > 1 {
-			results = append(results, domain.Result{
-				PageID: page.ID,
-				Page: &domain.ResultPage{
-					ID:          page.ID,
-					Hash:        page.Hash,
-					URL:         page.URL,
-					Title:       page.Title,
-					Description: page.Description,
-				},
-				Signals: breakdown,
-				Score:   totalScore,
-			})
-		}
+		results = append(results, domain.Result{
+			PageID: page.ID,
+			Page: &domain.ResultPage{
+				ID:          page.ID,
+				Hash:        page.Hash,
+				URL:         page.URL,
+				Title:       page.Title,
+				Description: page.Description,
+			},
+			Signals: breakdown,
+			Score:   totalScore,
+		})
 	}
 
 	sort.Slice(results, func(i, j int) bool {

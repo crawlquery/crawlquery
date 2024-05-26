@@ -14,7 +14,6 @@ type Page struct {
 	URL           string     `json:"url"`
 	Title         string     `json:"title"`
 	Description   string     `json:"description"`
-	Keywords      [][]string `json:"keywords"`
 	Language      string     `json:"language"`
 	LastIndexedAt *time.Time `json:"last_indexed"`
 	UpdatedAt     time.Time  `json:"updated_at"`

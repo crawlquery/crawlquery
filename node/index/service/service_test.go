@@ -12,6 +12,9 @@ import (
 	pageRepo "crawlquery/node/page/repository/mem"
 	pageService "crawlquery/node/page/service"
 
+	keywordRepo "crawlquery/node/keyword/repository/mem"
+	keywordService "crawlquery/node/keyword/service"
+
 	peerService "crawlquery/node/peer/service"
 
 	"testing"
@@ -29,6 +32,9 @@ func TestIndex(t *testing.T) {
 
 	htmlRepo := htmlRepo.NewRepository()
 	htmlService := htmlService.NewService(htmlRepo, nil)
+
+	keywordRepo := keywordRepo.NewRepository()
+	keywordService := keywordService.NewService(keywordRepo)
 
 	htmlRepo.Save("page1", []byte(`
 		<html>
@@ -48,7 +54,7 @@ func TestIndex(t *testing.T) {
 
 	logger := testutil.NewTestLogger()
 
-	s := service.NewService(pageService, htmlService, peerService, logger)
+	s := service.NewService(pageService, htmlService, peerService, keywordService, logger)
 
 	err := s.Index("page1")
 
@@ -82,10 +88,6 @@ func TestIndex(t *testing.T) {
 		t.Fatalf("Expected meta description to be This is a test page, got %s", page.Description)
 	}
 
-	if len(page.Keywords) == 0 {
-		t.Fatalf("Expected keywords to be found, got none")
-	}
-
 	if page.LastIndexedAt.IsZero() {
 		t.Fatalf("Expected last indexed at to be set, got zero")
 	}
@@ -103,6 +105,9 @@ func TestGetIndex(t *testing.T) {
 
 		htmlRepo := htmlRepo.NewRepository()
 		htmlService := htmlService.NewService(htmlRepo, nil)
+
+		keywordRepo := keywordRepo.NewRepository()
+		keywordService := keywordService.NewService(keywordRepo)
 
 		html := []byte(`
 		<html>
@@ -122,7 +127,7 @@ func TestGetIndex(t *testing.T) {
 
 		logger := testutil.NewTestLogger()
 
-		s := service.NewService(pageService, htmlService, peerService, logger)
+		s := service.NewService(pageService, htmlService, peerService, keywordService, logger)
 
 		err := s.Index("page1")
 
@@ -173,6 +178,9 @@ func TestSearch(t *testing.T) {
 		htmlRepo := htmlRepo.NewRepository()
 		htmlService := htmlService.NewService(htmlRepo, nil)
 
+		keywordRepo := keywordRepo.NewRepository()
+		keywordService := keywordService.NewService(keywordRepo)
+
 		html := []byte(`
 		<html>
 			<head>
@@ -192,7 +200,7 @@ func TestSearch(t *testing.T) {
 
 		logger := testutil.NewTestLogger()
 
-		s := service.NewService(pageService, htmlService, peerService, logger)
+		s := service.NewService(pageService, htmlService, peerService, keywordService, logger)
 
 		err := s.Index("page1")
 
@@ -249,6 +257,9 @@ func TestSearch(t *testing.T) {
 		htmlRepo := htmlRepo.NewRepository()
 		htmlService := htmlService.NewService(htmlRepo, nil)
 
+		keywordRepo := keywordRepo.NewRepository()
+		keywordService := keywordService.NewService(keywordRepo)
+
 		htmlRepo.Save("page1", []byte(`
 		<html>
 			<head>
@@ -267,7 +278,7 @@ func TestSearch(t *testing.T) {
 
 		logger := testutil.NewTestLogger()
 
-		s := service.NewService(pageService, htmlService, peerService, logger)
+		s := service.NewService(pageService, htmlService, peerService, keywordService, logger)
 
 		err := s.Index("page1")
 
@@ -302,6 +313,9 @@ func TestSearch(t *testing.T) {
 		htmlRepo := htmlRepo.NewRepository()
 		htmlService := htmlService.NewService(htmlRepo, nil)
 
+		keywordRepo := keywordRepo.NewRepository()
+		keywordService := keywordService.NewService(keywordRepo)
+
 		html := []byte(`
 		<html>
 			<head>
@@ -321,7 +335,7 @@ func TestSearch(t *testing.T) {
 
 		logger := testutil.NewTestLogger()
 
-		s := service.NewService(pageService, htmlService, peerService, logger)
+		s := service.NewService(pageService, htmlService, peerService, keywordService, logger)
 
 		err := s.Index("page1")
 
@@ -360,14 +374,16 @@ func TestApplyPageUpdatedEvent(t *testing.T) {
 
 		peerService := peerService.NewService(nil, nil, testutil.NewTestLogger())
 
-		service := service.NewService(pageService, htmlService, peerService, testutil.NewTestLogger())
+		keywordRepo := keywordRepo.NewRepository()
+		keywordService := keywordService.NewService(keywordRepo)
+
+		service := service.NewService(pageService, htmlService, peerService, keywordService, testutil.NewTestLogger())
 
 		page := &domain.Page{
 			URL:         "http://example.com",
 			ID:          "page1",
 			Title:       "Example",
 			Description: "An example page",
-			Keywords:    [][]string{{"distro"}, {"linux"}},
 		}
 
 		event := &domain.PageUpdatedEvent{
@@ -402,17 +418,6 @@ func TestApplyPageUpdatedEvent(t *testing.T) {
 			t.Fatalf("Expected meta description to be An example page, got %s", page.Description)
 		}
 
-		if len(page.Keywords) != 2 {
-			t.Fatalf("Expected 2 keywords, got %d", len(page.Keywords))
-		}
-
-		if page.Keywords[0][0] != "distro" {
-			t.Fatalf("Expected keyword to be distro, got %s", page.Keywords[0][0])
-		}
-
-		if page.Keywords[1][0] != "linux" {
-			t.Fatalf("Expected keyword to be linux, got %s", page.Keywords[1][0])
-		}
 	})
 
 }
@@ -428,6 +433,9 @@ func TestHash(t *testing.T) {
 
 	htmlRepo := htmlRepo.NewRepository()
 	htmlService := htmlService.NewService(htmlRepo, nil)
+
+	keywordRepo := keywordRepo.NewRepository()
+	keywordService := keywordService.NewService(keywordRepo)
 
 	htmlRepo.Save("page1", []byte(`
 		<html>
@@ -446,7 +454,7 @@ func TestHash(t *testing.T) {
 
 	logger := testutil.NewTestLogger()
 
-	s := service.NewService(pageService, htmlService, peerService, logger)
+	s := service.NewService(pageService, htmlService, peerService, keywordService, logger)
 
 	err := s.Index("page1")
 

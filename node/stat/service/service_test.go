@@ -27,21 +27,18 @@ func TestInfo(t *testing.T) {
 				URL:         "http://example.com",
 				Title:       "Example Domain",
 				Description: "",
-				Keywords:    [][]string{{"example", "domain"}},
 			},
 			"2": {
 				ID:          "2",
 				URL:         "http://example.com",
 				Title:       "Example Domain",
 				Description: "",
-				Keywords:    [][]string{{"example", "domain"}},
 			},
 			"3": {
 				ID:          "3",
 				URL:         "http://example.com",
 				Title:       "Example Domain",
 				Description: "",
-				Keywords:    [][]string{{"example", "domain"}},
 			},
 		}
 
@@ -68,8 +65,8 @@ func TestInfo(t *testing.T) {
 			t.Errorf("expected 3 pages, got %d", info.TotalPages)
 		}
 
-		if info.TotalKeywords != 3 {
-			t.Errorf("expected 3 keywords, got %d", info.TotalKeywords)
+		if info.TotalKeywords != 0 {
+			t.Errorf("expected 0 keywords, got %d", info.TotalKeywords)
 		}
 
 		if info.SizeOfIndex != len(encoded) {

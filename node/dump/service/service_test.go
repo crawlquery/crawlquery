@@ -29,10 +29,9 @@ func TestPage(t *testing.T) {
 		}
 
 		pageRepo.Save("1", &domain.Page{
-			ID:       "1",
-			URL:      "http://example.com",
-			Hash:     "1",
-			Keywords: [][]string{{"test", "page"}},
+			ID:   "1",
+			URL:  "http://example.com",
+			Hash: "1",
 		})
 
 		data, err = dumpService.Page()
@@ -65,12 +64,5 @@ func TestPage(t *testing.T) {
 			t.Fatalf("Expected page Hash to be '1', got '%s'", slicePages["1"].Hash)
 		}
 
-		if len(slicePages["1"].Keywords) != 1 {
-			t.Fatalf("Expected 1 keyword, got %d", len(slicePages["1"].Keywords))
-		}
-
-		if slicePages["1"].Keywords[0][0] != "test" {
-			t.Fatalf("Expected keyword to be 'test', got %s", slicePages["1"].Keywords[0][0])
-		}
 	})
 }

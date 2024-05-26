@@ -31,10 +31,6 @@ func (s *Service) Info() (*domain.StatInfo, error) {
 
 	sizeOfIndex = len(bytes)
 
-	for _, page := range pages {
-		totalKeywords += len(page.Keywords)
-	}
-
 	return &domain.StatInfo{
 		TotalPages:    totalPages,
 		TotalKeywords: totalKeywords,
