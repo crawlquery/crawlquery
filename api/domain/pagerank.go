@@ -1,6 +1,8 @@
 package domain
 
-import "crawlquery/node/domain"
+import (
+	"time"
+)
 
 type PageRank struct {
 	PageID   string
@@ -8,6 +10,11 @@ type PageRank struct {
 }
 
 type PageRankService interface {
-	CalculatePageRank(pageID string) (float64, error)
-	ApplyPageRankToResults(results []domain.Result) ([]domain.Result, error)
+	UpdatePageRanks() error
+	GetPageRank(pageID string) (float64, error)
+}
+
+type PageRankRepository interface {
+	Get(pageID string) (float64, error)
+	Update(pageID string, rank float64, createdAt time.Time) error
 }

@@ -103,18 +103,18 @@ func (s *Service) Search(term string) ([]nodeDomain.Result, error) {
 
 	wg.Wait()
 
-	results, err = s.pageRankService.ApplyPageRankToResults(results)
-
-	if err != nil {
-		s.logger.Errorf("Error applying PageRank to results: %v", err)
-		return nil, err
-	}
-
 	// filter out duplicate results
 	uniqueResults := make(map[string]nodeDomain.Result)
 
 	for _, res := range results {
 		if _, ok := uniqueResults[res.PageID]; !ok {
+			rank, err := s.pageRankService.GetPageRank(res.PageID)
+
+			if err != nil {
+				s.logger.Errorf("Error applying PageRank to results: %v", err)
+				return nil, err
+			}
+			res.PageRank = rank
 			uniqueResults[res.PageID] = res
 		}
 	}

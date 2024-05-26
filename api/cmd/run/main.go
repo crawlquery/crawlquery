@@ -35,6 +35,7 @@ import (
 	linkMySQLRepo "crawlquery/api/link/repository/mysql"
 	linkService "crawlquery/api/link/service"
 
+	pageRankMysqlRepo "crawlquery/api/pagerank/repository/mysql"
 	pageRankService "crawlquery/api/pagerank/service"
 
 	pageMysqlRepo "crawlquery/api/page/repository/mysql"
@@ -109,7 +110,8 @@ func main() {
 	linkService := linkService.NewService(linkRepo, crawlJobService, sugar)
 	linkHandler := linkHandler.NewHandler(linkService, sugar)
 
-	pageRankService := pageRankService.NewService(linkService, sugar)
+	pageRankRepo := pageRankMysqlRepo.NewRepository(db)
+	pageRankService := pageRankService.NewService(linkService, pageRankRepo, sugar)
 
 	searchService := searchService.NewService(nodeService, pageRankService, sugar)
 	searchHandler := searchHandler.NewHandler(searchService)

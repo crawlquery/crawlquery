@@ -70,7 +70,6 @@ var migrations = []Migration{
 		Name: "create_pages_table",
 		SQL: `CREATE TABLE pages (
 			id VARCHAR(32) PRIMARY KEY,
-			url TEXT NOT NULL,
 			shard_id INT NOT NULL,
 			hash VARCHAR(32) NOT NULL,
 			created_at TIMESTAMP NOT NULL)`,
@@ -83,6 +82,13 @@ var migrations = []Migration{
 			backoff_until TIMESTAMP,
 			last_indexed_at TIMESTAMP,
 			failed_reason TEXT,
+			created_at TIMESTAMP NOT NULL)`,
+	},
+	{
+		Name: "create_page_ranks_table",
+		SQL: `CREATE TABLE page_ranks (
+			page_id VARCHAR(32) PRIMARY KEY,
+			` + "`rank`" + ` FLOAT NOT NULL,
 			created_at TIMESTAMP NOT NULL)`,
 	},
 }

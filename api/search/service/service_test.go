@@ -9,6 +9,7 @@ import (
 	nodeDomain "crawlquery/node/domain"
 	"math"
 
+	pageRankRepo "crawlquery/api/pagerank/repository/mem"
 	pageRankService "crawlquery/api/pagerank/service"
 	searchService "crawlquery/api/search/service"
 
@@ -25,7 +26,8 @@ func setupServices() (*nodeRepo.Repository, *nodeService.Service, *linkService.S
 	nodeService := nodeService.NewService(nodeRepo, nil, nil, testutil.NewTestLogger())
 	linkRepo := linkRepo.NewRepository()
 	linkService := linkService.NewService(linkRepo, nil, testutil.NewTestLogger())
-	pageRankService := pageRankService.NewService(linkService, testutil.NewTestLogger())
+	pageRankRepo := pageRankRepo.NewRepository()
+	pageRankService := pageRankService.NewService(linkService, pageRankRepo, testutil.NewTestLogger())
 	searchService := searchService.NewService(nodeService, pageRankService, testutil.NewTestLogger())
 
 	return nodeRepo, nodeService, linkService, linkRepo, pageRankService, searchService

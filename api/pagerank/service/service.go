@@ -2,9 +2,8 @@ package service
 
 import (
 	"crawlquery/api/domain"
-	nodeDomain "crawlquery/node/domain"
-	"crawlquery/pkg/testutil"
 	"math"
+	"time"
 
 	"go.uber.org/zap"
 )
@@ -16,39 +15,40 @@ const (
 )
 
 type Service struct {
-	linkService domain.LinkService
-	logger      *zap.SugaredLogger
+	linkService  domain.LinkService
+	pageRankRepo domain.PageRankRepository
+	logger       *zap.SugaredLogger
 }
 
-func NewService(linkService domain.LinkService, logger *zap.SugaredLogger) *Service {
+func NewService(linkService domain.LinkService, pageRankRepo domain.PageRankRepository, logger *zap.SugaredLogger) *Service {
 	return &Service{
-		linkService: linkService,
-		logger:      logger,
+		linkService:  linkService,
+		pageRankRepo: pageRankRepo,
+		logger:       logger,
 	}
 }
 
-func (s *Service) ApplyPageRankToResults(results []nodeDomain.Result) ([]nodeDomain.Result, error) {
+func (s *Service) UpdatePageRanks() error {
 	pages, links, err := s.fetchPagesAndLinks()
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	pageRanks := calculatePageRank(pages, links)
 
-	testutil.PrettyPrint(pageRanks)
-	var updatedResults []nodeDomain.Result
+	for pageID, rank := range pageRanks {
 
-	for _, result := range results {
-		if rank, ok := pageRanks[result.PageID]; ok {
-			result.PageRank = rank
+		err := s.pageRankRepo.Update(pageID, rank, time.Now())
+		if err != nil {
+			s.logger.Errorw("Error updating page rank", "error", err)
+			return err
 		}
-		updatedResults = append(updatedResults, result)
 	}
 
-	return updatedResults, nil
+	return nil
 }
 
-func (s *Service) CalculatePageRank(pageID string) (float64, error) {
+func (s *Service) GetPageRank(pageID string) (float64, error) {
 
 	pages, links, err := s.fetchPagesAndLinks()
 	if err != nil {

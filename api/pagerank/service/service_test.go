@@ -4,18 +4,18 @@ import (
 	"crawlquery/api/domain"
 	linksRepo "crawlquery/api/link/repository/mem"
 	linksService "crawlquery/api/link/service"
+	pageRankRepo "crawlquery/api/pagerank/repository/mem"
 	pageRankService "crawlquery/api/pagerank/service"
 	"math"
 	"testing"
-
-	nodeDomain "crawlquery/node/domain"
 )
 
 func TestApplyPageRankToResults(t *testing.T) {
 	// Create new repository and services
 	linksRepo := linksRepo.NewRepository()
 	linksService := linksService.NewService(linksRepo, nil, nil)
-	pageRankService := pageRankService.NewService(linksService, nil)
+	pageRankRepo := pageRankRepo.NewRepository()
+	pageRankService := pageRankService.NewService(linksService, pageRankRepo, nil)
 
 	// Create some links for each page
 	links := []*domain.Link{
@@ -34,18 +34,8 @@ func TestApplyPageRankToResults(t *testing.T) {
 		}
 	}
 
-	// Create a list of results
-	results := []nodeDomain.Result{
-		{PageID: "A"},
-		{PageID: "B"},
-		{PageID: "C"},
-		{PageID: "D"},
-		{PageID: "E"},
-	}
-
-	var err error
 	// Apply PageRank to the results
-	results, err = pageRankService.ApplyPageRankToResults(results)
+	err := pageRankService.UpdatePageRanks()
 	if err != nil {
 		t.Fatalf("Failed to apply PageRank to results: %v", err)
 	}
@@ -61,23 +51,24 @@ func TestApplyPageRankToResults(t *testing.T) {
 
 	tolerance := 0.01 // Adjust the tolerance as needed
 
-	for _, result := range results {
-		expectedRank, ok := expectedRanks[result.PageID]
-		if !ok {
-			t.Fatalf("No expected rank found for PageID %s", result.PageID)
+	for pageID, expected := range expectedRanks {
+		actual, err := pageRankService.GetPageRank(pageID)
+		if err != nil {
+			t.Fatalf("Failed to get PageRank for %s: %v", pageID, err)
 		}
 
-		if math.Abs(result.PageRank-expectedRank) > tolerance {
-			t.Errorf("Unexpected PageRank for %s. Expected %f, got %f", result.PageID, expectedRank, result.PageRank)
+		if math.Abs(actual-expected) > tolerance {
+			t.Errorf("Unexpected PageRank for %s. Expected %f, got %f", pageID, expected, actual)
 		}
 	}
 }
 
-func TestCalculatePageRank(t *testing.T) {
+func TestGetPageRank(t *testing.T) {
 	// Create new repository and services
 	linksRepo := linksRepo.NewRepository()
 	linksService := linksService.NewService(linksRepo, nil, nil)
-	pageRankService := pageRankService.NewService(linksService, nil)
+	pageRankRepo := pageRankRepo.NewRepository()
+	pageRankService := pageRankService.NewService(linksService, pageRankRepo, nil)
 
 	// Create some links for each page
 	links := []*domain.Link{
@@ -107,7 +98,7 @@ func TestCalculatePageRank(t *testing.T) {
 	tolerance := 0.01 // Adjust the tolerance as needed
 
 	for id, expectedRank := range expectedRanks {
-		rank, err := pageRankService.CalculatePageRank(id)
+		rank, err := pageRankService.GetPageRank(id)
 		if err != nil {
 			t.Fatalf("Failed to calculate PageRank for %s: %v", id, err)
 		}
