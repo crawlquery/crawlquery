@@ -1,6 +1,7 @@
 package keyword
 
 import (
+	"crawlquery/node/domain"
 	"reflect"
 	"testing"
 
@@ -20,12 +21,12 @@ func TestParseQuantifierNounKeywords(t *testing.T) {
 	cases := []struct {
 		name     string
 		sentence string
-		want     [][]string
+		want     []domain.Keyword
 	}{
 		{
 			name:     "Quantifier noun keyword",
 			sentence: "There are a few holes in the bucket.",
-			want:     [][]string{{"few", "holes"}},
+			want:     []domain.Keyword{"few holes"},
 		},
 	}
 

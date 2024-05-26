@@ -2,6 +2,7 @@ package parse_test
 
 import (
 	"bytes"
+	"crawlquery/node/domain"
 	"crawlquery/node/parse"
 	"testing"
 
@@ -13,12 +14,12 @@ func TestKeywordParser(t *testing.T) {
 	t.Run("parses keywords from the page", func(t *testing.T) {
 		cases := []struct {
 			html     []byte
-			contains [][]string
+			contains []domain.Keyword
 		}{
 			{
 				html: testdataloader.GetTestFile("testdata/pages/info/which-search-engine-is-the-best.html"),
-				contains: [][]string{
-					{"search", "engine"},
+				contains: []domain.Keyword{
+					"search engine",
 				},
 			},
 		}
@@ -43,7 +44,7 @@ func TestKeywordParser(t *testing.T) {
 							continue
 						}
 						for i, w := range c {
-							if p[i] != w {
+							if p[i] != byte(w) {
 								break
 							}
 							if i == len(c)-1 {
@@ -63,18 +64,18 @@ func TestKeywordParser(t *testing.T) {
 	t.Run("parses keywords from the heading", func(t *testing.T) {
 		cases := []struct {
 			html     []byte
-			contains [][]string
+			contains []domain.Keyword
 		}{
 			{
 				html: testdataloader.GetTestFile("testdata/pages/stackoverflow/best-way-to-detect-bot-from-user-agent.html"),
-				contains: [][]string{
-					{"best"},
-					{"way"},
-					{"detect"},
-					{"bot"},
-					{"from"},
-					{"best", "way", "to", "detect", "bot", "from", "user", "agent"},
-					{"user", "agent"},
+				contains: []domain.Keyword{
+					"best",
+					"way",
+					"detect",
+					"bot",
+					"from",
+					"best way to detect bot from user agent",
+					"user agent",
 				},
 			},
 		}
@@ -103,7 +104,7 @@ func TestKeywordParser(t *testing.T) {
 							continue
 						}
 						for i, w := range c {
-							if p[i] != w {
+							if p[i] != byte(w) {
 								break
 							}
 							if i == len(c)-1 {

@@ -4,6 +4,8 @@ import (
 	"reflect"
 	"testing"
 
+	"crawlquery/node/domain"
+
 	"github.com/jdkato/prose/v2"
 )
 
@@ -28,9 +30,9 @@ func TestFindMatches(t *testing.T) {
 		}
 
 		expected := []match{
-			{start: 0, end: 3, keyword: []string{"The", "quick", "brown", "fox"}},
-			{start: 0, end: 2, keyword: []string{"The", "quick", "brown"}},
-			{start: 6, end: 8, keyword: []string{"the", "lazy", "dog"}},
+			{start: 0, end: 3, keyword: domain.Keyword("The quick brown fox")},
+			{start: 0, end: 2, keyword: domain.Keyword("The quick brown")},
+			{start: 6, end: 8, keyword: domain.Keyword("the lazy dog")},
 		}
 
 		got := findMatches(tokens, templates, 0)
@@ -80,7 +82,7 @@ func TestFindMatches(t *testing.T) {
 		}
 
 		expected := []match{
-			{start: 6, end: 8, keyword: []string{"the", "lazy", "dog"}},
+			{start: 6, end: 8, keyword: domain.Keyword("the lazy dog")},
 		}
 
 		got := findMatches(tokens, templates, 6)
@@ -94,18 +96,18 @@ func TestFindMatches(t *testing.T) {
 func TestUpdateLongestMatches(t *testing.T) {
 	t.Run("updates longest matches", func(t *testing.T) {
 		longestMatches := map[int]match{
-			0: {start: 0, end: 2, keyword: []string{"The", "quick"}},
+			0: {start: 0, end: 2, keyword: domain.Keyword("The quick")},
 		}
 
 		matches := []match{
-			{start: 0, end: 3, keyword: []string{"The", "quick", "brown", "fox"}},
-			{start: 1, end: 3, keyword: []string{"quick", "brown", "fox"}},
-			{start: 0, end: 2, keyword: []string{"The", "quick"}},
+			{start: 0, end: 3, keyword: domain.Keyword("The quick brown fox")},
+			{start: 1, end: 3, keyword: domain.Keyword("quick brown fox")},
+			{start: 0, end: 2, keyword: domain.Keyword("The quick")},
 		}
 
 		expected := map[int]match{
-			0: {start: 0, end: 3, keyword: []string{"The", "quick", "brown", "fox"}},
-			1: {start: 1, end: 3, keyword: []string{"quick", "brown", "fox"}},
+			0: {start: 0, end: 3, keyword: domain.Keyword("The quick brown fox")},
+			1: {start: 1, end: 3, keyword: domain.Keyword("quick brown fox")},
 		}
 
 		updateLongestMatches(longestMatches, matches)
@@ -119,13 +121,13 @@ func TestUpdateLongestMatches(t *testing.T) {
 		longestMatches := map[int]match{}
 
 		matches := []match{
-			{start: 0, end: 2, keyword: []string{"The", "quick"}},
-			{start: 1, end: 3, keyword: []string{"quick", "brown", "fox"}},
+			{start: 0, end: 2, keyword: domain.Keyword("The quick")},
+			{start: 1, end: 3, keyword: domain.Keyword("quick brown fox")},
 		}
 
 		expected := map[int]match{
-			0: {start: 0, end: 2, keyword: []string{"The", "quick"}},
-			1: {start: 1, end: 3, keyword: []string{"quick", "brown", "fox"}},
+			0: {start: 0, end: 2, keyword: domain.Keyword("The quick")},
+			1: {start: 1, end: 3, keyword: domain.Keyword("quick brown fox")},
 		}
 
 		updateLongestMatches(longestMatches, matches)
@@ -137,15 +139,15 @@ func TestUpdateLongestMatches(t *testing.T) {
 
 	t.Run("does not update with shorter matches", func(t *testing.T) {
 		longestMatches := map[int]match{
-			0: {start: 0, end: 3, keyword: []string{"The", "quick", "brown", "fox"}},
+			0: {start: 0, end: 3, keyword: domain.Keyword("The quick brown fox")},
 		}
 
 		matches := []match{
-			{start: 0, end: 2, keyword: []string{"The", "quick"}},
+			{start: 0, end: 2, keyword: domain.Keyword("The quick")},
 		}
 
 		expected := map[int]match{
-			0: {start: 0, end: 3, keyword: []string{"The", "quick", "brown", "fox"}},
+			0: {start: 0, end: 3, keyword: domain.Keyword("The quick brown fox")},
 		}
 
 		updateLongestMatches(longestMatches, matches)

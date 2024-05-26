@@ -2,63 +2,57 @@ package handler_test
 
 import (
 	"bytes"
-	"crawlquery/node/dto"
-	"crawlquery/pkg/client/html"
-	"crawlquery/pkg/testutil"
-	"crawlquery/pkg/util"
 	"encoding/json"
 	"net/http/httptest"
 	"testing"
 
 	crawlHandler "crawlquery/node/crawl/handler"
-
+	crawlService "crawlquery/node/crawl/service"
+	"crawlquery/node/dto"
 	htmlBackupService "crawlquery/node/html/backup/service"
 	htmlRepo "crawlquery/node/html/repository/mem"
 	htmlService "crawlquery/node/html/service"
-
+	indexService "crawlquery/node/index/service"
 	pageRepo "crawlquery/node/page/repository/mem"
 	pageService "crawlquery/node/page/service"
-
-	keywordRepo "crawlquery/node/keyword/repository/mem"
-	keywordService "crawlquery/node/keyword/service"
-
 	peerService "crawlquery/node/peer/service"
-
-	indexService "crawlquery/node/index/service"
-
-	crawlService "crawlquery/node/crawl/service"
+	"crawlquery/pkg/client/api"
+	"crawlquery/pkg/client/html"
+	"crawlquery/pkg/testutil"
+	"crawlquery/pkg/util"
 
 	"github.com/gin-gonic/gin"
 	"github.com/h2non/gock"
 )
 
+func setupServices() (*crawlService.CrawlService, *htmlRepo.Repository, *pageRepo.Repository) {
+	htmlRepository := htmlRepo.NewRepository()
+	htmlBackupSvc := htmlBackupService.NewService(html.NewClient("http://storage:8080"))
+	htmlSvc := htmlService.NewService(htmlRepository, htmlBackupSvc)
+
+	pageRepository := pageRepo.NewRepository()
+	pageSvc := pageService.NewService(pageRepository, nil)
+
+	peerSvc := peerService.NewService(nil, nil, testutil.NewTestLogger())
+	indexSvc := indexService.NewService(pageSvc, htmlSvc, peerSvc, nil, testutil.NewTestLogger())
+	apiClient := api.NewClient("http://localhost:8080", testutil.NewTestLogger())
+
+	crawlSvc := crawlService.NewService(htmlSvc, pageSvc, indexSvc, apiClient, testutil.NewTestLogger())
+
+	return crawlSvc, htmlRepository, pageRepository
+}
+
 func TestCrawl(t *testing.T) {
 	t.Run("can crawl a page", func(t *testing.T) {
 		defer gock.Off()
-		htmlRepo := htmlRepo.NewRepository()
+		crawlSvc, htmlRepo, pageRepo := setupServices()
+
+		expectedData := "<html><head><title>Example</title></head><body><h1>Hello, World!</h1><p>Website description</p></body></html>"
+		expectedPageHash := util.Sha256Hex32([]byte(expectedData))
 
 		gock.New("http://storage:8080").
 			Post("/pages").
 			Reply(201)
-
-		htmlBackupService := htmlBackupService.NewService(html.NewClient("http://storage:8080"))
-
-		htmlService := htmlService.NewService(htmlRepo, htmlBackupService)
-		pageRepo := pageRepo.NewRepository()
-		pageService := pageService.NewService(pageRepo, nil)
-
-		peerService := peerService.NewService(nil, nil, testutil.NewTestLogger())
-
-		keywordRepo := keywordRepo.NewRepository()
-		keywordService := keywordService.NewService(keywordRepo)
-
-		indexService := indexService.NewService(pageService, htmlService, peerService, keywordService, testutil.NewTestLogger())
-
-		crawlService := crawlService.NewService(htmlService, pageService, indexService, nil, testutil.NewTestLogger())
-
-		expectedData := "<html><head><title>Example</title></head><body><h1>Hello, World!</h1><p>Website description</p></body></html>"
-
-		expectedPageHash := util.Sha256Hex32([]byte(expectedData))
 
 		gock.New("http://example.com").
 			Get("/").
@@ -72,18 +66,15 @@ func TestCrawl(t *testing.T) {
 		}
 
 		body, err := json.Marshal(req)
-
 		if err != nil {
 			t.Fatalf("Error marshalling request: %v", err)
 		}
 
 		w := httptest.NewRecorder()
 		ctx, _ := gin.CreateTestContext(w)
-
 		ctx.Request = httptest.NewRequest("POST", "/crawl", bytes.NewBuffer(body))
 
-		handler := crawlHandler.NewHandler(crawlService, testutil.NewTestLogger())
-
+		handler := crawlHandler.NewHandler(crawlSvc, testutil.NewTestLogger())
 		handler.Crawl(ctx)
 
 		if err != nil {
@@ -100,7 +91,6 @@ func TestCrawl(t *testing.T) {
 		}
 
 		data, err := htmlRepo.Get("test1")
-
 		if err != nil {
 			t.Fatalf("Error reading data: %v", err)
 		}
@@ -110,7 +100,6 @@ func TestCrawl(t *testing.T) {
 		}
 
 		page, err := pageRepo.Get("test1")
-
 		if err != nil {
 			t.Fatalf("Error getting page: %v", err)
 		}
@@ -133,14 +122,8 @@ func TestCrawl(t *testing.T) {
 	})
 
 	t.Run("handles 404", func(t *testing.T) {
-		htmlRepo := htmlRepo.NewRepository()
-		htmlService := htmlService.NewService(htmlRepo, nil)
-		pageRepo := pageRepo.NewRepository()
-		pageService := pageService.NewService(pageRepo, nil)
-
-		crawlService := crawlService.NewService(htmlService, pageService, nil, nil, testutil.NewTestLogger())
-
 		defer gock.Off()
+		crawlSvc, _, pageRepo := setupServices()
 
 		gock.New("http://example.com").
 			Get("/").
@@ -152,18 +135,15 @@ func TestCrawl(t *testing.T) {
 		}
 
 		body, err := json.Marshal(req)
-
 		if err != nil {
 			t.Fatalf("Error marshalling request: %v", err)
 		}
 
 		w := httptest.NewRecorder()
 		ctx, _ := gin.CreateTestContext(w)
-
 		ctx.Request = httptest.NewRequest("POST", "/crawl", bytes.NewBuffer(body))
 
-		handler := crawlHandler.NewHandler(crawlService, testutil.NewTestLogger())
-
+		handler := crawlHandler.NewHandler(crawlSvc, testutil.NewTestLogger())
 		handler.Crawl(ctx)
 
 		if w.Code != 400 {
@@ -171,7 +151,6 @@ func TestCrawl(t *testing.T) {
 		}
 
 		page, err := pageRepo.Get("test1")
-
 		if err == nil || page != nil {
 			t.Fatalf("Expected page to be nil")
 		}

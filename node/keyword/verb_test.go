@@ -4,6 +4,8 @@ import (
 	"reflect"
 	"testing"
 
+	"crawlquery/node/domain"
+
 	"github.com/jdkato/prose/v2"
 )
 
@@ -12,37 +14,37 @@ func TestVerbKeywords(t *testing.T) {
 		cases := []struct {
 			name     string
 			sentence string
-			want     [][]string
+			want     []domain.Keyword
 		}{
 			{
 				name:     "VBD (verb, past tense)",
 				sentence: "He walked quickly.",
-				want:     [][]string{{"walked"}},
+				want:     []domain.Keyword{"walked"},
 			},
 			{
 				name:     "VBG (verb, gerund or present participle)",
 				sentence: "I enjoy walking.",
-				want:     [][]string{{"enjoy"}, {"walking"}},
+				want:     []domain.Keyword{"enjoy", "walking"},
 			},
 			{
 				name:     "VBN (verb, past participle)",
 				sentence: "He eaten quickly.",
-				want:     [][]string{{"eaten"}},
+				want:     []domain.Keyword{"eaten"},
 			},
 			{
 				name:     "VBP (verb, non-3rd person singular present)",
 				sentence: "They run every day.",
-				want:     [][]string{{"run"}},
+				want:     []domain.Keyword{"run"},
 			},
 			{
 				name:     "VBZ (verb, 3rd person singular present)",
 				sentence: "He runs quickly.",
-				want:     [][]string{{"runs"}},
+				want:     []domain.Keyword{"runs"},
 			},
 			{
 				name:     "VB (verb, base form)",
 				sentence: "I want to detect this.",
-				want:     [][]string{{"want"}, {"detect"}},
+				want:     []domain.Keyword{"want", "detect"},
 			},
 		}
 
@@ -74,32 +76,32 @@ func TestVerbKeywords(t *testing.T) {
 		cases := []struct {
 			name     string
 			sentence string
-			want     [][]string
+			want     []domain.Keyword
 		}{
 			{
 				name:     "VBD (verb, past tense)",
 				sentence: "He walked quickly.",
-				want:     [][]string{{"walked", "quickly"}},
+				want:     []domain.Keyword{"walked quickly"},
 			},
 			{
 				name:     "VBG (verb, gerund or present participle)",
 				sentence: "I enjoy walking quickly.",
-				want:     [][]string{{"walking", "quickly"}},
+				want:     []domain.Keyword{"walking quickly"},
 			},
 			{
 				name:     "VBN (verb, past participle)",
 				sentence: "He eaten quickly.",
-				want:     [][]string{{"eaten", "quickly"}},
+				want:     []domain.Keyword{"eaten quickly"},
 			},
 			{
 				name:     "VBP (verb, non-3rd person singular present)",
 				sentence: "They run quickly every day.",
-				want:     [][]string{{"run", "quickly"}},
+				want:     []domain.Keyword{"run quickly"},
 			},
 			{
 				name:     "VBZ (verb, 3rd person singular present)",
 				sentence: "He runs quickly.",
-				want:     [][]string{{"runs", "quickly"}},
+				want:     []domain.Keyword{"runs quickly"},
 			},
 		}
 

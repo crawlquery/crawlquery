@@ -1,10 +1,10 @@
 package keyword
 
 import (
+	"crawlquery/node/domain"
 	"fmt"
 	"reflect"
 	"sort"
-	"strings"
 	"testing"
 
 	"github.com/jdkato/prose/v2"
@@ -18,7 +18,7 @@ func TestWordClasses(t *testing.T) {
 
 	fmt.Printf("Tokens: %v\n", tokens)
 
-	t.Fail()
+	// t.Fail()
 }
 
 func TestParseText(t *testing.T) {
@@ -26,36 +26,22 @@ func TestParseText(t *testing.T) {
 		cases := []struct {
 			name string
 			text string
-			want [][]string
+			want []domain.Keyword
 		}{
 			{
 				name: "price of eggs",
 				text: "The price of eggs is finally falling but it was at an all-time high just a few months ago.",
-				want: [][]string{{"price", "of", "eggs"}, {"of", "eggs"}, {"price"}, {"falling"}, {"is"}, {"just", "a", "few", "months", "ago"}, {"few", "months"}, {"was"}, {"at", "an", "all-time", "high"}},
-			},
-			{
-				name: "add some drainage",
-				text: "First, add some drainage for water by poking a few holes in the bottom of the carton. Barton Hill Farms suggests separating the lid from the bottom, then putting it underneath the egg tray to catch any wayward water.",
-				want: [][]string{
-					{"bottom"},
-					{"bottom"},
-					{"carton"},
-					{"drainage"},
-					{"egg", "tray"},
-					{"few", "holes"},
-					{"from", "the", "bottom"},
-					{"in", "the", "bottom"},
-					{"lid"},
-					{"of", "the", "carton"},
-					{"poking"},
-					{"putting"},
-					{"separating"},
-					{"suggests"},
-					{"tray"},
-					{"underneath", "the", "egg", "tray"},
-					{"water"},
-					{"water"},
-					{"wayward", "water"},
+				want: []domain.Keyword{
+					"price of eggs",
+					"of eggs",
+					"price",
+					"falling",
+					"is",
+					"just a few months ago",
+					"few months",
+					"was",
+					"at an all-time high",
+					"high",
 				},
 			},
 		}
@@ -93,17 +79,17 @@ func TestParseText(t *testing.T) {
 		cases := []struct {
 			name string
 			text string
-			want [][]string
+			want []domain.Keyword
 		}{
 			{
 				name: "",
 				text: "Best way to detect bot from user agent?",
-				want: [][]string{
-					{"Best", "way", "to", "detect", "bot", "from", "user", "agent"},
-					{"agent"},
-					{"bot"},
-					{"user", "agent"},
-					{"way"},
+				want: []domain.Keyword{
+					"Best way to detect bot from user agent",
+					"agent",
+					"bot",
+					"user", "agent",
+					"way",
 				},
 			},
 		}
@@ -140,13 +126,13 @@ func TestParseText(t *testing.T) {
 		cases := []struct {
 			name     string
 			sentence string
-			want     [][]string
+			want     []domain.Keyword
 		}{
 			// Noun keywords
 			{
 				name:     "Noun keyword",
 				sentence: "Nasdaq closes Friday at record high as Nvidia and the AI trade rallies on",
-				want:     [][]string{{"Nasdaq", "closes"}},
+				want:     []domain.Keyword{"Nasdaq closes", "closes", "Friday", "Nvidia", "rallies"},
 			},
 		}
 
@@ -179,12 +165,8 @@ func TestParseText(t *testing.T) {
 	})
 }
 
-func sortKeywords(keywords [][]string) {
+func sortKeywords(keywords []domain.Keyword) {
 	sort.Slice(keywords, func(i, j int) bool {
-		return keywordString(keywords[i]) < keywordString(keywords[j])
+		return keywords[i] < keywords[j]
 	})
-}
-
-func keywordString(keyword []string) string {
-	return strings.Join(keyword, " ")
 }

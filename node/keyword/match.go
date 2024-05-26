@@ -1,6 +1,11 @@
 package keyword
 
-import "github.com/jdkato/prose/v2"
+import (
+	"crawlquery/node/domain"
+	"strings"
+
+	"github.com/jdkato/prose/v2"
+)
 
 func findMatches(tokens []prose.Token, templates KeywordSubCategory, startIndex int) []match {
 	var matches []match
@@ -15,14 +20,16 @@ func findMatches(tokens []prose.Token, templates KeywordSubCategory, startIndex 
 					}
 				}
 				if matchBool {
-					var keyword []string
+					var keywords []string
 					for k := 0; k < len(template); k++ {
-						keyword = append(keyword, tokens[i+k].Text)
+						keywords = append(keywords, tokens[i+k].Text)
 					}
+
+					kwString := strings.Join(keywords, " ")
 					m := match{
 						start:   i,
 						end:     i + len(template) - 1,
-						keyword: keyword,
+						keyword: domain.Keyword(kwString),
 					}
 					matches = append(matches, m)
 				}

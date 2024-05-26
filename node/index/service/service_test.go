@@ -13,24 +13,45 @@ import (
 
 	peerService "crawlquery/node/peer/service"
 
+	keywordOccurrenceRepo "crawlquery/node/keyword/occurrence/repository/mem"
+	keywordService "crawlquery/node/keyword/service"
+
 	"testing"
 )
 
-func TestIndex(t *testing.T) {
-
+func setupTestRepos() (
+	*pageRepo.Repository,
+	*pageService.Service,
+	*htmlRepo.Repository,
+	*htmlService.Service,
+	*peerService.Service,
+	*keywordService.Service,
+) {
 	pageRepo := pageRepo.NewRepository()
 	pageService := pageService.NewService(pageRepo, nil)
+
+	htmlRepo := htmlRepo.NewRepository()
+	htmlService := htmlService.NewService(htmlRepo, nil)
+
+	peerService := peerService.NewService(nil, nil, testutil.NewTestLogger())
+
+	keywordOccurrenceRepo := keywordOccurrenceRepo.NewRepository()
+	keywordService := keywordService.NewService(keywordOccurrenceRepo)
+
+	return pageRepo, pageService, htmlRepo, htmlService, peerService, keywordService
+}
+
+func TestIndex(t *testing.T) {
+
+	pageRepo, pageService, htmlRepo, htmlService, peerService, keywordService := setupTestRepos()
+
+	logger := testutil.NewTestLogger()
+	s := service.NewService(pageService, htmlService, peerService, keywordService, logger)
 
 	pageRepo.Save("page1", &domain.Page{
 		ID:  "page1",
 		URL: "http://example.com",
 	})
-
-	htmlRepo := htmlRepo.NewRepository()
-	htmlService := htmlService.NewService(htmlRepo, nil)
-
-	keywordRepo := keywordRepo.NewRepository()
-	keywordService := keywordService.NewService(keywordRepo)
 
 	htmlRepo.Save("page1", []byte(`
 		<html>
@@ -45,12 +66,6 @@ func TestIndex(t *testing.T) {
 			</body>
 		</html>
 	`))
-
-	peerService := peerService.NewService(nil, nil, testutil.NewTestLogger())
-
-	logger := testutil.NewTestLogger()
-
-	s := service.NewService(pageService, htmlService, peerService, keywordService, logger)
 
 	err := s.Index("page1")
 
@@ -87,4 +102,28 @@ func TestIndex(t *testing.T) {
 	if page.LastIndexedAt.IsZero() {
 		t.Fatalf("Expected last indexed at to be set, got zero")
 	}
+
+	checkOccurrences := map[domain.Keyword]domain.KeywordOccurrence{
+		"page": {
+			PageID:    "page1",
+			Frequency: 2,
+			Positions: []int{3, 4},
+		},
+	}
+
+	for keyword, check := range checkOccurrences {
+		matches, err := keywordService.GetKeywordMatches([]domain.Keyword{keyword})
+		if err != nil {
+			t.Fatalf("Error getting occurrences: %v", err)
+		}
+
+		if len(matches) != 1 {
+			t.Fatalf("Expected 1 match, got %d", len(matches))
+		}
+
+		if matches[0].Occurrences[0].PageID != check.PageID {
+			t.Fatalf("Expected page ID %s, got %s", check.PageID, matches[0].Occurrences[0].PageID)
+		}
+	}
+
 }

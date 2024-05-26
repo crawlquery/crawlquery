@@ -6,12 +6,12 @@ import (
 
 	"crawlquery/node/domain"
 	"crawlquery/node/keyword/occurrence/repository/mem"
-	"crawlquery/node/keyword/occurrence/service"
+	"crawlquery/node/keyword/service"
 )
 
 func TestGetKeywordMatches(t *testing.T) {
 	repo := mem.NewRepository()
-	svc := service.NewKeywordOccurrenceService(repo)
+	svc := service.NewService(repo)
 
 	// Add occurrences to the repository
 	keyword := domain.Keyword("example")
@@ -46,12 +46,12 @@ func TestGetKeywordMatches(t *testing.T) {
 
 func TestUpdate(t *testing.T) {
 	repo := mem.NewRepository()
-	svc := service.NewKeywordOccurrenceService(repo)
+	svc := service.NewService(repo)
 
 	keyword := domain.Keyword("example")
 	occurrence := domain.KeywordOccurrence{PageID: "page1", Frequency: 1, Positions: []int{1}}
 
-	err := svc.Update("page1", map[domain.Keyword]domain.KeywordOccurrence{keyword: occurrence})
+	err := svc.UpdateOccurrences("page1", map[domain.Keyword]domain.KeywordOccurrence{keyword: occurrence})
 	if err != nil {
 		t.Fatalf("Error updating keyword occurrences: %v", err)
 	}
@@ -72,7 +72,7 @@ func TestUpdate(t *testing.T) {
 
 func TestRemovePageOccurrences(t *testing.T) {
 	repo := mem.NewRepository()
-	svc := service.NewKeywordOccurrenceService(repo)
+	svc := service.NewService(repo)
 
 	keyword := domain.Keyword("example")
 	occurrences := []domain.KeywordOccurrence{
@@ -86,7 +86,7 @@ func TestRemovePageOccurrences(t *testing.T) {
 		}
 	}
 
-	err := svc.RemoveForPageID("page1")
+	err := svc.RemoveOccurrencesForPageID("page1")
 	if err != nil {
 		t.Fatalf("Error removing occurrences: %v", err)
 	}
@@ -104,7 +104,7 @@ func TestRemovePageOccurrences(t *testing.T) {
 		t.Errorf("Expected occurrences %v, got %v", expectedOccurrences, gotOccurrences)
 	}
 
-	err = svc.RemoveForPageID("page2")
+	err = svc.RemoveOccurrencesForPageID("page2")
 	if err != nil {
 		t.Fatalf("Error removing occurrences: %v", err)
 	}

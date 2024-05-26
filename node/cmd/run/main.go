@@ -16,7 +16,7 @@ import (
 	pageRepo "crawlquery/node/page/repository/bolt"
 	pageService "crawlquery/node/page/service"
 
-	keywordRepo "crawlquery/node/keyword/repository/bolt"
+	keywordOccurrenceRepo "crawlquery/node/keyword/occurrence/repository/bolt"
 	keywordService "crawlquery/node/keyword/service"
 
 	peerService "crawlquery/node/peer/service"
@@ -37,6 +37,7 @@ import (
 
 	"flag"
 
+	"github.com/boltdb/bolt"
 	"go.uber.org/zap"
 )
 
@@ -75,7 +76,13 @@ func main() {
 		sugar.Fatalf("Error creating page repository: %v", err)
 	}
 
-	keywordRepo, err := keywordRepo.NewRepository(keywordDBPath)
+	boltDB, err := bolt.Open(keywordDBPath, 0600, nil)
+
+	if err != nil {
+		sugar.Fatalf("Error opening bolt db: %v", err)
+	}
+
+	keywordRepo, err := keywordOccurrenceRepo.NewRepository(boltDB)
 	if err != nil {
 		sugar.Fatalf("Error creating keyword repository: %v", err)
 	}

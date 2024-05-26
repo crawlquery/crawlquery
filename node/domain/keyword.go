@@ -18,10 +18,9 @@ type KeywordMatch struct {
 	Occurrences []KeywordOccurrence `json:"occurrences"`
 }
 
-type KeywordOccurrenceService interface {
+type KeywordService interface {
 	GetKeywordMatches(keywords []Keyword) ([]KeywordMatch, error)
-	Update(pageID string, keywordOccurrences map[Keyword]KeywordOccurrence) error
-	RemoveForPageID(pageID string) error
+	UpdateOccurrences(pageID string, keywordOccurrences map[Keyword]KeywordOccurrence) error
 }
 
 type KeywordOccurrenceRepository interface {

@@ -3,10 +3,10 @@ package domain
 import "github.com/gin-gonic/gin"
 
 type Result struct {
-	PageID string         `json:"id"`
-	Score  float64        `json:"score"`
-	Page   *ResultPage    `json:"page"`
-	Hits   map[string]int `json:"hits"`
+	PageID            string                       `json:"id"`
+	Score             float64                      `json:"score"`
+	Page              *ResultPage                  `json:"page"`
+	KeywordOccurences map[string]KeywordOccurrence `json:"keyword_occurrences"`
 }
 
 // Page represents a web page with metadata. Note this does not include the keywords.

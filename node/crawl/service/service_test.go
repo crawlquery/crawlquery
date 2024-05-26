@@ -1,55 +1,48 @@
 package service_test
 
 import (
-	"crawlquery/node/crawl/service"
+	"testing"
+
+	crawlService "crawlquery/node/crawl/service"
 	htmlBackupService "crawlquery/node/html/backup/service"
 	htmlRepo "crawlquery/node/html/repository/mem"
 	htmlService "crawlquery/node/html/service"
-
+	indexService "crawlquery/node/index/service"
 	pageRepo "crawlquery/node/page/repository/mem"
 	pageService "crawlquery/node/page/service"
-
 	peerService "crawlquery/node/peer/service"
-
-	indexService "crawlquery/node/index/service"
-
-	keywordRepo "crawlquery/node/keyword/repository/mem"
-	keywordService "crawlquery/node/keyword/service"
-
 	"crawlquery/pkg/client/api"
 	"crawlquery/pkg/client/html"
 	"crawlquery/pkg/testutil"
 	"crawlquery/pkg/util"
-	"testing"
 
 	"github.com/h2non/gock"
 )
 
+func setupServices() (*crawlService.CrawlService, *htmlRepo.Repository, *pageRepo.Repository) {
+	htmlRepository := htmlRepo.NewRepository()
+	htmlBackupSvc := htmlBackupService.NewService(html.NewClient("http://storage:8080"))
+	htmlSvc := htmlService.NewService(htmlRepository, htmlBackupSvc)
+
+	pageRepository := pageRepo.NewRepository()
+	pageSvc := pageService.NewService(pageRepository, nil)
+
+	peerSvc := peerService.NewService(nil, nil, testutil.NewTestLogger())
+	indexSvc := indexService.NewService(pageSvc, htmlSvc, peerSvc, nil, testutil.NewTestLogger())
+	apiClient := api.NewClient("http://localhost:8080", testutil.NewTestLogger())
+
+	crawlService := crawlService.NewService(htmlSvc, pageSvc, indexSvc, apiClient, testutil.NewTestLogger())
+
+	return crawlService, htmlRepository, pageRepository
+}
+
 func TestCrawl(t *testing.T) {
 	t.Run("can crawl a page", func(t *testing.T) {
-
 		defer gock.Off()
-		htmlRepo := htmlRepo.NewRepository()
-		gock.New("http://storage:8080").
-			Post("/pages").
-			Reply(201)
 
-		htmlBackupService := htmlBackupService.NewService(html.NewClient("http://storage:8080"))
+		gock.New("http://storage:8080").Post("/pages").Reply(201)
 
-		htmlService := htmlService.NewService(htmlRepo, htmlBackupService)
-		pageRepo := pageRepo.NewRepository()
-		pageService := pageService.NewService(pageRepo, nil)
-
-		peerService := peerService.NewService(nil, nil, testutil.NewTestLogger())
-
-		keywordRepo := keywordRepo.NewRepository()
-		keywordService := keywordService.NewService(keywordRepo)
-
-		indexService := indexService.NewService(pageService, htmlService, peerService, keywordService, testutil.NewTestLogger())
-
-		api := api.NewClient("http://localhost:8080", testutil.NewTestLogger())
-
-		service := service.NewService(htmlService, pageService, indexService, api, testutil.NewTestLogger())
+		service, htmlRepo, pageRepo := setupServices()
 
 		expectedData := "<html><head><title>Example</title></head><body><h1>Hello, World!</h1><p>Welcome to my example website.</p></body></html>"
 
@@ -62,10 +55,6 @@ func TestCrawl(t *testing.T) {
 
 		if err != nil {
 			t.Errorf("Error crawling page: %v", err)
-		}
-
-		if err != nil {
-			t.Fatalf("Error creating repository: %v", err)
 		}
 
 		data, err := htmlRepo.Get("test1")
@@ -104,26 +93,9 @@ func TestCrawl(t *testing.T) {
 	t.Run("creates crawl jobs for links", func(t *testing.T) {
 		defer gock.Off()
 
-		gock.New("http://storage:8080").
-			Post("/pages").
-			Reply(201)
+		gock.New("http://storage:8080").Post("/pages").Reply(201)
 
-		htmlRepo := htmlRepo.NewRepository()
-		htmlBackupService := htmlBackupService.NewService(html.NewClient("http://storage:8080"))
-		htmlService := htmlService.NewService(htmlRepo, htmlBackupService)
-		pageRepo := pageRepo.NewRepository()
-		pageService := pageService.NewService(pageRepo, nil)
-
-		peerService := peerService.NewService(nil, nil, testutil.NewTestLogger())
-
-		keywordRepo := keywordRepo.NewRepository()
-		keywordService := keywordService.NewService(keywordRepo)
-
-		indexService := indexService.NewService(pageService, htmlService, peerService, keywordService, testutil.NewTestLogger())
-
-		api := api.NewClient("http://localhost:8080", testutil.NewTestLogger())
-
-		service := service.NewService(htmlService, pageService, indexService, api, testutil.NewTestLogger())
+		service, htmlRepo, pageRepo := setupServices()
 
 		expectedData := `<html><head><title>Example</title></head><body><h1>Hello, World! <a href="http://example.com/about">About us</a></h1><p>Welcome to my website.</p></body></html>`
 
@@ -152,10 +124,6 @@ func TestCrawl(t *testing.T) {
 
 		if pageCrawled.Hash != expectedHash {
 			t.Fatalf("Expected page hash to be %s, got %s", expectedHash, pageCrawled.Hash)
-		}
-
-		if err != nil {
-			t.Fatalf("Error creating repository: %v", err)
 		}
 
 		data, err := htmlRepo.Get("test1")
@@ -194,26 +162,9 @@ func TestCrawl(t *testing.T) {
 	t.Run("handles relative links", func(t *testing.T) {
 		defer gock.Off()
 
-		gock.New("http://storage:8080").
-			Post("/pages").
-			Reply(201)
+		gock.New("http://storage:8080").Post("/pages").Reply(201)
 
-		htmlRepo := htmlRepo.NewRepository()
-		htmlBackupService := htmlBackupService.NewService(html.NewClient("http://storage:8080"))
-		htmlService := htmlService.NewService(htmlRepo, htmlBackupService)
-		pageRepo := pageRepo.NewRepository()
-		pageService := pageService.NewService(pageRepo, nil)
-
-		peerService := peerService.NewService(nil, nil, testutil.NewTestLogger())
-
-		keywordRepo := keywordRepo.NewRepository()
-		keywordService := keywordService.NewService(keywordRepo)
-
-		indexService := indexService.NewService(pageService, htmlService, peerService, keywordService, testutil.NewTestLogger())
-
-		api := api.NewClient("http://localhost:8080", testutil.NewTestLogger())
-
-		service := service.NewService(htmlService, pageService, indexService, api, testutil.NewTestLogger())
+		service, htmlRepo, pageRepo := setupServices()
 
 		expectedData := `<html><head><title>Example</title></head><body><h1>Hello, World! <a href="/about">About us</a></h1><p>Welcome to my website.</p></body></html>`
 
@@ -242,10 +193,6 @@ func TestCrawl(t *testing.T) {
 
 		if pageCrawled.Hash != expectedHash {
 			t.Fatalf("Expected page hash to be %s, got %s", expectedHash, pageCrawled.Hash)
-		}
-
-		if err != nil {
-			t.Fatalf("Error creating repository: %v", err)
 		}
 
 		data, err := htmlRepo.Get("test1")
@@ -282,14 +229,9 @@ func TestCrawl(t *testing.T) {
 	})
 
 	t.Run("handles 404", func(t *testing.T) {
-		htmlRepo := htmlRepo.NewRepository()
-		htmlService := htmlService.NewService(htmlRepo, nil)
-		pageRepo := pageRepo.NewRepository()
-		pageService := pageService.NewService(pageRepo, nil)
-
-		service := service.NewService(htmlService, pageService, nil, nil, testutil.NewTestLogger())
-
 		defer gock.Off()
+
+		service, _, _ := setupServices()
 
 		gock.New("http://example.com").
 			Get("/").
@@ -305,22 +247,7 @@ func TestCrawl(t *testing.T) {
 	t.Run("only crawls html content type", func(t *testing.T) {
 		defer gock.Off()
 
-		htmlRepo := htmlRepo.NewRepository()
-		htmlBackupService := htmlBackupService.NewService(html.NewClient("http://storage:8080"))
-		htmlService := htmlService.NewService(htmlRepo, htmlBackupService)
-		pageRepo := pageRepo.NewRepository()
-		pageService := pageService.NewService(pageRepo, nil)
-
-		peerService := peerService.NewService(nil, nil, testutil.NewTestLogger())
-
-		keywordRepo := keywordRepo.NewRepository()
-		keywordService := keywordService.NewService(keywordRepo)
-
-		indexService := indexService.NewService(pageService, htmlService, peerService, keywordService, testutil.NewTestLogger())
-
-		api := api.NewClient("http://localhost:8080", testutil.NewTestLogger())
-
-		service := service.NewService(htmlService, pageService, indexService, api, testutil.NewTestLogger())
+		service, _, _ := setupServices()
 
 		expectedData := `<html><head><title>Example</title></head><body><h1>Hello, World! <a href="/about">About us</a></h1><p>Welcome to my website.</p></body></html>`
 

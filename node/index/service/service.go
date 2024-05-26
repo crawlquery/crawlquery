@@ -3,9 +3,9 @@ package service
 import (
 	"bytes"
 	"crawlquery/node/domain"
+	"crawlquery/node/keyword"
 	"crawlquery/node/parse"
 	"crawlquery/pkg/util"
-	"strings"
 	"time"
 
 	"github.com/PuerkitoBio/goquery"
@@ -13,26 +13,26 @@ import (
 )
 
 type Service struct {
-	pageService              domain.PageService
-	htmlService              domain.HTMLService
-	peerService              domain.PeerService
-	keywordOccurrenceService domain.KeywordOccurrenceService
-	logger                   *zap.SugaredLogger
+	pageService    domain.PageService
+	htmlService    domain.HTMLService
+	peerService    domain.PeerService
+	keywordService domain.KeywordService
+	logger         *zap.SugaredLogger
 }
 
 func NewService(
 	pageService domain.PageService,
 	htmlService domain.HTMLService,
 	peerService domain.PeerService,
-	keywordOccurrenceService domain.KeywordOccurrenceService,
+	keywordService domain.KeywordService,
 	logger *zap.SugaredLogger,
 ) *Service {
 	return &Service{
-		pageService:              pageService,
-		htmlService:              htmlService,
-		peerService:              peerService,
-		keywordOccurrenceService: keywordOccurrenceService,
-		logger:                   logger,
+		pageService:    pageService,
+		htmlService:    htmlService,
+		peerService:    peerService,
+		keywordService: keywordService,
+		logger:         logger,
 	}
 }
 
@@ -59,68 +59,45 @@ func (s *Service) Index(pageID string) error {
 		return err
 	}
 
-	var keywords [][]string
-
-	parsers := []domain.Parser{
-		parse.NewLanguageParser(doc),
-		parse.NewTitleParser(doc),
-		parse.NewDescriptionParser(doc),
-		parse.NewKeywordParser(doc, &keywords),
+	title, err := parse.Title(doc)
+	if err != nil {
+		s.logger.Errorw("Error parsing title", "error", err, "pageID", pageID)
+		return err
 	}
 
-	var errors []error
+	desc, err := parse.Description(doc)
 
-	for _, parser := range parsers {
-		err = parser.Parse(page)
-
-		if err != nil {
-			s.logger.Errorw("Error parsing page", "error", err, "pageID", pageID)
-			errors = append(errors, err)
-		}
+	if err != nil {
+		s.logger.Errorw("Error parsing description", "error", err, "pageID", pageID)
+		return err
 	}
+
+	keywords, err := parse.Keywords(doc)
+
+	if err != nil {
+		s.logger.Errorw("Error parsing keywords", "error", err, "pageID", pageID)
+		return err
+	}
+
+	occurrences, err := keyword.MakeKeywordOccurrences(keywords, page.ID)
+
+	// Update keywords
+	err = s.keywordService.UpdateOccurrences(page.ID, occurrences)
+
+	if err != nil {
+		s.logger.Errorw("Error updating keyword occurrences", "error", err, "pageID", pageID)
+		return err
+	}
+
+	page.Title = title
+	page.Description = desc
 	now := time.Now()
 	page.LastIndexedAt = &now
 
 	err = s.pageService.Update(page)
 
 	if err != nil {
-		s.logger.Errorw("Error saving page", "error", err, "pageID", pageID)
-		return err
-	}
-
-	if len(errors) > 0 {
-		return errors[0]
-	}
-
-	// Update occurrences
-	keywordOccurrences := make(map[domain.Keyword]domain.KeywordOccurrence, 0)
-
-	for i, termSplit := range keywords {
-		term := strings.Join(termSplit, " ")
-
-		// Get the current occurrence or initialize a new one
-		occurrence, ok := keywordOccurrences[domain.Keyword(term)]
-		if !ok {
-			occurrence = domain.KeywordOccurrence{
-				PageID:    page.ID,
-				Frequency: 1,
-				Positions: []int{i},
-			}
-		} else {
-			// Update the existing occurrence
-			occurrence.Frequency += 1
-			occurrence.Positions = append(occurrence.Positions, i)
-		}
-
-		// Put the updated occurrence back into the map
-		keywordOccurrences[domain.Keyword(term)] = occurrence
-	}
-
-	// Update keywords
-	err = s.keywordOccurrenceService.Update(page.ID, keywordOccurrences)
-
-	if err != nil {
-		s.logger.Errorw("Error updating keyword occurrences", "error", err, "pageID", pageID)
+		s.logger.Errorw("Error updating page", "error", err, "pageID", pageID)
 		return err
 	}
 

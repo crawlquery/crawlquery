@@ -4,6 +4,8 @@ import (
 	"reflect"
 	"testing"
 
+	"crawlquery/node/domain"
+
 	"github.com/jdkato/prose/v2"
 )
 
@@ -12,22 +14,22 @@ func TestAdjectiveKeywords(t *testing.T) {
 		cases := []struct {
 			name     string
 			sentence string
-			want     [][]string
+			want     []domain.Keyword
 		}{
 			{
 				name:     "RB JJ intensifier adjective",
 				sentence: "It is very interesting when it comes to the topic of politics.",
-				want:     [][]string{{"very", "interesting"}, {"interesting"}},
+				want:     []domain.Keyword{"very interesting", "interesting"},
 			},
 			{
 				name:     "JJ adjective",
 				sentence: "The quick brown fox jumps over the lazy dog.",
-				want:     [][]string{{"quick"}, {"lazy"}},
+				want:     []domain.Keyword{"quick", "lazy"},
 			},
 			{
 				name:     "JJS JJ adjective",
 				sentence: "The best way to detect bot from user agent.",
-				want:     [][]string{{"best"}, {"user"}},
+				want:     []domain.Keyword{"best", "user"},
 			},
 		}
 

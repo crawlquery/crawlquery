@@ -4,15 +4,15 @@ import (
 	"crawlquery/node/domain"
 )
 
-type KeywordOccurrenceService struct {
+type Service struct {
 	repo domain.KeywordOccurrenceRepository
 }
 
-func NewKeywordOccurrenceService(repo domain.KeywordOccurrenceRepository) *KeywordOccurrenceService {
-	return &KeywordOccurrenceService{repo: repo}
+func NewService(repo domain.KeywordOccurrenceRepository) *Service {
+	return &Service{repo: repo}
 }
 
-func (s *KeywordOccurrenceService) GetKeywordMatches(keywords []domain.Keyword) ([]domain.KeywordMatch, error) {
+func (s *Service) GetKeywordMatches(keywords []domain.Keyword) ([]domain.KeywordMatch, error) {
 	var matches []domain.KeywordMatch
 
 	for _, keyword := range keywords {
@@ -33,7 +33,7 @@ func (s *KeywordOccurrenceService) GetKeywordMatches(keywords []domain.Keyword) 
 	return matches, nil
 }
 
-func (s *KeywordOccurrenceService) Update(pageID string, keywordOccurrences map[domain.Keyword]domain.KeywordOccurrence) error {
+func (s *Service) UpdateOccurrences(pageID string, keywordOccurrences map[domain.Keyword]domain.KeywordOccurrence) error {
 	for keyword, occurrence := range keywordOccurrences {
 		err := s.repo.Add(keyword, occurrence)
 		if err != nil {
@@ -43,6 +43,6 @@ func (s *KeywordOccurrenceService) Update(pageID string, keywordOccurrences map[
 	return nil
 }
 
-func (s *KeywordOccurrenceService) RemoveForPageID(pageID string) error {
+func (s *Service) RemoveOccurrencesForPageID(pageID string) error {
 	return s.repo.RemoveForPageID(pageID)
 }

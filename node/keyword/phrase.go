@@ -1,6 +1,8 @@
 package keyword
 
 import (
+	"crawlquery/node/domain"
+
 	"github.com/jdkato/prose/v2"
 )
 
@@ -24,7 +26,7 @@ func keywordCategories() KeywordCategories {
 	}
 }
 
-func ParseText(text string) ([][]string, error) {
+func ParseText(text string) ([]domain.Keyword, error) {
 	doc, err := prose.NewDocument(text, prose.WithSegmentation(false), prose.WithExtraction(false))
 	if err != nil {
 		return nil, err
@@ -37,12 +39,12 @@ func ParseText(text string) ([][]string, error) {
 type match struct {
 	start   int
 	end     int
-	keyword []string
+	keyword domain.Keyword
 }
 
-func parseKeywords(tokens []prose.Token, keywordCategories KeywordCategories) ([][]string, error) {
+func parseKeywords(tokens []prose.Token, keywordCategories KeywordCategories) ([]domain.Keyword, error) {
 
-	var keywords [][]string
+	var keywords []domain.Keyword
 
 	for _, subCategories := range keywordCategories {
 		subCategoryKeywords := parseSubCategories(tokens, subCategories)
@@ -52,8 +54,8 @@ func parseKeywords(tokens []prose.Token, keywordCategories KeywordCategories) ([
 	return keywords, nil
 }
 
-func parseSubCategories(tokens []prose.Token, subCategories KeywordSubCategories) [][]string {
-	var keywords [][]string
+func parseSubCategories(tokens []prose.Token, subCategories KeywordSubCategories) []domain.Keyword {
+	var keywords []domain.Keyword
 	for _, subCategory := range subCategories {
 		longestMatches := map[int]match{}
 

@@ -17,7 +17,7 @@ import (
 	htmlRepo "crawlquery/node/html/repository/mem"
 	htmlService "crawlquery/node/html/service"
 
-	keywordRepo "crawlquery/node/keyword/repository/mem"
+	keywordOccurrenceRepo "crawlquery/node/keyword/occurrence/repository/mem"
 	keywordService "crawlquery/node/keyword/service"
 
 	indexService "crawlquery/node/index/service"
@@ -27,18 +27,39 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+func setupTestRepos() (
+	*pageRepo.Repository,
+	*pageService.Service,
+	*htmlRepo.Repository,
+	*htmlService.Service,
+	*peerService.Service,
+	*keywordService.Service,
+) {
+	pageRepo := pageRepo.NewRepository()
+	pageService := pageService.NewService(pageRepo, nil)
+
+	htmlRepo := htmlRepo.NewRepository()
+	htmlService := htmlService.NewService(htmlRepo, nil)
+
+	peerService := peerService.NewService(nil, nil, testutil.NewTestLogger())
+
+	keywordOccurrenceRepo := keywordOccurrenceRepo.NewRepository()
+	keywordService := keywordService.NewService(keywordOccurrenceRepo)
+
+	return pageRepo, pageService, htmlRepo, htmlService, peerService, keywordService
+}
+
 func TestIndex(t *testing.T) {
 	t.Run("indexes page", func(t *testing.T) {
-		pageRepo := pageRepo.NewRepository()
-		pageService := pageService.NewService(pageRepo, nil)
 
-		htmlRepo := htmlRepo.NewRepository()
-		htmlService := htmlService.NewService(htmlRepo, nil)
+		pageRepo, pageService, htmlRepo, htmlService, peerService, keywordService := setupTestRepos()
 
-		peerService := peerService.NewService(nil, nil, testutil.NewTestLogger())
+		pageRepo.Save("home1", &domain.Page{
+			ID:  "home1",
+			URL: "http://example.com",
+		})
 
-		keywordRepo := keywordRepo.NewRepository()
-		keywordService := keywordService.NewService(keywordRepo)
+		htmlRepo.Save("home1", []byte(`<html><head><title>Home</title></head><body><p>Hello this is my home page</p></html>`))
 
 		indexService := indexService.NewService(
 			pageService,
@@ -47,21 +68,6 @@ func TestIndex(t *testing.T) {
 			keywordService,
 			testutil.NewTestLogger(),
 		)
-
-		for k, dummy := range factory.ThreePages {
-
-			page, err := pageService.Create(k, dummy.URL, "hash1")
-
-			if err != nil {
-				t.Fatalf("error saving page: %v", err)
-			}
-
-			err = htmlRepo.Save(page.ID, []byte(dummy.HTML))
-
-			if err != nil {
-				t.Fatalf("error saving html: %v", err)
-			}
-		}
 
 		indexHandler := indexHandler.NewHandler(indexService, testutil.NewTestLogger())
 
@@ -101,16 +107,8 @@ func TestIndex(t *testing.T) {
 
 func TestGetIndex(t *testing.T) {
 	t.Run("returns page", func(t *testing.T) {
-		pageRepo := pageRepo.NewRepository()
-		pageService := pageService.NewService(pageRepo, nil)
 
-		htmlRepo := htmlRepo.NewRepository()
-		htmlService := htmlService.NewService(htmlRepo, nil)
-
-		peerService := peerService.NewService(nil, nil, testutil.NewTestLogger())
-
-		keywordRepo := keywordRepo.NewRepository()
-		keywordService := keywordService.NewService(keywordRepo)
+		_, pageService, htmlRepo, htmlService, peerService, keywordService := setupTestRepos()
 
 		indexService := indexService.NewService(
 			pageService,
@@ -177,16 +175,8 @@ func TestGetIndex(t *testing.T) {
 
 func TestEvent(t *testing.T) {
 	t.Run("can handle index event", func(t *testing.T) {
-		pageRepo := pageRepo.NewRepository()
-		pageService := pageService.NewService(pageRepo, nil)
 
-		htmlRepo := htmlRepo.NewRepository()
-		htmlService := htmlService.NewService(htmlRepo, nil)
-
-		peerService := peerService.NewService(nil, nil, testutil.NewTestLogger())
-
-		keywordRepo := keywordRepo.NewRepository()
-		keywordService := keywordService.NewService(keywordRepo)
+		_, pageService, _, htmlService, peerService, keywordService := setupTestRepos()
 
 		indexService := indexService.NewService(
 			pageService,
