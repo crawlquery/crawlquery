@@ -1,4 +1,4 @@
-package phrase
+package keyword
 
 import (
 	"reflect"
@@ -7,8 +7,8 @@ import (
 	"github.com/jdkato/prose/v2"
 )
 
-func TestAdjectivePhrases(t *testing.T) {
-	t.Run("parses adjective phrases", func(t *testing.T) {
+func TestAdjectiveKeywords(t *testing.T) {
+	t.Run("parses adjective keywords", func(t *testing.T) {
 		cases := []struct {
 			name     string
 			sentence string
@@ -38,15 +38,15 @@ func TestAdjectivePhrases(t *testing.T) {
 					t.Errorf("Error parsing sentence: %v", err)
 				}
 
-				got, err := parsePhrases(doc.Tokens(), PhraseCategories{
-					"adjective": adjectivePhraseSubCategories(),
+				got, err := parseKeywords(doc.Tokens(), KeywordCategories{
+					"adjective": adjectiveKeywordSubCategories(),
 				})
 				if err != nil {
 					t.Errorf("Error parsing sentence: %v", err)
 				}
 
-				sortPhrases(tc.want)
-				sortPhrases(got)
+				sortKeywords(tc.want)
+				sortKeywords(got)
 
 				if !reflect.DeepEqual(got, tc.want) {
 					t.Errorf("Expected %v, got %v", tc.want, got)

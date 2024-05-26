@@ -56,8 +56,8 @@ github.com/fatih/set v0.2.1/go.mod h1:+RKtMCH+favT2+3YecHGxcc0b4KyVWA1QWWJUs4E0C
 github.com/fogleman/gg v1.2.1-0.20190220221249-0403632d5b90/go.mod h1:R/bRT+9gY/C5z7JzPU0zXsXHKM4/ayA+zqcVNZzPa1k=
 github.com/gabriel-vasile/mimetype v1.4.3 h1:in2uUcidCuFcDKtdcBxlR0rJ1+fsokWf+uqxgUFjbI0=
 github.com/gabriel-vasile/mimetype v1.4.3/go.mod h1:d8uq/6HKRL6CGdk+aubisF/M5GcPfT7nKyLpA0lbSSk=
-github.com/gelembjuk/keyphrases v0.0.0-20170617170230-ed58e6ab55d9 h1:zGcNcBFbPXNN9KimsfKlY+Y9gHBrVtRBVoyFxMWGtEw=
-github.com/gelembjuk/keyphrases v0.0.0-20170617170230-ed58e6ab55d9/go.mod h1:YyZm7Ri88Uyvy1+PeUW77vTDxCp3WGYQmCbA+caUSeI=
+github.com/gelembjuk/keykeywords v0.0.0-20170617170230-ed58e6ab55d9 h1:zGcNcBFbPXNN9KimsfKlY+Y9gHBrVtRBVoyFxMWGtEw=
+github.com/gelembjuk/keykeywords v0.0.0-20170617170230-ed58e6ab55d9/go.mod h1:YyZm7Ri88Uyvy1+PeUW77vTDxCp3WGYQmCbA+caUSeI=
 github.com/gigawattio/window v0.0.0-20180317192513-0f5467e35573 h1:u8AQ9bPa9oC+8/A/jlWouakhIvkFfuxgIIRjiy8av7I=
 github.com/gigawattio/window v0.0.0-20180317192513-0f5467e35573/go.mod h1:eBvb3i++NHDH4Ugo9qCvMw8t0mTSctaEa5blJbWcNxs=
 github.com/gin-contrib/cors v1.7.2 h1:oLDHxdg8W/XDoN/8zamqk/Drgt4oVZDvaV0YmvVICQw=

@@ -1,4 +1,4 @@
-package phrase
+package keyword
 
 import (
 	"reflect"
@@ -7,40 +7,40 @@ import (
 	"github.com/jdkato/prose/v2"
 )
 
-func TestParsePrepositionalPhrases(t *testing.T) {
-	t.Run("parses prepositional phrases", func(t *testing.T) {
+func TestParsePrepositionalKeywords(t *testing.T) {
+	t.Run("parses prepositional keywords", func(t *testing.T) {
 		cases := []struct {
 			name     string
 			sentence string
 			want     [][]string
 		}{
 			{
-				name:     "simple prepositional phrase",
+				name:     "simple prepositional keyword",
 				sentence: "The price of eggs is rising.",
 				want:     [][]string{{"price", "of", "eggs"}, {"of", "eggs"}},
 			},
 			{
-				name:     "prepositional phrase with determiner",
+				name:     "prepositional keyword with determiner",
 				sentence: "The price of the eggs is rising.",
 				want:     [][]string{{"price", "of", "the", "eggs"}, {"of"}},
 			},
 			{
-				name:     "simple prepositional phrase",
+				name:     "simple prepositional keyword",
 				sentence: "The stock is at an all-time high.",
 				want:     [][]string{{"at", "an", "all-time", "high"}},
 			},
 			{
-				name:     "prepositional phrase with determiner",
+				name:     "prepositional keyword with determiner",
 				sentence: "Price of eggs is finally falling but it was at an all-time high.",
 				want:     [][]string{{"Price", "of", "eggs"}, {"of", "eggs"}, {"at", "an", "all-time", "high"}},
 			},
 			{
-				name:     "simple prepositional phrase",
+				name:     "simple prepositional keyword",
 				sentence: "The note was underneath the egg tray.",
 				want:     [][]string{{"underneath", "the", "egg", "tray"}},
 			},
 			{
-				name:     "multiple prepositional phrases",
+				name:     "multiple prepositional keywords",
 				sentence: "He met her at the park and they walked with friends in London.",
 				want: [][]string{
 					{"at", "the", "park"},
@@ -64,14 +64,14 @@ func TestParsePrepositionalPhrases(t *testing.T) {
 					t.Errorf("Error parsing sentence: %v", err)
 				}
 
-				got, err := parsePhrases(doc.Tokens(), PhraseCategories{
-					"prepositional": PhraseSubCategories{
-						"prepositional": PrepositionalPhraseTemplates,
+				got, err := parseKeywords(doc.Tokens(), KeywordCategories{
+					"prepositional": KeywordSubCategories{
+						"prepositional": PrepositionalKeywordTemplates,
 					},
 				})
 
-				sortPhrases(tc.want)
-				sortPhrases(got)
+				sortKeywords(tc.want)
+				sortKeywords(got)
 
 				if err != nil {
 					t.Errorf("Error parsing sentence: %v", err)

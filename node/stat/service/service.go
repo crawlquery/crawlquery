@@ -21,7 +21,7 @@ func (s *Service) Info() (*domain.StatInfo, error) {
 	}
 
 	totalPages := len(pages)
-	totalPhrases := 0
+	totalKeywords := 0
 	sizeOfIndex := 0
 	bytes, err := s.dumpService.Page()
 
@@ -32,12 +32,12 @@ func (s *Service) Info() (*domain.StatInfo, error) {
 	sizeOfIndex = len(bytes)
 
 	for _, page := range pages {
-		totalPhrases += len(page.Phrases)
+		totalKeywords += len(page.Keywords)
 	}
 
 	return &domain.StatInfo{
-		TotalPages:   totalPages,
-		TotalPhrases: totalPhrases,
-		SizeOfIndex:  sizeOfIndex,
+		TotalPages:    totalPages,
+		TotalKeywords: totalKeywords,
+		SizeOfIndex:   sizeOfIndex,
 	}, nil
 }

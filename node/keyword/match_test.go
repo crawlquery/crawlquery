@@ -1,4 +1,4 @@
-package phrase
+package keyword
 
 import (
 	"reflect"
@@ -21,16 +21,16 @@ func TestFindMatches(t *testing.T) {
 			{Tag: "NN", Text: "dog"},
 		}
 
-		templates := PhraseSubCategory{
+		templates := KeywordSubCategory{
 			{"DT", "JJ", "NN", "NN"},
 			{"DT", "JJ", "NN"},
 			{"DT", "NN"},
 		}
 
 		expected := []match{
-			{start: 0, end: 3, phrase: []string{"The", "quick", "brown", "fox"}},
-			{start: 0, end: 2, phrase: []string{"The", "quick", "brown"}},
-			{start: 6, end: 8, phrase: []string{"the", "lazy", "dog"}},
+			{start: 0, end: 3, keyword: []string{"The", "quick", "brown", "fox"}},
+			{start: 0, end: 2, keyword: []string{"The", "quick", "brown"}},
+			{start: 6, end: 8, keyword: []string{"the", "lazy", "dog"}},
 		}
 
 		got := findMatches(tokens, templates, 0)
@@ -46,7 +46,7 @@ func TestFindMatches(t *testing.T) {
 			{Tag: "IN", Text: "over"},
 		}
 
-		templates := PhraseSubCategory{
+		templates := KeywordSubCategory{
 			{"DT", "JJ", "NN", "NN"},
 			{"DT", "NN"},
 		}
@@ -73,14 +73,14 @@ func TestFindMatches(t *testing.T) {
 			{Tag: "NN", Text: "dog"},
 		}
 
-		templates := PhraseSubCategory{
+		templates := KeywordSubCategory{
 			{"DT", "JJ", "NN", "NN"},
 			{"DT", "JJ", "NN"},
 			{"DT", "NN"},
 		}
 
 		expected := []match{
-			{start: 6, end: 8, phrase: []string{"the", "lazy", "dog"}},
+			{start: 6, end: 8, keyword: []string{"the", "lazy", "dog"}},
 		}
 
 		got := findMatches(tokens, templates, 6)
@@ -94,18 +94,18 @@ func TestFindMatches(t *testing.T) {
 func TestUpdateLongestMatches(t *testing.T) {
 	t.Run("updates longest matches", func(t *testing.T) {
 		longestMatches := map[int]match{
-			0: {start: 0, end: 2, phrase: []string{"The", "quick"}},
+			0: {start: 0, end: 2, keyword: []string{"The", "quick"}},
 		}
 
 		matches := []match{
-			{start: 0, end: 3, phrase: []string{"The", "quick", "brown", "fox"}},
-			{start: 1, end: 3, phrase: []string{"quick", "brown", "fox"}},
-			{start: 0, end: 2, phrase: []string{"The", "quick"}},
+			{start: 0, end: 3, keyword: []string{"The", "quick", "brown", "fox"}},
+			{start: 1, end: 3, keyword: []string{"quick", "brown", "fox"}},
+			{start: 0, end: 2, keyword: []string{"The", "quick"}},
 		}
 
 		expected := map[int]match{
-			0: {start: 0, end: 3, phrase: []string{"The", "quick", "brown", "fox"}},
-			1: {start: 1, end: 3, phrase: []string{"quick", "brown", "fox"}},
+			0: {start: 0, end: 3, keyword: []string{"The", "quick", "brown", "fox"}},
+			1: {start: 1, end: 3, keyword: []string{"quick", "brown", "fox"}},
 		}
 
 		updateLongestMatches(longestMatches, matches)
@@ -119,13 +119,13 @@ func TestUpdateLongestMatches(t *testing.T) {
 		longestMatches := map[int]match{}
 
 		matches := []match{
-			{start: 0, end: 2, phrase: []string{"The", "quick"}},
-			{start: 1, end: 3, phrase: []string{"quick", "brown", "fox"}},
+			{start: 0, end: 2, keyword: []string{"The", "quick"}},
+			{start: 1, end: 3, keyword: []string{"quick", "brown", "fox"}},
 		}
 
 		expected := map[int]match{
-			0: {start: 0, end: 2, phrase: []string{"The", "quick"}},
-			1: {start: 1, end: 3, phrase: []string{"quick", "brown", "fox"}},
+			0: {start: 0, end: 2, keyword: []string{"The", "quick"}},
+			1: {start: 1, end: 3, keyword: []string{"quick", "brown", "fox"}},
 		}
 
 		updateLongestMatches(longestMatches, matches)
@@ -137,15 +137,15 @@ func TestUpdateLongestMatches(t *testing.T) {
 
 	t.Run("does not update with shorter matches", func(t *testing.T) {
 		longestMatches := map[int]match{
-			0: {start: 0, end: 3, phrase: []string{"The", "quick", "brown", "fox"}},
+			0: {start: 0, end: 3, keyword: []string{"The", "quick", "brown", "fox"}},
 		}
 
 		matches := []match{
-			{start: 0, end: 2, phrase: []string{"The", "quick"}},
+			{start: 0, end: 2, keyword: []string{"The", "quick"}},
 		}
 
 		expected := map[int]match{
-			0: {start: 0, end: 3, phrase: []string{"The", "quick", "brown", "fox"}},
+			0: {start: 0, end: 3, keyword: []string{"The", "quick", "brown", "fox"}},
 		}
 
 		updateLongestMatches(longestMatches, matches)

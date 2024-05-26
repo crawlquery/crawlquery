@@ -1,4 +1,4 @@
-package phrase
+package keyword
 
 import (
 	"reflect"
@@ -7,20 +7,20 @@ import (
 	"github.com/jdkato/prose/v2"
 )
 
-func TestParseAdverbialPhrases(t *testing.T) {
-	t.Run("parses adverbial phrases", func(t *testing.T) {
+func TestParseAdverbialKeywords(t *testing.T) {
+	t.Run("parses adverbial keywords", func(t *testing.T) {
 		cases := []struct {
 			name     string
 			sentence string
 			want     [][]string
 		}{
 			{
-				name:     "simple adverbial phrase",
+				name:     "simple adverbial keyword",
 				sentence: "He left just a few months ago.",
 				want:     [][]string{{"just", "a", "few", "months", "ago"}},
 			},
 			{
-				name:     "multiple adverbial phrases",
+				name:     "multiple adverbial keywords",
 				sentence: "She arrived just a few months ago and left right after the meeting.",
 				want: [][]string{
 					{"just", "a", "few", "months", "ago"},
@@ -40,14 +40,14 @@ func TestParseAdverbialPhrases(t *testing.T) {
 					t.Errorf("Error parsing sentence: %v", err)
 				}
 
-				got, err := parsePhrases(doc.Tokens(), PhraseCategories{
-					"adverbial": PhraseSubCategories{
-						"adverbial": AdverbialPhraseTemplates,
+				got, err := parseKeywords(doc.Tokens(), KeywordCategories{
+					"adverbial": KeywordSubCategories{
+						"adverbial": AdverbialKeywordTemplates,
 					},
 				})
 
-				sortPhrases(tc.want)
-				sortPhrases(got)
+				sortKeywords(tc.want)
+				sortKeywords(got)
 
 				if err != nil {
 					t.Errorf("Error parsing sentence: %v", err)

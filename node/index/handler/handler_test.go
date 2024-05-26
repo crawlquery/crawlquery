@@ -283,7 +283,7 @@ func TestEvent(t *testing.T) {
 				ID:          "page1",
 				Title:       "Example",
 				Description: "An example page",
-				Phrases:     [][]string{{"distro"}, {"linux"}},
+				Keywords:    [][]string{{"distro"}, {"linux"}},
 			},
 		}
 
@@ -323,16 +323,16 @@ func TestEvent(t *testing.T) {
 			t.Fatalf("expected meta description to be An example page, got %s", page.Description)
 		}
 
-		if len(page.Phrases) != 2 {
-			t.Fatalf("expected 2 phrases, got %d", len(page.Phrases))
+		if len(page.Keywords) != 2 {
+			t.Fatalf("expected 2 keywords, got %d", len(page.Keywords))
 		}
 
-		if page.Phrases[0][0] != "distro" {
-			t.Fatalf("expected phrase to be distro, got %s", page.Phrases[0][0])
+		if page.Keywords[0][0] != "distro" {
+			t.Fatalf("expected keyword to be distro, got %s", page.Keywords[0][0])
 		}
 
-		if page.Phrases[1][0] != "linux" {
-			t.Fatalf("expected phrase to be linux, got %s", page.Phrases[1][0])
+		if page.Keywords[1][0] != "linux" {
+			t.Fatalf("expected keyword to be linux, got %s", page.Keywords[1][0])
 		}
 	})
 }

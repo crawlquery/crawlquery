@@ -1,4 +1,4 @@
-package phrase
+package keyword
 
 import (
 	"fmt"
@@ -22,7 +22,7 @@ func TestWordClasses(t *testing.T) {
 }
 
 func TestParseText(t *testing.T) {
-	t.Run("parses a text using noun, verb, and adjective phrases", func(t *testing.T) {
+	t.Run("parses a text using noun, verb, and adjective keywords", func(t *testing.T) {
 		cases := []struct {
 			name string
 			text string
@@ -67,14 +67,14 @@ func TestParseText(t *testing.T) {
 					t.Errorf("Error parsing text: %v", err)
 				}
 
-				sortPhrases(tc.want)
-				sortPhrases(got)
+				sortKeywords(tc.want)
+				sortKeywords(got)
 
-				for _, phrase := range tc.want {
+				for _, keyword := range tc.want {
 					var found bool
 
 					for _, p := range got {
-						if reflect.DeepEqual(phrase, p) {
+						if reflect.DeepEqual(keyword, p) {
 							found = true
 							break
 						}
@@ -89,7 +89,7 @@ func TestParseText(t *testing.T) {
 		}
 	})
 
-	t.Run("parses longest phrase matches", func(t *testing.T) {
+	t.Run("parses longest keyword matches", func(t *testing.T) {
 		cases := []struct {
 			name string
 			text string
@@ -115,14 +115,14 @@ func TestParseText(t *testing.T) {
 					t.Errorf("Error parsing text: %v", err)
 				}
 
-				sortPhrases(tc.want)
-				sortPhrases(got)
+				sortKeywords(tc.want)
+				sortKeywords(got)
 
-				for _, phrase := range tc.want {
+				for _, keyword := range tc.want {
 					var found bool
 
 					for _, p := range got {
-						if reflect.DeepEqual(phrase, p) {
+						if reflect.DeepEqual(keyword, p) {
 							found = true
 							break
 						}
@@ -137,12 +137,12 @@ func TestParseText(t *testing.T) {
 	})
 }
 
-func sortPhrases(phrases [][]string) {
-	sort.Slice(phrases, func(i, j int) bool {
-		return phraseString(phrases[i]) < phraseString(phrases[j])
+func sortKeywords(keywords [][]string) {
+	sort.Slice(keywords, func(i, j int) bool {
+		return keywordString(keywords[i]) < keywordString(keywords[j])
 	})
 }
 
-func phraseString(phrase []string) string {
-	return strings.Join(phrase, " ")
+func keywordString(keyword []string) string {
+	return strings.Join(keyword, " ")
 }

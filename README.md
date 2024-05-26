@@ -168,9 +168,9 @@ go run node/cmd/run/main.go -key 0dc709b5-7565-40e9-b795-d74f5752a6a0 -html /hom
 
 - Root directory for the Node packages.
 
-### ./node/phrase
+### ./node/keyword
 
-- Handles phrase extraction and processing.
+- Handles keyword extraction and processing.
 
 ### ./node/stat
 

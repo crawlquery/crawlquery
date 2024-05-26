@@ -28,7 +28,7 @@ require (
 	github.com/deckarep/golang-set v1.7.1 // indirect
 	github.com/fatih/set v0.2.1 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.3 // indirect
-	github.com/gelembjuk/keyphrases v0.0.0-20170617170230-ed58e6ab55d9 // indirect
+	github.com/gelembjuk/keykeywords v0.0.0-20170617170230-ed58e6ab55d9 // indirect
 	github.com/gigawattio/window v0.0.0-20180317192513-0f5467e35573 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect

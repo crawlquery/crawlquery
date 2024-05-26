@@ -1,6 +1,6 @@
-package phrase
+package keyword
 
-var SimpleNounTemplates = PhraseSubCategory{
+var SimpleNounTemplates = KeywordSubCategory{
 	// A tree
 	{"NN"},
 
@@ -8,7 +8,7 @@ var SimpleNounTemplates = PhraseSubCategory{
 	{"NN", "NN"},
 }
 
-var AdjectiveNounTemplates = PhraseSubCategory{
+var AdjectiveNounTemplates = KeywordSubCategory{
 	// bright red car
 	{"JJ", "JJ", "NN"},
 
@@ -23,8 +23,8 @@ var AdjectiveNounTemplates = PhraseSubCategory{
 	{"JJS", "NN", "TO", "VB", "NN", "IN", "JJ", "NN"},
 }
 
-func nounPhraseSubCategories() PhraseSubCategories {
-	subCategories := PhraseSubCategories{
+func nounKeywordSubCategories() KeywordSubCategories {
+	subCategories := KeywordSubCategories{
 		"simple_noun":    SimpleNounTemplates,
 		"adjective_noun": AdjectiveNounTemplates,
 	}

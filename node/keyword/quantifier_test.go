@@ -1,4 +1,4 @@
-package phrase
+package keyword
 
 import (
 	"reflect"
@@ -7,13 +7,13 @@ import (
 	"github.com/jdkato/prose/v2"
 )
 
-func TestParseQuantifierNounPhrases(t *testing.T) {
-	QuantifierNounTemplates := PhraseSubCategory{
+func TestParseQuantifierNounKeywords(t *testing.T) {
+	QuantifierNounTemplates := KeywordSubCategory{
 		// few holes
 		{"JJ", "NNS"},
 	}
 
-	subCategories := PhraseSubCategories{
+	subCategories := KeywordSubCategories{
 		"quantifier_noun": QuantifierNounTemplates,
 	}
 
@@ -23,7 +23,7 @@ func TestParseQuantifierNounPhrases(t *testing.T) {
 		want     [][]string
 	}{
 		{
-			name:     "Quantifier noun phrase",
+			name:     "Quantifier noun keyword",
 			sentence: "There are a few holes in the bucket.",
 			want:     [][]string{{"few", "holes"}},
 		},

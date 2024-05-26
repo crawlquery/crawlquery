@@ -82,8 +82,8 @@ func TestIndex(t *testing.T) {
 		t.Fatalf("Expected meta description to be This is a test page, got %s", page.Description)
 	}
 
-	if len(page.Phrases) == 0 {
-		t.Fatalf("Expected phrases to be found, got none")
+	if len(page.Keywords) == 0 {
+		t.Fatalf("Expected keywords to be found, got none")
 	}
 
 	if page.LastIndexedAt.IsZero() {
@@ -367,7 +367,7 @@ func TestApplyPageUpdatedEvent(t *testing.T) {
 			ID:          "page1",
 			Title:       "Example",
 			Description: "An example page",
-			Phrases:     [][]string{{"distro"}, {"linux"}},
+			Keywords:    [][]string{{"distro"}, {"linux"}},
 		}
 
 		event := &domain.PageUpdatedEvent{
@@ -402,16 +402,16 @@ func TestApplyPageUpdatedEvent(t *testing.T) {
 			t.Fatalf("Expected meta description to be An example page, got %s", page.Description)
 		}
 
-		if len(page.Phrases) != 2 {
-			t.Fatalf("Expected 2 phrases, got %d", len(page.Phrases))
+		if len(page.Keywords) != 2 {
+			t.Fatalf("Expected 2 keywords, got %d", len(page.Keywords))
 		}
 
-		if page.Phrases[0][0] != "distro" {
-			t.Fatalf("Expected phrase to be distro, got %s", page.Phrases[0][0])
+		if page.Keywords[0][0] != "distro" {
+			t.Fatalf("Expected keyword to be distro, got %s", page.Keywords[0][0])
 		}
 
-		if page.Phrases[1][0] != "linux" {
-			t.Fatalf("Expected phrase to be linux, got %s", page.Phrases[1][0])
+		if page.Keywords[1][0] != "linux" {
+			t.Fatalf("Expected keyword to be linux, got %s", page.Keywords[1][0])
 		}
 	})
 

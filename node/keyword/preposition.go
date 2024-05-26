@@ -1,6 +1,6 @@
-package phrase
+package keyword
 
-var PrepositionalPhraseTemplates = PhraseSubCategory{
+var PrepositionalKeywordTemplates = KeywordSubCategory{
 	// price of eggs
 	{"NN", "IN", "NNS"},
 
@@ -14,7 +14,7 @@ var PrepositionalPhraseTemplates = PhraseSubCategory{
 	{"IN", "DT", "JJ", "NN"},
 	{"IN", "DT", "JJ", "JJ"},
 
-	// other examples of prepositional phrases
+	// other examples of prepositional keywords
 	{"IN", "DT", "NN"}, // at the park
 	{"IN", "DT", "NN"}, // in the park
 	{"IN", "NNS"},      // with friends
@@ -24,9 +24,9 @@ var PrepositionalPhraseTemplates = PhraseSubCategory{
 	{"IN"},
 }
 
-func prepositionalPhraseSubCategories() PhraseSubCategories {
-	subCategories := PhraseSubCategories{
-		"prepositional": PrepositionalPhraseTemplates,
+func prepositionalKeywordSubCategories() KeywordSubCategories {
+	subCategories := KeywordSubCategories{
+		"prepositional": PrepositionalKeywordTemplates,
 	}
 
 	return subCategories

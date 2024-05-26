@@ -6,12 +6,12 @@ import (
 	"testing"
 )
 
-func TestPhraseSignal(t *testing.T) {
-	t.Run("adds score for each matching phrase", func(t *testing.T) {
-		p := &signal.Phrase{}
+func TestKeywordSignal(t *testing.T) {
+	t.Run("adds score for each matching keyword", func(t *testing.T) {
+		p := &signal.Keyword{}
 
 		page := &domain.Page{
-			Phrases: [][]string{{"ride", "a", "bike"}, {"ride"}, {"bike"}},
+			Keywords: [][]string{{"ride", "a", "bike"}, {"ride"}, {"bike"}},
 		}
 
 		terms := []string{"how", "to", "ride", "a", "bike"}

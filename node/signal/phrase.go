@@ -2,22 +2,22 @@ package signal
 
 import "crawlquery/node/domain"
 
-type Phrase struct{}
+type Keyword struct{}
 
-func (Phrase) Name() string {
-	return "phrase"
+func (Keyword) Name() string {
+	return "keyword"
 }
 
-func (p *Phrase) containsPhrase(page *domain.Page, phrase []string) bool {
-	for _, pagePhrase := range page.Phrases {
-		if len(pagePhrase) != len(phrase) {
+func (p *Keyword) containsKeyword(page *domain.Page, keyword []string) bool {
+	for _, pageKeyword := range page.Keywords {
+		if len(pageKeyword) != len(keyword) {
 			continue
 		}
 
 		matches := true
 
-		for i, word := range pagePhrase {
-			if word != phrase[i] {
+		for i, word := range pageKeyword {
+			if word != keyword[i] {
 				matches = false
 				break
 			}
@@ -31,7 +31,7 @@ func (p *Phrase) containsPhrase(page *domain.Page, phrase []string) bool {
 	return false
 }
 
-func (p *Phrase) Level(page *domain.Page, terms []string) (domain.SignalLevel, domain.SignalBreakdown) {
+func (p *Keyword) Level(page *domain.Page, terms []string) (domain.SignalLevel, domain.SignalBreakdown) {
 
 	baseLevel := domain.SignalLevelNone
 
@@ -39,7 +39,7 @@ func (p *Phrase) Level(page *domain.Page, terms []string) (domain.SignalLevel, d
 	// so for example if terms = ["a", "b", "c"]
 	// groups = [["a"], ["a", "b"], ["a", "b", "c"],
 
-	// then search the group for any matching phrases which could be ["a", "b"] or ["b", "c"]
+	// then search the group for any matching keywords which could be ["a", "b"] or ["b", "c"]
 
 	groups := make([][]string, len(terms)*(len(terms)+1)/2)
 
@@ -50,12 +50,12 @@ func (p *Phrase) Level(page *domain.Page, terms []string) (domain.SignalLevel, d
 	}
 
 	for _, group := range groups {
-		if p.containsPhrase(page, group) {
+		if p.containsKeyword(page, group) {
 			baseLevel += domain.SignalLevelMedium
 		}
 	}
 
 	return baseLevel, domain.SignalBreakdown{
-		"phrase": baseLevel,
+		"keyword": baseLevel,
 	}
 }

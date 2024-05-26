@@ -1,4 +1,4 @@
-package phrase
+package keyword
 
 import (
 	"reflect"
@@ -7,8 +7,8 @@ import (
 	"github.com/jdkato/prose/v2"
 )
 
-func TestVerbPhrases(t *testing.T) {
-	t.Run("parses verb phrases", func(t *testing.T) {
+func TestVerbKeywords(t *testing.T) {
+	t.Run("parses verb keywords", func(t *testing.T) {
 		cases := []struct {
 			name     string
 			sentence string
@@ -53,15 +53,15 @@ func TestVerbPhrases(t *testing.T) {
 					t.Errorf("Error parsing sentence: %v", err)
 				}
 
-				got, err := parsePhrases(doc.Tokens(), PhraseCategories{
-					"verb": verbPhraseSubCategories(),
+				got, err := parseKeywords(doc.Tokens(), KeywordCategories{
+					"verb": verbKeywordSubCategories(),
 				})
 				if err != nil {
 					t.Errorf("Error parsing sentence: %v", err)
 				}
 
-				sortPhrases(tc.want)
-				sortPhrases(got)
+				sortKeywords(tc.want)
+				sortKeywords(got)
 
 				if !reflect.DeepEqual(got, tc.want) {
 					t.Errorf("Expected %v, got %v", tc.want, got)
@@ -70,7 +70,7 @@ func TestVerbPhrases(t *testing.T) {
 		}
 	})
 
-	t.Run("parses verb phrases with adverbs", func(t *testing.T) {
+	t.Run("parses verb keywords with adverbs", func(t *testing.T) {
 		cases := []struct {
 			name     string
 			sentence string
@@ -110,12 +110,12 @@ func TestVerbPhrases(t *testing.T) {
 					t.Errorf("Error parsing sentence: %v", err)
 				}
 
-				got := parseSubCategories(doc.Tokens(), PhraseSubCategories{
+				got := parseSubCategories(doc.Tokens(), KeywordSubCategories{
 					"verb": VerbAdverbTemplates,
 				})
 
-				sortPhrases(tc.want)
-				sortPhrases(got)
+				sortKeywords(tc.want)
+				sortKeywords(got)
 
 				if !reflect.DeepEqual(got, tc.want) {
 					t.Errorf("Expected %v, got %v", tc.want, got)
