@@ -17,19 +17,30 @@ func MakeAbsoluteIfRelative(base, link string) (string, error) {
 		return "", fmt.Errorf("failed to parse base URL: %w", err)
 	}
 
-	// Parse the link
+	// Parse the link URL
 	linkParsed, err := url.Parse(link)
 	if err != nil {
 		return "", fmt.Errorf("failed to parse link: %w", err)
 	}
 
-	// If the link is already absolute, return it as is
+	// If the link is already absolute, check its scheme
 	if linkParsed.IsAbs() {
+		if linkParsed.Scheme != "http" && linkParsed.Scheme != "https" {
+			return "", fmt.Errorf("unsupported URL scheme: %s", linkParsed.Scheme)
+		}
 		return link, nil
+	}
+
+	if len(linkParsed.String()) > 0 && linkParsed.String()[0] == '#' {
+		return "", fmt.Errorf("unsupported URL scheme: %s", linkParsed.Scheme)
 	}
 
 	// Resolve the relative URL against the base URL
 	resolvedURL := baseParsed.ResolveReference(linkParsed)
+
+	if resolvedURL.Scheme != "http" && resolvedURL.Scheme != "https" {
+		return "", fmt.Errorf("unsupported URL scheme: %s", resolvedURL.Scheme)
+	}
 	return resolvedURL.String(), nil
 }
 

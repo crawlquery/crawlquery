@@ -88,10 +88,10 @@ func (r *Repository) FirstProcessable() (*domain.CrawlJob, error) {
 		crawl_jobs 
 	WHERE 
 		(backoff_until IS NULL OR backoff_until < ?) AND
-		(last_crawled_at IS NULL OR last_crawled_at < ?) 
+		(last_crawled_at IS NULL) 
 	ORDER BY 
 		created_at ASC 
-	LIMIT 1`, time.Now(), time.Now().Add(-time.Hour*24*31))
+	LIMIT 1`, time.Now())
 
 	var job domain.CrawlJob
 	err := row.Scan(&job.ID, &job.URL, &job.PageID, &job.BackoffUntil, &job.FailedReason, &job.LastCrawledAt, &job.CreatedAt)

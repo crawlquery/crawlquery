@@ -4,6 +4,7 @@ import (
 	"crawlquery/node/domain"
 	"crawlquery/pkg/client/api"
 	"crawlquery/pkg/util"
+	"strings"
 
 	"github.com/gocolly/colly/v2"
 	"go.uber.org/zap"
@@ -43,6 +44,13 @@ func (cs *CrawlService) Crawl(pageID, url string) (*domain.Page, error) {
 	var pageCrawled *domain.Page
 
 	c.OnResponse(func(r *colly.Response) {
+
+		if !strings.Contains(r.Headers.Get("Content-Type"), "text/html") {
+			cs.logger.Errorw("Error fetching page", "error", "Content-Type is not text/html", "pageID", pageID)
+			failedErr = domain.ErrCrawlFailedToFetchHtml
+			return
+		}
+
 		if r.StatusCode != 200 {
 			cs.logger.Errorw("Error fetching page", "status", r.StatusCode, "pageID", pageID)
 

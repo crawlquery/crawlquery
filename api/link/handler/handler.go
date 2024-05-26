@@ -4,6 +4,7 @@ import (
 	"crawlquery/api/domain"
 	"crawlquery/api/dto"
 	"crawlquery/api/errorutil"
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -27,7 +28,7 @@ func (h *Handler) Create(c *gin.Context) {
 
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, dto.NewErrorResponse(err))
-
+		fmt.Printf("\nsrc: %s, dst: %s\n", req.Src, req.Dst)
 		h.logger.Errorw("Error binding request for create link", "error", err, "request", req)
 		return
 	}
@@ -36,6 +37,8 @@ func (h *Handler) Create(c *gin.Context) {
 
 	if err != nil {
 		errorutil.HandleGinError(c, err, http.StatusBadRequest)
+
+		h.logger.Errorw("Error creating link", "error", err, "request", req)
 		return
 	}
 

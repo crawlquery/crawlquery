@@ -50,7 +50,7 @@ func TestCrawl(t *testing.T) {
 		gock.New("http://example.com").
 			Get("/").
 			Reply(200).
-			BodyString(expectedData)
+			BodyString(expectedData).Header.Set("Content-Type", "text/html")
 
 		_, err := service.Crawl("test1", "http://example.com")
 
@@ -287,6 +287,46 @@ func TestCrawl(t *testing.T) {
 
 		if err == nil {
 			t.Errorf("Expected error, got nil")
+		}
+	})
+
+	t.Run("only crawls html content type", func(t *testing.T) {
+		defer gock.Off()
+
+		htmlRepo := htmlRepo.NewRepository()
+		htmlBackupService := htmlBackupService.NewService(html.NewClient("http://storage:8080"))
+		htmlService := htmlService.NewService(htmlRepo, htmlBackupService)
+		pageRepo := pageRepo.NewRepository()
+		pageService := pageService.NewService(pageRepo, nil)
+
+		peerService := peerService.NewService(nil, nil, testutil.NewTestLogger())
+
+		indexService := indexService.NewService(pageService, htmlService, peerService, testutil.NewTestLogger())
+
+		api := api.NewClient("http://localhost:8080", testutil.NewTestLogger())
+
+		service := service.NewService(htmlService, pageService, indexService, api, testutil.NewTestLogger())
+
+		expectedData := `<html><head><title>Example</title></head><body><h1>Hello, World! <a href="/about">About us</a></h1><p>Welcome to my website.</p></body></html>`
+
+		gock.New("http://example.com").
+			Get("/").
+			Reply(200).
+			BodyString(expectedData).
+			SetHeader("Content-Type", "application/atom+xml")
+
+		pageCrawled, err := service.Crawl("test1", "http://example.com")
+
+		if err == nil {
+			t.Errorf("Expected error, got nil")
+		}
+
+		if pageCrawled != nil {
+			t.Fatalf("Expected page to be nil")
+		}
+
+		if !gock.IsDone() {
+			t.Errorf("Expected all mocks to be called")
 		}
 	})
 }

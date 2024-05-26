@@ -10,42 +10,72 @@ func TestMakeAbsoluteIfRelative(t *testing.T) {
 		base     string
 		link     string
 		expected string
+		hasError bool
 	}{
 		{
 			base:     "http://example.com/path/to/resource/",
 			link:     "/relative/path",
 			expected: "http://example.com/relative/path",
+			hasError: false,
 		},
 		{
 			base:     "http://example.com/path/to/resource/",
 			link:     "relative/path",
 			expected: "http://example.com/path/to/resource/relative/path",
+			hasError: false,
 		},
 		{
 			base:     "http://example.com/path/to/resource/",
 			link:     "http://another.com/absolute/path",
 			expected: "http://another.com/absolute/path",
+			hasError: false,
 		},
 		{
 			base:     "http://example.com/path/to/resource/",
 			link:     "../up/one/level",
 			expected: "http://example.com/path/to/up/one/level",
+			hasError: false,
 		},
 		{
-			base:     "https://espanol.yahoo.com/topics/",
-			link:     "/topics/",
-			expected: "https://espanol.yahoo.com/topics/",
+			base:     "http://example.com/path/to/resource/",
+			link:     "#main",
+			expected: "",
+			hasError: true,
+		},
+		{
+			base:     "http://example.com/path/to/resource/",
+			link:     "/",
+			expected: "http://example.com/",
+			hasError: false,
+		},
+		{
+			base:     "http://example.com/path/to/resource/",
+			link:     "mailto:test@example.com",
+			expected: "",
+			hasError: true,
+		},
+		{
+			base:     "http://example.com/path/to/resource/",
+			link:     "ftp://example.com/file",
+			expected: "",
+			hasError: true,
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.link, func(t *testing.T) {
 			result, err := util.MakeAbsoluteIfRelative(test.base, test.link)
-			if err != nil {
-				t.Fatalf("unexpected error: %v", err)
-			}
-			if result != test.expected {
-				t.Errorf("expected %s, got %s", test.expected, result)
+			if test.hasError {
+				if err == nil {
+					t.Fatalf("expected error but got none")
+				}
+			} else {
+				if err != nil {
+					t.Fatalf("unexpected error: %v", err)
+				}
+				if result != test.expected {
+					t.Errorf("expected %s, got %s", test.expected, result)
+				}
 			}
 		})
 	}
