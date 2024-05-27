@@ -1,6 +1,7 @@
 package service_test
 
 import (
+	"strings"
 	"testing"
 
 	crawlService "crawlquery/node/crawl/service"
@@ -16,6 +17,7 @@ import (
 	"crawlquery/pkg/testutil"
 	"crawlquery/pkg/util"
 
+	"github.com/gocolly/colly/v2"
 	"github.com/h2non/gock"
 )
 
@@ -304,8 +306,25 @@ func TestCrawl(t *testing.T) {
 
 		_, err := service.Crawl("test1", "http://example.com")
 
-		if err.Error() != "page not crawled, could be due to robots.txt" {
+		if err != colly.ErrRobotsTxtBlocked {
 			t.Errorf("Expected error, got nil")
+		}
+	})
+
+	t.Run("does not follow redirects", func(t *testing.T) {
+		defer gock.Off()
+
+		service, _, _ := setupServices()
+
+		gock.New("http://exampleredirect.com").
+			Get("/").
+			Reply(301).
+			SetHeader("Location", "http://example.com/redirect")
+
+		_, err := service.Crawl("test1", "http://exampleredirect.com")
+
+		if !strings.Contains(err.Error(), "301") {
+			t.Errorf("Expected error to contain '301', got '%s'", err.Error())
 		}
 	})
 }

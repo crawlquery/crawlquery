@@ -4,7 +4,7 @@ import (
 	"crawlquery/node/domain"
 	"crawlquery/pkg/client/api"
 	"crawlquery/pkg/util"
-	"fmt"
+	"net/http"
 	"strings"
 
 	"github.com/gocolly/colly/v2"
@@ -48,6 +48,11 @@ func (cs *CrawlService) Crawl(pageID, url string) (*domain.Page, error) {
 	var pageCrawled *domain.Page
 
 	extensions.RandomUserAgent(c)
+
+	c.SetRedirectHandler(func(req *http.Request, via []*http.Request) error {
+		// Returning an error prevents the redirect
+		return http.ErrUseLastResponse
+	})
 
 	c.OnResponse(func(r *colly.Response) {
 
@@ -108,10 +113,11 @@ func (cs *CrawlService) Crawl(pageID, url string) (*domain.Page, error) {
 		failedErr = e
 	})
 
-	c.Visit(url)
+	err := c.Visit(url)
 
-	if pageCrawled == nil && failedErr == nil {
-		failedErr = fmt.Errorf("page not crawled, could be due to robots.txt")
+	if err != nil {
+		cs.logger.Errorw("Error visiting page", "error", err, "pageID", pageID)
+		return nil, err
 	}
 
 	return pageCrawled, failedErr

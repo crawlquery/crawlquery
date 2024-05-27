@@ -160,7 +160,11 @@ func (cs *Service) ProcessCrawlJobs() {
 		crawledPage, err := cs.processJob(job, shardID)
 
 		if err != nil {
-			cs.pushBack(job, time.Now().Add(time.Hour), err.Error())
+			if strings.Contains(err.Error(), "robots.txt") {
+				cs.pushBack(job, time.Now().Add(time.Hour*24*365), err.Error())
+				continue
+			}
+			cs.pushBack(job, time.Now().Add(time.Hour*24), err.Error())
 			time.Sleep(100 * time.Millisecond)
 			continue
 		}

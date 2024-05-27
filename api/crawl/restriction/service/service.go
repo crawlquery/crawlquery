@@ -50,7 +50,7 @@ func (s *Service) Restrict(domain string) error {
 		Domain: domain,
 		Until: sql.NullTime{
 			Valid: true,
-			Time:  time.Now().Add(time.Minute * 5),
+			Time:  time.Now().Add(time.Second * 20),
 		},
 	}
 

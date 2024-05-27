@@ -103,7 +103,7 @@ func main() {
 			break
 		}
 
-		sugar.Fatalf("Error authenticating node: %v", err)
+		sugar.Errorf("Error authenticating node (retrying in 5 seconds): %v", err)
 		time.Sleep(5 * time.Second)
 	}
 

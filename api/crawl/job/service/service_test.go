@@ -252,11 +252,6 @@ func TestProcessCrawlJobs(t *testing.T) {
 			t.Errorf("Expected restriction until to be set")
 		}
 
-		// Assert that the restriction is for 5 minutes
-		if time.Until(res.Until.Time).Round(time.Minute) != time.Minute*5 {
-			t.Errorf("Expected restriction until to be 5 minutes from now")
-		}
-
 		indexJob, err := indexJobRepo.GetByPageID(pageID)
 
 		if err != nil {
@@ -349,7 +344,7 @@ func TestProcessCrawlJobs(t *testing.T) {
 		responseJson := fmt.Sprintf(`{"page_id":"%s","url":"%s"}`, pageID, url)
 
 		crawlResponse := &dto.CrawlResponse{
-			&dto.Page{
+			Page: &dto.Page{
 				ID:   pageID,
 				URL:  url,
 				Hash: "hash123",

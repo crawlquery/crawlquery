@@ -80,8 +80,8 @@ func TestRestrict(t *testing.T) {
 			t.Errorf("expected domain to be 'http://example.com', got %v", res.Domain)
 		}
 
-		if time.Until(res.Until.Time).Round(time.Minute) != time.Minute*5 {
-			t.Errorf("expected until to be 5 minutes from now, got %v", time.Until(res.Until.Time))
+		if time.Until(res.Until.Time).Round(time.Second) != time.Second*20 {
+			t.Errorf("expected until to be 20 seconds from now, got %v", time.Until(res.Until.Time))
 		}
 	})
 }

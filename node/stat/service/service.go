@@ -37,6 +37,7 @@ func (s *Service) Info() (*domain.StatInfo, error) {
 	totalPages := len(pages)
 	totalIndexedPages := 0
 	totalKeywords := keywordCount
+	pagesIndexedByLanguage := make(map[string]int)
 	sizeOfPages := 0
 	bytes, err := s.dumpService.Page()
 
@@ -50,12 +51,15 @@ func (s *Service) Info() (*domain.StatInfo, error) {
 		if page.LastIndexedAt != nil {
 			totalIndexedPages++
 		}
+
+		pagesIndexedByLanguage[page.Language]++
 	}
 
 	return &domain.StatInfo{
-		TotalPages:        totalPages,
-		TotalIndexedPages: totalIndexedPages,
-		TotalKeywords:     totalKeywords,
-		SizeOfPages:       sizeOfPages,
+		TotalPages:             totalPages,
+		TotalIndexedPages:      totalIndexedPages,
+		PagesIndexedByLanguage: pagesIndexedByLanguage,
+		TotalKeywords:          totalKeywords,
+		SizeOfPages:            sizeOfPages,
 	}, nil
 }
