@@ -38,15 +38,13 @@ func ParseParagraph(doc *goquery.Document) ([]domain.Keyword, error) {
 
 	var keywords []domain.Keyword
 
-	for _, p := range paragraphs {
-		clean := strings.ToLower(strings.Join(strings.Fields(p), " "))
-		parsedKeywords, err := keyword.ParseText(clean)
-		if err != nil {
-			return nil, err
-		}
-
-		keywords = append(keywords, parsedKeywords...)
+	clean := strings.ToLower(strings.Join(paragraphs, " "))
+	parsedKeywords, err := keyword.ParseText(clean)
+	if err != nil {
+		return nil, err
 	}
+
+	keywords = append(keywords, parsedKeywords...)
 
 	return keywords, nil
 }

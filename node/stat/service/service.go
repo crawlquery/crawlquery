@@ -2,7 +2,6 @@ package service
 
 import (
 	"crawlquery/node/domain"
-	"time"
 )
 
 type Service struct {
@@ -48,7 +47,7 @@ func (s *Service) Info() (*domain.StatInfo, error) {
 	sizeOfPages = len(bytes)
 
 	for _, page := range pages {
-		if page.LastIndexedAt != nil && page.LastIndexedAt.After(time.Now().Add(-4*time.Hour)) {
+		if page.LastIndexedAt != nil {
 			totalIndexedPages++
 		}
 	}

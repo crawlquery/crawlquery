@@ -54,6 +54,10 @@ func TestCrawl(t *testing.T) {
 			Post("/pages").
 			Reply(201)
 
+		gock.New("http://example.com/robots.txt").
+			Reply(200).
+			BodyString("User-agent: *\nAllow: /")
+
 		gock.New("http://example.com").
 			Get("/").
 			Reply(200).

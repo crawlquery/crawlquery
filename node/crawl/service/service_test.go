@@ -42,16 +42,21 @@ func TestCrawl(t *testing.T) {
 
 		gock.New("http://storage:8080").Post("/pages").Reply(201)
 
+		gock.New("http://example.com:9292/robots.txt").
+			Reply(200).
+			// allow all
+			BodyString("User-agent: *\nAllow: /")
+
 		service, htmlRepo, pageRepo := setupServices()
 
 		expectedData := "<html><head><title>Example</title></head><body><h1>Hello, World!</h1><p>Welcome to my example website.</p></body></html>"
 
-		gock.New("http://example.com").
+		gock.New("http://example.com:9292").
 			Get("/").
 			Reply(200).
 			BodyString(expectedData).Header.Set("Content-Type", "text/html")
 
-		_, err := service.Crawl("test1", "http://example.com")
+		_, err := service.Crawl("test1", "http://example.com:9292")
 
 		if err != nil {
 			t.Errorf("Error crawling page: %v", err)
@@ -81,8 +86,8 @@ func TestCrawl(t *testing.T) {
 			t.Fatalf("Expected page ID to be 'test1', got '%s'", page.ID)
 		}
 
-		if page.URL != "http://example.com" {
-			t.Fatalf("Expected page URL to be 'http://example.com', got '%s'", page.URL)
+		if page.URL != "http://example.com:9292" {
+			t.Fatalf("Expected page URL to be 'http://example.com:9292', got '%s'", page.URL)
 		}
 
 		if !gock.IsDone() {
@@ -94,6 +99,11 @@ func TestCrawl(t *testing.T) {
 		defer gock.Off()
 
 		gock.New("http://storage:8080").Post("/pages").Reply(201)
+
+		gock.New("http://example.com/robots.txt").
+			Reply(200).
+			// allow all
+			BodyString("User-agent: *\nAllow: /")
 
 		service, htmlRepo, pageRepo := setupServices()
 
@@ -167,6 +177,11 @@ func TestCrawl(t *testing.T) {
 		service, htmlRepo, pageRepo := setupServices()
 
 		expectedData := `<html><head><title>Example</title></head><body><h1>Hello, World! <a href="/about">About us</a></h1><p>Welcome to my website.</p></body></html>`
+
+		gock.New("http://example.com/robots.txt").
+			Reply(200).
+			// allow all
+			BodyString("User-agent: *\nAllow: /")
 
 		gock.New("http://example.com").
 			Get("/").
