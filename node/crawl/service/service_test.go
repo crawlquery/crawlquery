@@ -271,4 +271,26 @@ func TestCrawl(t *testing.T) {
 			t.Errorf("Expected all mocks to be called")
 		}
 	})
+
+	t.Run("simulate robots.txt failure", func(t *testing.T) {
+
+		service, _, _ := setupServices()
+
+		gock.New("http://example.com").
+			Get("/robots.txt").
+			Reply(200).
+			BodyString("User-agent: *\nDisallow: /")
+
+		gock.New("http://example.com").
+			Get("/").
+			Reply(400).
+			BodyString("<html><head><title>Example</title></head><body><h1>Hello, World!</h1><p>Welcome to my example website.</p></body></html>").
+			SetHeader("Content-Type", "text/html")
+
+		_, err := service.Crawl("test1", "http://example.com")
+
+		if err.Error() != "page not crawled, could be due to robots.txt" {
+			t.Errorf("Expected error, got nil")
+		}
+	})
 }

@@ -29,6 +29,11 @@ func NewService(linkService domain.LinkService, pageRankRepo domain.PageRankRepo
 }
 
 func (s *Service) UpdatePageRanksEvery(interval time.Duration) {
+	err := s.UpdatePageRanks()
+
+	if err != nil {
+		s.logger.Errorw("Error updating page ranks", "error", err)
+	}
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 

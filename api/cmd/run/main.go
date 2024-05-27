@@ -36,7 +36,8 @@ import (
 	linkMySQLRepo "crawlquery/api/link/repository/mysql"
 	linkService "crawlquery/api/link/service"
 
-	pageRankMysqlRepo "crawlquery/api/pagerank/repository/mysql"
+	// pageRankMysqlRepo "crawlquery/api/pagerank/repository/mysql"
+	pageRankMemRepo "crawlquery/api/pagerank/repository/mem"
 	pageRankService "crawlquery/api/pagerank/service"
 
 	pageMysqlRepo "crawlquery/api/page/repository/mysql"
@@ -51,7 +52,7 @@ import (
 
 func main() {
 
-	logger, _ := zap.NewProduction()
+	logger, _ := zap.NewDevelopment()
 	defer logger.Sync()
 	sugar := logger.Sugar()
 
@@ -111,7 +112,8 @@ func main() {
 	linkService := linkService.NewService(linkRepo, crawlJobService, sugar)
 	linkHandler := linkHandler.NewHandler(linkService, sugar)
 
-	pageRankRepo := pageRankMysqlRepo.NewRepository(db)
+	// pageRankRepo := pageRankMysqlRepo.NewRepository(db)
+	pageRankRepo := pageRankMemRepo.NewRepository()
 	pageRankService := pageRankService.NewService(linkService, pageRankRepo, sugar)
 
 	searchService := searchService.NewService(nodeService, pageRankService, sugar)

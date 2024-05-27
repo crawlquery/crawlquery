@@ -4,9 +4,11 @@ import (
 	"crawlquery/node/domain"
 	"crawlquery/pkg/client/api"
 	"crawlquery/pkg/util"
+	"fmt"
 	"strings"
 
 	"github.com/gocolly/colly/v2"
+	"github.com/gocolly/colly/v2/extensions"
 	"go.uber.org/zap"
 )
 
@@ -39,9 +41,13 @@ func (cs *CrawlService) Crawl(pageID, url string) (*domain.Page, error) {
 	// Instantiate default collector
 	c := colly.NewCollector()
 
+	c.IgnoreRobotsTxt = false
+
 	var failedErr error
 	var pageHash string
 	var pageCrawled *domain.Page
+
+	extensions.RandomUserAgent(c)
 
 	c.OnResponse(func(r *colly.Response) {
 
@@ -103,6 +109,10 @@ func (cs *CrawlService) Crawl(pageID, url string) (*domain.Page, error) {
 	})
 
 	c.Visit(url)
+
+	if pageCrawled == nil && failedErr == nil {
+		failedErr = fmt.Errorf("page not crawled, could be due to robots.txt")
+	}
 
 	return pageCrawled, failedErr
 }

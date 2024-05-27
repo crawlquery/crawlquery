@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crawlquery/api/dto"
 	crawlHandler "crawlquery/node/crawl/handler"
 	crawlService "crawlquery/node/crawl/service"
 	"crawlquery/node/domain"
@@ -89,11 +90,21 @@ func main() {
 
 	api := api.NewClient(apiURL, sugar)
 
-	// Authenticate with the API
-	node, err := api.AuthenticateNode(key)
+	retry := 20
 
-	if err != nil {
+	var node *dto.Node
+
+	for i := 0; i < retry; i++ {
+
+		// Authenticate with the API
+		node, err = api.AuthenticateNode(key)
+
+		if err == nil {
+			break
+		}
+
 		sugar.Fatalf("Error authenticating node: %v", err)
+		time.Sleep(5 * time.Second)
 	}
 
 	fmt.Printf("Node ID: %s\n", node.ID)
