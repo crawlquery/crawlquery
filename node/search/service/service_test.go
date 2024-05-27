@@ -90,6 +90,20 @@ func TestService_Search(t *testing.T) {
 
 	expectedResults := []domain.Result{
 		{
+			PageID: "page2",
+			Page: domain.ResultPage{
+				ID:    "page2",
+				Hash:  "", // Assuming Hash is not being set for the test
+				URL:   "http://example.com/contact",
+				Title: "Contact",
+			},
+			Score: 4,
+			KeywordOccurences: map[string]domain.KeywordOccurrence{
+				"example": {PageID: "page2", Frequency: 1, Positions: []int{1}},
+				"contact": {PageID: "page2", Frequency: 1, Positions: []int{4}},
+			},
+		},
+		{
 			PageID: "page1",
 			Page: domain.ResultPage{
 				ID:    "page1",
@@ -100,20 +114,6 @@ func TestService_Search(t *testing.T) {
 			Score: 3,
 			KeywordOccurences: map[string]domain.KeywordOccurrence{
 				"example": {PageID: "page1", Frequency: 3, Positions: []int{1, 2, 3}},
-			},
-		},
-		{
-			PageID: "page2",
-			Page: domain.ResultPage{
-				ID:    "page2",
-				Hash:  "", // Assuming Hash is not being set for the test
-				URL:   "http://example.com/contact",
-				Title: "Contact",
-			},
-			Score: 2,
-			KeywordOccurences: map[string]domain.KeywordOccurrence{
-				"example": {PageID: "page2", Frequency: 1, Positions: []int{1}},
-				"contact": {PageID: "page2", Frequency: 1, Positions: []int{4}},
 			},
 		},
 	}

@@ -109,7 +109,9 @@ func (cs *Service) pushBack(job *domain.CrawlJob, until time.Time, reason string
 	}
 
 	if err := cs.repo.Update(job); err != nil {
-		cs.logger.Errorw("Crawl.Service.pushBack: error updating job", "error", reason)
+		if err == domain.ErrNoRowsUpdated {
+			return nil
+		}
 		return err
 	}
 

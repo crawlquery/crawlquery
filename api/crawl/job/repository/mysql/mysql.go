@@ -69,7 +69,7 @@ func (r *Repository) GetByPageID(pageID string) (*domain.CrawlJob, error) {
 }
 
 func (r *Repository) First() (*domain.CrawlJob, error) {
-	row := r.db.QueryRow("SELECT id, url, page_id, backoff_until, failed_reason, last_crawled_at, created_at FROM crawl_jobs ORDER BY created_at ASC LIMIT 1")
+	row := r.db.QueryRow("SELECT id, url, page_id, backoff_until, failed_reason, last_crawled_at, created_at FROM crawl_jobs ORDER BY created_at DESC LIMIT 1")
 
 	var job domain.CrawlJob
 	err := row.Scan(&job.ID, &job.URL, &job.PageID, &job.BackoffUntil, &job.FailedReason, &job.LastCrawledAt, &job.CreatedAt)

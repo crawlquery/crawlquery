@@ -65,6 +65,12 @@ func (s *Service) getResultsForKeywords(keywords []domain.Keyword) ([]domain.Res
 		}
 	}
 
+	// Multiply the score by the total number of keyword occurrences
+	for _, result := range unsortedResults {
+		result.Score *= float64(len(result.KeywordOccurences))
+		unsortedResults[result.Page.ID] = result
+	}
+
 	results := []domain.Result{}
 
 	for _, result := range unsortedResults {

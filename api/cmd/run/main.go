@@ -119,9 +119,16 @@ func main() {
 	searchService := searchService.NewService(nodeService, pageRankService, sugar)
 	searchHandler := searchHandler.NewHandler(searchService)
 
-	go crawlJobService.ProcessCrawlJobs()
-	go indexJobService.ProcessIndexJobs()
+	for i := 0; i < 4; i++ {
+		go crawlJobService.ProcessCrawlJobs()
+	}
+
 	go pageRankService.UpdatePageRanksEvery(time.Minute)
+
+	// start 4 workers to process index jobs
+	for i := 0; i < 4; i++ {
+		go indexJobService.ProcessIndexJobs()
+	}
 
 	r := router.NewRouter(
 		accountService,
