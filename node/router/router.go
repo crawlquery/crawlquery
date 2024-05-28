@@ -31,6 +31,7 @@ func NewRouter(
 	crawlHandler domain.CrawlHandler,
 	dumpHandler domain.DumpHandler,
 	statHandler domain.StatHandler,
+	repairHandler domain.RepairHandler,
 ) *gin.Engine {
 	router := gin.Default()
 	router.Use(cors.New(cors.Config{
@@ -55,5 +56,8 @@ func NewRouter(
 	router.GET("/dump/page", dumpHandler.Page)
 
 	router.GET("/stats", statHandler.Info)
+
+	router.POST("/repair/get-index-metas", repairHandler.GetIndexMetas)
+	router.POST("/repair/get-page-dumps", repairHandler.GetPageDumps)
 	return router
 }

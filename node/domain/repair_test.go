@@ -86,3 +86,84 @@ func TestPageDumpFromDTO(t *testing.T) {
 
 	})
 }
+
+func TestPageDumpToDTO(t *testing.T) {
+	t.Run("can create DTO from page dump", func(t *testing.T) {
+		now := time.Now()
+		pageDump := domain.PageDump{
+			PeerID: "peer1",
+			PageID: "page1",
+			Page: domain.Page{
+				ID:            "page1",
+				URL:           "http://google.com",
+				Title:         "Google",
+				Description:   "Search engine",
+				Language:      "English",
+				LastIndexedAt: &now,
+			},
+			KeywordOccurrences: map[domain.Keyword]domain.KeywordOccurrence{
+				"keyword1": {
+					PageID:    "page1",
+					Frequency: 1,
+					Positions: []int{1, 2, 3},
+				},
+			},
+		}
+
+		dto := domain.PageDumpToDTO(pageDump)
+
+		if dto.Page.ID != pageDump.Page.ID {
+			t.Errorf("Expected page ID to be %s, got %s", pageDump.Page.ID, dto.Page.ID)
+		}
+
+		if dto.Page.URL != pageDump.Page.URL {
+			t.Errorf("Expected page URL to be %s, got %s", pageDump.Page.URL, dto.Page.URL)
+		}
+
+		if dto.Page.Title != pageDump.Page.Title {
+			t.Errorf("Expected page title to be %s, got %s", pageDump.Page.Title, dto.Page.Title)
+		}
+
+		if dto.Page.Description != pageDump.Page.Description {
+			t.Errorf("Expected page description to be %s, got %s", pageDump.Page.Description, dto.Page.Description)
+		}
+
+		if dto.Page.Language != pageDump.Page.Language {
+			t.Errorf("Expected page language to be %s, got %s", pageDump.Page.Language, dto.Page.Language)
+		}
+
+		if dto.Page.LastIndexedAt != *pageDump.Page.LastIndexedAt {
+			t.Errorf("Expected page last indexed at to be %v, got %v", *pageDump.Page.LastIndexedAt, dto.Page.LastIndexedAt)
+		}
+
+		if len(dto.KeywordOccurrences) != 1 {
+			t.Errorf("Expected 1 keyword occurrence, got %v", len(dto.KeywordOccurrences))
+		}
+
+		keywordOccurrence := dto.KeywordOccurrences["keyword1"]
+		if keywordOccurrence.PageID != "page1" {
+			t.Errorf("Expected page ID to be page1, got %s", keywordOccurrence.PageID)
+		}
+
+		if keywordOccurrence.Frequency != 1 {
+			t.Errorf("Expected frequency to be 1, got %v", keywordOccurrence.Frequency)
+		}
+
+		if len(keywordOccurrence.Positions) != 3 {
+			t.Errorf("Expected 3 positions, got %v", len(keywordOccurrence.Positions))
+		}
+
+		if keywordOccurrence.Positions[0] != 1 {
+			t.Errorf("Expected position to be 1, got %v", keywordOccurrence.Positions[0])
+		}
+
+		if keywordOccurrence.Positions[1] != 2 {
+			t.Errorf("Expected position to be 2, got %v", keywordOccurrence.Positions[1])
+		}
+
+		if keywordOccurrence.Positions[2] != 3 {
+			t.Errorf("Expected position to be 3, got %v", keywordOccurrence.Positions[2])
+		}
+
+	})
+}

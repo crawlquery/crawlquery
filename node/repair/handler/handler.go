@@ -47,3 +47,30 @@ func (h *Handler) GetIndexMetas(c *gin.Context) {
 		IndexMetas: dtoIndexMetas,
 	})
 }
+
+func (h *Handler) GetPageDumps(c *gin.Context) {
+
+	var req dto.GetPageDumpsRequest
+
+	if err := c.ShouldBindBodyWithJSON(&req); err != nil {
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+
+	dumps, err := h.repairService.GetPageDumps(req.PageIDs)
+
+	if err != nil {
+		c.JSON(500, gin.H{"error": err.Error()})
+		return
+	}
+
+	var dtoPageDumps []dto.PageDump
+
+	for _, dump := range dumps {
+		dtoPageDumps = append(dtoPageDumps, domain.PageDumpToDTO(dump))
+	}
+
+	c.JSON(200, dto.GetPageDumpsResponse{
+		PageDumps: dtoPageDumps,
+	})
+}

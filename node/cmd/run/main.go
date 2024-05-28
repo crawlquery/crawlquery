@@ -37,6 +37,9 @@ import (
 	statHandler "crawlquery/node/stat/handler"
 	statService "crawlquery/node/stat/service"
 
+	repairHandler "crawlquery/node/repair/handler"
+	repairService "crawlquery/node/repair/service"
+
 	"crawlquery/node/router"
 
 	"flag"
@@ -135,6 +138,7 @@ func main() {
 	statService := statService.NewService(pageService, keywordService, dumpService)
 	searchService := searchService.NewService(pageService, keywordService)
 	queryService := queryService.NewService(pageService)
+	repairService := repairService.NewService(nil, pageService, keywordService, peerService, sugar)
 
 	// handlers
 	indexHandler := indexHandler.NewHandler(indexService, sugar)
@@ -143,11 +147,20 @@ func main() {
 	statHandler := statHandler.NewHandler(statService)
 	searchHandler := searchHandler.NewHandler(searchService, sugar)
 	queryHandler := queryHandler.NewHandler(queryService)
+	repairHandler := repairHandler.NewHandler(repairService)
 
 	peerService.SyncPeerList()
 	go peerService.SyncPeerListEvery(30 * time.Second)
 
-	r := router.NewRouter(indexHandler, searchHandler, queryHandler, crawlHandler, dumpHandler, statHandler)
+	r := router.NewRouter(
+		indexHandler,
+		searchHandler,
+		queryHandler,
+		crawlHandler,
+		dumpHandler,
+		statHandler,
+		repairHandler,
+	)
 
 	r.Run(fmt.Sprintf(":%d", node.Port))
 }

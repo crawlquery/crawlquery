@@ -91,3 +91,36 @@ func PageDumpFromDTO(d dto.PageDump) PageDump {
 
 	return pageDump
 }
+
+func PageDumpToDTO(d PageDump) dto.PageDump {
+
+	lastIndexedAt := time.Time{}
+
+	if d.Page.LastIndexedAt != nil {
+		lastIndexedAt = *d.Page.LastIndexedAt
+	}
+	newDto := dto.PageDump{
+		PeerID: string(d.PeerID),
+		PageID: string(d.PageID),
+		Page: dto.Page{
+			ID:            d.Page.ID,
+			URL:           d.Page.URL,
+			Title:         d.Page.Title,
+			Description:   d.Page.Description,
+			Language:      d.Page.Language,
+			Hash:          d.Page.Hash,
+			LastIndexedAt: lastIndexedAt,
+		},
+		KeywordOccurrences: make(map[string]dto.KeywordOccurrence),
+	}
+
+	for keyword, occurrence := range d.KeywordOccurrences {
+		newDto.KeywordOccurrences[string(keyword)] = dto.KeywordOccurrence{
+			PageID:    occurrence.PageID,
+			Frequency: occurrence.Frequency,
+			Positions: occurrence.Positions,
+		}
+	}
+
+	return newDto
+}
