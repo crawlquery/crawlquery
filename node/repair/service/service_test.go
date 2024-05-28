@@ -298,6 +298,14 @@ func TestMapLatestPages(t *testing.T) {
 				Language:      "English",
 				LastIndexedAt: &threeHoursAgo,
 			},
+			"3": {
+				ID:            "3",
+				URL:           "http://example.com",
+				Title:         "Example",
+				Description:   "Description",
+				Language:      "English",
+				LastIndexedAt: nil,
+			},
 		}
 		metas := []domain.IndexMeta{
 			{
@@ -319,6 +327,11 @@ func TestMapLatestPages(t *testing.T) {
 				PageID:        "2",
 				PeerID:        "peer3",
 				LastIndexedAt: time.Now().Add(-time.Hour),
+			},
+			{
+				PageID:        "3",
+				PeerID:        "peer3",
+				LastIndexedAt: time.Time{},
 			},
 		}
 

@@ -58,6 +58,8 @@ func (s *Service) AuditAndRepair() error {
 		}
 	}
 
+	s.logger.Infow("Attempting to repair pages", "total", len(pageIDs), "pageIDs", pageIDs)
+
 	err = s.ProcessRepairJobs(pageIDs)
 
 	if err != nil {
@@ -65,17 +67,19 @@ func (s *Service) AuditAndRepair() error {
 		return err
 	}
 
+	s.logger.Infow("Successfully repaired pages", "total", len(pageIDs), "pageIDs", pageIDs)
+
 	return nil
 }
 
-func (s *Service) AuditAndRepairEvery(interval int) {
+func (s *Service) AuditAndRepairEvery(interval time.Duration) {
 	err := s.AuditAndRepair()
 
 	if err != nil {
 		s.logger.Errorw("Error auditing and repairing", "error", err)
 	}
 
-	ticker := time.NewTicker(time.Duration(interval) * time.Second)
+	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 
 	for range ticker.C {
@@ -188,8 +192,16 @@ func (s *Service) MapLatestPages(metas []domain.IndexMeta, currentPages map[stri
 
 	for _, meta := range metas {
 
+		if meta.LastIndexedAt.IsZero() {
+			continue
+		}
+
 		if currentPage, ok := currentPages[string(meta.PageID)]; ok {
 			if currentPage.LastIndexedAt != nil && currentPage.LastIndexedAt.After(meta.LastIndexedAt) {
+				continue
+			}
+
+			if currentPage.LastIndexedAt != nil && currentPage.LastIndexedAt.Equal(meta.LastIndexedAt) {
 				continue
 			}
 		}
@@ -272,6 +284,8 @@ func (s *Service) ProcessRepairJobs(pageIDs []string) error {
 			return err
 		}
 	}
+
+	s.logger.Infow("Successfully repaired pages", "total", len(pageIDs), "pageIDs", pageIDs)
 
 	return nil
 }

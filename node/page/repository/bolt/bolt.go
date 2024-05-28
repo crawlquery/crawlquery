@@ -118,7 +118,7 @@ func (repo *Repository) GetByIDs(pageIDs []string) (map[string]*domain.Page, err
 		for _, pageID := range pageIDs {
 			v := b.Get([]byte(pageID))
 			if v == nil {
-				return fmt.Errorf("page not found")
+				return nil
 			}
 			page := &domain.Page{}
 			err := json.Unmarshal(v, page)
