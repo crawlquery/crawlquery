@@ -77,7 +77,7 @@ func TestGetIndexMetas(t *testing.T) {
 		defer gock.Off()
 
 		expectedRes := &dto.GetIndexMetasResponse{
-			IndexMetas: []*dto.IndexMeta{
+			IndexMetas: []dto.IndexMeta{
 				{
 					PageID:        "page1",
 					LastIndexedAt: time.Now(),
@@ -116,10 +116,10 @@ func TestGetPageDumps(t *testing.T) {
 		defer gock.Off()
 
 		expectedRes := &dto.GetPageDumpsResponse{
-			PageDumps: []*dto.PageDump{
+			PageDumps: []dto.PageDump{
 				{
 					PageID: "page1",
-					Page: &dto.Page{
+					Page: dto.Page{
 						ID:          "page1",
 						URL:         "http://example.com",
 						Title:       "Example",

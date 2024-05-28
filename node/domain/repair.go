@@ -4,6 +4,8 @@ import (
 	"crawlquery/node/dto"
 	"errors"
 	"time"
+
+	"github.com/gin-gonic/gin"
 )
 
 var ErrRepairJobNotFound = errors.New("repair job not found")
@@ -24,9 +26,15 @@ type RepairJob struct {
 	CreatedAt           time.Time
 }
 
-type RepairJobService interface {
-	CreateRepairJobs(pageID string) error
-	ProcessRepairJob(pageID string) error
+type RepairService interface {
+	CreateRepairJobs(pageID []string) error
+	GetIndexMetas(pageIDs []string) ([]IndexMeta, error)
+	GetPageDumps(pageIDs []string) ([]PageDump, error)
+}
+
+type RepairHandler interface {
+	GetIndexMetas(c *gin.Context)
+	GetPageDumps(c *gin.Context)
 }
 
 type RepairJobRepository interface {
@@ -57,8 +65,8 @@ type PageDump struct {
 	KeywordOccurrences map[Keyword]KeywordOccurrence
 }
 
-func PageDumpFromDTO(d *dto.PageDump) *PageDump {
-	pageDump := &PageDump{
+func PageDumpFromDTO(d dto.PageDump) PageDump {
+	pageDump := PageDump{
 		PeerID: PeerID(d.PeerID),
 		PageID: PageID(d.PageID),
 		Page: Page{

@@ -44,6 +44,36 @@ func TestGetKeywordMatches(t *testing.T) {
 	}
 }
 
+func TestGetForPageID(t *testing.T) {
+	repo := mem.NewRepository()
+	svc := service.NewService(repo)
+
+	keyword := domain.Keyword("example")
+	occurrences := []domain.KeywordOccurrence{
+		{PageID: "page1", Frequency: 3, Positions: []int{1, 2, 3}},
+		{PageID: "page2", Frequency: 2, Positions: []int{4, 5}},
+	}
+	for _, occ := range occurrences {
+		err := repo.Add(keyword, occ)
+		if err != nil {
+			t.Fatalf("Error adding occurrence: %v", err)
+		}
+	}
+
+	gotOccurrences, err := svc.GetForPageID("page1")
+	if err != nil {
+		t.Fatalf("Error getting occurrences: %v", err)
+	}
+
+	expectedOccurrences := map[domain.Keyword]domain.KeywordOccurrence{
+		keyword: {PageID: "page1", Frequency: 3, Positions: []int{1, 2, 3}},
+	}
+
+	if !reflect.DeepEqual(gotOccurrences, expectedOccurrences) {
+		t.Errorf("Expected occurrences %v, got %v", expectedOccurrences, gotOccurrences)
+	}
+}
+
 func TestUpdate(t *testing.T) {
 	t.Run("can update occurrences", func(t *testing.T) {
 		repo := mem.NewRepository()

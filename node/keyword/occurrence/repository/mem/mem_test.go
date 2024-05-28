@@ -88,8 +88,8 @@ func TestGetOccurrencesForPageID(t *testing.T) {
 		t.Fatalf("Error getting occurrences: %v", err)
 	}
 
-	expectedOccurrences := []domain.KeywordOccurrence{
-		{PageID: "page1", Frequency: 3, Positions: []int{1, 2, 3}},
+	expectedOccurrences := map[domain.Keyword]domain.KeywordOccurrence{
+		keyword: {PageID: "page1", Frequency: 3, Positions: []int{1, 2, 3}},
 	}
 
 	if !reflect.DeepEqual(gotOccurrences, expectedOccurrences) {
@@ -102,8 +102,8 @@ func TestGetOccurrencesForPageID(t *testing.T) {
 		t.Fatalf("Error getting occurrences: %v", err)
 	}
 
-	expectedOccurrences = []domain.KeywordOccurrence{
-		{PageID: "page2", Frequency: 2, Positions: []int{4, 5}},
+	expectedOccurrences = map[domain.Keyword]domain.KeywordOccurrence{
+		keyword: {PageID: "page2", Frequency: 2, Positions: []int{4, 5}},
 	}
 
 	if !reflect.DeepEqual(gotOccurrences, expectedOccurrences) {

@@ -73,9 +73,10 @@ func TestGetForPageID(t *testing.T) {
 	}
 
 	keyword := domain.Keyword("example")
-	occurrences := []domain.KeywordOccurrence{
-		{PageID: "page1", Frequency: 3, Positions: []int{1, 2, 3}},
-		{PageID: "page2", Frequency: 2, Positions: []int{4, 5}},
+	keyword2 := domain.Keyword("example2")
+	occurrences := map[domain.Keyword]domain.KeywordOccurrence{
+		keyword:  {PageID: "page1", Frequency: 3, Positions: []int{1, 2, 3}},
+		keyword2: {PageID: "page2", Frequency: 2, Positions: []int{4, 5}},
 	}
 
 	for _, occ := range occurrences {
@@ -90,8 +91,8 @@ func TestGetForPageID(t *testing.T) {
 		t.Fatalf("Error getting occurrences: %v", err)
 	}
 
-	expectedOccurrences := []domain.KeywordOccurrence{
-		{PageID: "page1", Frequency: 3, Positions: []int{1, 2, 3}},
+	expectedOccurrences := map[domain.Keyword]domain.KeywordOccurrence{
+		keyword: {PageID: "page1", Frequency: 3, Positions: []int{1, 2, 3}},
 	}
 
 	if !reflect.DeepEqual(gotOccurrences, expectedOccurrences) {

@@ -5,6 +5,7 @@ import (
 	"crawlquery/node/dto"
 	repairJobRepo "crawlquery/node/repair/job/repository/mem"
 	repairJobService "crawlquery/node/repair/service"
+	"reflect"
 
 	peerService "crawlquery/node/peer/service"
 	"crawlquery/pkg/testutil"
@@ -19,6 +20,187 @@ import (
 
 	"github.com/h2non/gock"
 )
+
+func TestGetIndexMetas(t *testing.T) {
+	t.Run("can get index metas", func(t *testing.T) {
+		defer gock.Off()
+
+		now := time.Now().Round(time.Second)
+		oneHourAgo := now.Add(-time.Hour).Round(time.Second)
+
+		expectedMetas := []domain.IndexMeta{
+			{
+				PageID:        "1",
+				PeerID:        "peer1",
+				LastIndexedAt: now,
+			},
+			{
+				PageID:        "2",
+				PeerID:        "peer1",
+				LastIndexedAt: oneHourAgo,
+			},
+		}
+
+		pageRepo := pageRepo.NewRepository()
+		pageService := pageService.NewService(pageRepo, nil)
+
+		pageRepo.Save("1", &domain.Page{
+			ID:            "1",
+			LastIndexedAt: &now,
+		})
+
+		pageRepo.Save("2", &domain.Page{
+			ID:            "2",
+			LastIndexedAt: &oneHourAgo,
+		})
+
+		pageRepo.Save("3", &domain.Page{
+			ID:            "3",
+			LastIndexedAt: nil,
+		})
+
+		peerService := peerService.NewService(nil, &domain.Peer{
+			ID:       "peer1",
+			Hostname: "node1",
+			Port:     8080,
+		}, testutil.NewTestLogger())
+
+		repairJobService := repairJobService.NewService(nil, pageService, nil, peerService, testutil.NewTestLogger())
+
+		metas, err := repairJobService.GetIndexMetas([]string{"1", "2", "3"})
+
+		if err != nil {
+			t.Fatalf("Expected no error, got %v", err)
+		}
+
+		if len(metas) != 2 {
+			t.Fatalf("Expected 2 metas, got %v", len(metas))
+		}
+
+		for i, meta := range expectedMetas {
+			if !reflect.DeepEqual(meta, metas[i]) {
+				t.Errorf("Expected meta %v, got %v", expectedMetas[i], meta)
+			}
+		}
+	})
+}
+
+func TestGetPageDumps(t *testing.T) {
+	t.Run("can get page dumps", func(t *testing.T) {
+		defer gock.Off()
+
+		now := time.Now().Round(time.Second)
+
+		expectedPageDumps := []domain.PageDump{
+			{
+				PeerID: "peer1",
+				PageID: "1",
+				Page: domain.Page{
+					ID:            "1",
+					URL:           "http://google.com",
+					Title:         "Google",
+					Description:   "Search engine",
+					Language:      "English",
+					LastIndexedAt: &now,
+				},
+				KeywordOccurrences: map[domain.Keyword]domain.KeywordOccurrence{
+					"keyword1": {
+						PageID:    "1",
+						Frequency: 1,
+						Positions: []int{1, 2, 3},
+					},
+				},
+			},
+			{
+				PeerID: "peer1",
+				PageID: "2",
+				Page: domain.Page{
+					ID:            "2",
+					URL:           "http://example.com",
+					Title:         "Example",
+					Description:   "Description",
+					Language:      "English",
+					LastIndexedAt: &now,
+				},
+				KeywordOccurrences: map[domain.Keyword]domain.KeywordOccurrence{
+					"keyword1": {
+						PageID:    "2",
+						Frequency: 1,
+						Positions: []int{1},
+					},
+				},
+			},
+		}
+
+		pageRepo := pageRepo.NewRepository()
+		pageService := pageService.NewService(pageRepo, nil)
+
+		pageRepo.Save("1", &domain.Page{
+			ID:            "1",
+			URL:           "http://google.com",
+			Title:         "Google",
+			Description:   "Search engine",
+			Language:      "English",
+			LastIndexedAt: &now,
+		})
+
+		pageRepo.Save("2", &domain.Page{
+			ID:            "2",
+			URL:           "http://example.com",
+			Title:         "Example",
+			Description:   "Description",
+			Language:      "English",
+			LastIndexedAt: &now,
+		})
+
+		keywordOccurrenceRepo := keywordOccurrenceRepo.NewRepository()
+		keywordService := keywordService.NewService(keywordOccurrenceRepo)
+
+		err := keywordOccurrenceRepo.Add("keyword1", domain.KeywordOccurrence{
+			PageID:    "1",
+			Frequency: 1,
+			Positions: []int{1, 2, 3},
+		})
+
+		if err != nil {
+			t.Fatalf("Error adding keyword occurrence: %v", err)
+		}
+
+		err = keywordOccurrenceRepo.Add("keyword1", domain.KeywordOccurrence{
+			PageID:    "2",
+			Frequency: 1,
+			Positions: []int{1},
+		})
+
+		if err != nil {
+			t.Fatalf("Error adding keyword occurrence: %v", err)
+		}
+
+		peerService := peerService.NewService(nil, &domain.Peer{
+			ID:       "peer1",
+			Hostname: "node1",
+			Port:     8080,
+		}, testutil.NewTestLogger())
+
+		repairJobService := repairJobService.NewService(nil, pageService, keywordService, peerService, testutil.NewTestLogger())
+
+		pageDumps, err := repairJobService.GetPageDumps([]string{"1", "2"})
+
+		if err != nil {
+			t.Fatalf("Expected no error, got %v", err)
+		}
+
+		if len(pageDumps) != 2 {
+			t.Fatalf("Expected 2 page dumps, got %v", len(pageDumps))
+		}
+
+		for i, dump := range expectedPageDumps {
+			if !reflect.DeepEqual(dump, pageDumps[i]) {
+				t.Errorf("Expected page dump %v, got %v", expectedPageDumps[i], pageDumps[i])
+			}
+		}
+	})
+}
 
 func TestCreateRepairJobs(t *testing.T) {
 	t.Run("can create repair jobs", func(t *testing.T) {
@@ -182,7 +364,7 @@ func TestProcessRepairJobs(t *testing.T) {
 		defer gock.Off()
 
 		expectedNode1MetasResponse := &dto.GetIndexMetasResponse{
-			IndexMetas: []*dto.IndexMeta{
+			IndexMetas: []dto.IndexMeta{
 				{
 					PageID:        "1",
 					PeerID:        "peer1",
@@ -207,11 +389,11 @@ func TestProcessRepairJobs(t *testing.T) {
 		}
 
 		expectedNode1PageDumpsResponse := &dto.GetPageDumpsResponse{
-			PageDumps: []*dto.PageDump{
+			PageDumps: []dto.PageDump{
 				{
 					PeerID: "peer1",
 					PageID: "3",
-					Page: &dto.Page{
+					Page: dto.Page{
 						ID:            "3",
 						URL:           "http://example.com",
 						Title:         "Example",
@@ -231,7 +413,7 @@ func TestProcessRepairJobs(t *testing.T) {
 		}
 
 		expectedNode2MetasResponse := &dto.GetIndexMetasResponse{
-			IndexMetas: []*dto.IndexMeta{
+			IndexMetas: []dto.IndexMeta{
 				{
 					PageID:        "1",
 					PeerID:        "peer2",
@@ -256,11 +438,11 @@ func TestProcessRepairJobs(t *testing.T) {
 		}
 
 		expectedNode2PageDumpsResponse := &dto.GetPageDumpsResponse{
-			PageDumps: []*dto.PageDump{
+			PageDumps: []dto.PageDump{
 				{
 					PeerID: "peer1",
 					PageID: "1",
-					Page: &dto.Page{
+					Page: dto.Page{
 						ID:            "1",
 						URL:           "http://google.com",
 						Title:         "Google",
@@ -279,7 +461,7 @@ func TestProcessRepairJobs(t *testing.T) {
 				{
 					PeerID: "peer1",
 					PageID: "2",
-					Page: &dto.Page{
+					Page: dto.Page{
 						ID:            "2",
 						URL:           "http://example.com",
 						Title:         "Example",
@@ -436,21 +618,50 @@ func TestProcessRepairJobs(t *testing.T) {
 			}
 
 			if job == "1" {
-				keywordOccurrences[0].PageID = "1"
-				keywordOccurrences[0].Frequency = 1
-				keywordOccurrences[0].Positions = []int{1, 2, 3}
+				if keywordOccurrences["keyword1"].PageID != "1" {
+					t.Fatalf("Expected page ID to be 1, got %s", keywordOccurrences["keyword1"].PageID)
+				}
+				if keywordOccurrences["keyword1"].Frequency != 1 {
+					t.Fatalf("Expected frequency to be 1, got %v", keywordOccurrences["keyword1"].Frequency)
+				}
+				if len(keywordOccurrences["keyword1"].Positions) != 3 {
+					t.Fatalf("Expected 3 positions, got %v", len(keywordOccurrences["keyword1"].Positions))
+				}
+				for i, position := range keywordOccurrences["keyword1"].Positions {
+					if position != i+1 {
+						t.Fatalf("Expected position to be %v, got %v", i+1, position)
+					}
+				}
 			}
 
 			if job == "2" {
-				keywordOccurrences[0].PageID = "2"
-				keywordOccurrences[0].Frequency = 1
-				keywordOccurrences[0].Positions = []int{1}
+				if keywordOccurrences["keyword1"].PageID != "2" {
+					t.Fatalf("Expected page ID to be 2, got %s", keywordOccurrences["keyword1"].PageID)
+				}
+				if keywordOccurrences["keyword1"].Frequency != 1 {
+					t.Fatalf("Expected frequency to be 1, got %v", keywordOccurrences["keyword1"].Frequency)
+				}
+				if len(keywordOccurrences["keyword1"].Positions) != 1 {
+					t.Fatalf("Expected 1 positions, got %v", len(keywordOccurrences["keyword1"].Positions))
+				}
+				if keywordOccurrences["keyword1"].Positions[0] != 1 {
+					t.Fatalf("Expected position to be 1, got %v", keywordOccurrences["keyword1"].Positions[0])
+				}
 			}
 
 			if job == "3" {
-				keywordOccurrences[0].PageID = "3"
-				keywordOccurrences[0].Frequency = 1
-				keywordOccurrences[0].Positions = []int{1}
+				if keywordOccurrences["keyword1"].PageID != "3" {
+					t.Fatalf("Expected page ID to be 3, got %s", keywordOccurrences["keyword1"].PageID)
+				}
+				if keywordOccurrences["keyword1"].Frequency != 1 {
+					t.Fatalf("Expected frequency to be 1, got %v", keywordOccurrences["keyword1"].Frequency)
+				}
+				if len(keywordOccurrences["keyword1"].Positions) != 1 {
+					t.Fatalf("Expected 1 positions, got %v", len(keywordOccurrences["keyword1"].Positions))
+				}
+				if keywordOccurrences["keyword1"].Positions[0] != 1 {
+					t.Fatalf("Expected position to be 1, got %v", keywordOccurrences["keyword1"].Positions[0])
+				}
 			}
 		}
 

@@ -1,6 +1,8 @@
 package dto
 
-import "time"
+import (
+	"time"
+)
 
 type IndexMeta struct {
 	PeerID        string    `json:"peer_id"`
@@ -17,12 +19,12 @@ type KeywordOccurrence struct {
 type PageDump struct {
 	PeerID             string                       `json:"peer_id"`
 	PageID             string                       `json:"page_id"`
-	Page               *Page                        `json:"page"`
+	Page               Page                         `json:"page"`
 	KeywordOccurrences map[string]KeywordOccurrence `json:"keyword_occurences"`
 }
 
 type GetIndexMetasResponse struct {
-	IndexMetas []*IndexMeta `json:"metas"`
+	IndexMetas []IndexMeta `json:"metas"`
 }
 
 type GetIndexMetasRequest struct {
@@ -34,5 +36,5 @@ type GetPageDumpsRequest struct {
 }
 
 type GetPageDumpsResponse struct {
-	PageDumps []*PageDump `json:"page_dumps"`
+	PageDumps []PageDump `json:"page_dumps"`
 }

@@ -30,6 +30,59 @@ func NewService(
 	}
 }
 
+func (s *Service) GetIndexMetas(pageIDs []string) ([]domain.IndexMeta, error) {
+	var metas []domain.IndexMeta
+
+	pages, err := s.pageService.GetByIDs(pageIDs)
+
+	if err != nil {
+		s.logger.Errorw("Error getting pages", "error", err)
+		return nil, err
+	}
+
+	for _, page := range pages {
+		if page.LastIndexedAt == nil {
+			continue
+		}
+		metas = append(metas, domain.IndexMeta{
+			PageID:        domain.PageID(page.ID),
+			PeerID:        domain.PeerID(s.peerService.Self().ID),
+			LastIndexedAt: *page.LastIndexedAt,
+		})
+	}
+
+	return metas, nil
+}
+
+func (s *Service) GetPageDumps(pageIDs []string) ([]domain.PageDump, error) {
+	var dumps []domain.PageDump
+
+	for _, pageID := range pageIDs {
+		page, err := s.pageService.Get(pageID)
+
+		if err != nil {
+			s.logger.Errorw("Error getting page", "error", err)
+			return nil, err
+		}
+
+		keywordOccurrences, err := s.keywordService.GetForPageID(pageID)
+
+		if err != nil {
+			s.logger.Errorw("Error getting keyword occurrences", "error", err)
+			return nil, err
+		}
+
+		dumps = append(dumps, domain.PageDump{
+			PeerID:             domain.PeerID(s.peerService.Self().ID),
+			PageID:             domain.PageID(page.ID),
+			Page:               *page,
+			KeywordOccurrences: keywordOccurrences,
+		})
+	}
+
+	return dumps, nil
+}
+
 func (s *Service) CreateRepairJobs(pageIDs []string) error {
 	for _, pageID := range pageIDs {
 		_, err := s.repairJobRepo.Get(pageID)
@@ -86,7 +139,7 @@ func (s *Service) ProcessRepairJobs(pageIDs []string) error {
 	currentPages, err := s.pageService.GetByIDs(pageIDs)
 
 	if err != nil {
-		s.logger.Errorw("Error getting indexed at times", "error", err)
+		s.logger.Errorw("Error getting current pages", "error", err)
 		return err
 	}
 
@@ -101,7 +154,7 @@ func (s *Service) ProcessRepairJobs(pageIDs []string) error {
 
 	peerIDToPageIDs := s.GroupPageIDsByThePeerID(latestIndexedAtPeers)
 
-	var dumps []*domain.PageDump
+	var dumps []domain.PageDump
 
 	for peerID, pageIDs := range peerIDToPageIDs {
 		peer, err := s.peerService.GetPeer(string(peerID))

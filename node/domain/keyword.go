@@ -20,12 +20,14 @@ type KeywordMatch struct {
 
 type KeywordService interface {
 	GetKeywordMatches(keywords []Keyword) ([]KeywordMatch, error)
+	GetForPageID(pageID string) (map[Keyword]KeywordOccurrence, error)
 	UpdateOccurrences(pageID string, keywordOccurrences map[Keyword]KeywordOccurrence) error
 	Count() (int, error)
 }
 
 type KeywordOccurrenceRepository interface {
 	GetAll(keyword Keyword) ([]KeywordOccurrence, error)
+	GetForPageID(pageID string) (map[Keyword]KeywordOccurrence, error)
 	Add(keyword Keyword, occurrence KeywordOccurrence) error
 	RemoveForPageID(pageID string) error
 	Count() (int, error)

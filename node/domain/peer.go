@@ -20,11 +20,12 @@ type PageMetadata struct {
 }
 
 type PeerService interface {
+	Self() *Peer
 	AddPeer(peer *Peer)
 	GetPeers() []*Peer
 	GetPeer(id string) (*Peer, error)
 	GetIndexMetas(pageIDs []string) ([]IndexMeta, error)
-	GetPageDumpsFromPeer(peer *Peer, pageIDs []PageID) ([]*PageDump, error)
+	GetPageDumpsFromPeer(peer *Peer, pageIDs []PageID) ([]PageDump, error)
 	SendPageUpdatedEvent(peer *Peer, event *PageUpdatedEvent) error
 	BroadcastPageUpdatedEvent(event *PageUpdatedEvent) error
 	SyncPeerList() error

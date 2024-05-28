@@ -110,7 +110,7 @@ func (c *Client) Index(pageID string) error {
 	return errors.New("indexing returned success=false")
 }
 
-func (c *Client) GetIndexMetas(pageIDs []string) ([]*dto.IndexMeta, error) {
+func (c *Client) GetIndexMetas(pageIDs []string) ([]dto.IndexMeta, error) {
 
 	var req dto.GetIndexMetasRequest
 
@@ -143,7 +143,7 @@ func (c *Client) GetIndexMetas(pageIDs []string) ([]*dto.IndexMeta, error) {
 	return indexMetaResponse.IndexMetas, nil
 }
 
-func (c *Client) GetPageDumps(pageIDs []string) ([]*dto.PageDump, error) {
+func (c *Client) GetPageDumps(pageIDs []string) ([]dto.PageDump, error) {
 
 	var req dto.GetPageDumpsRequest
 

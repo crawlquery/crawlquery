@@ -50,8 +50,8 @@ func (r *Repository) GetAll(keyword domain.Keyword) ([]domain.KeywordOccurrence,
 	return occurrences, nil
 }
 
-func (r *Repository) GetForPageID(pageID string) ([]domain.KeywordOccurrence, error) {
-	var occurrences []domain.KeywordOccurrence
+func (r *Repository) GetForPageID(pageID string) (map[domain.Keyword]domain.KeywordOccurrence, error) {
+	occurrences := make(map[domain.Keyword]domain.KeywordOccurrence)
 
 	err := r.db.View(func(tx *bolt.Tx) error {
 		bucket := tx.Bucket(occurrencesBucket)
@@ -68,7 +68,7 @@ func (r *Repository) GetForPageID(pageID string) ([]domain.KeywordOccurrence, er
 
 			for _, occ := range keywordOccurrences {
 				if occ.PageID == pageID {
-					occurrences = append(occurrences, occ)
+					occurrences[domain.Keyword(k)] = occ
 				}
 			}
 

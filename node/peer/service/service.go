@@ -37,6 +37,10 @@ func NewService(
 	}
 }
 
+func (s *Service) Self() *domain.Peer {
+	return s.host
+}
+
 func (s *Service) AddPeer(peer *domain.Peer) {
 	if _, err := s.GetPeer(peer.ID); err == nil {
 		return
@@ -78,7 +82,7 @@ func (s *Service) RemovePeer(id string) {
 	}
 }
 
-func (s *Service) GetPageDumpsFromPeer(peer *domain.Peer, pageIDs []domain.PageID) ([]*domain.PageDump, error) {
+func (s *Service) GetPageDumpsFromPeer(peer *domain.Peer, pageIDs []domain.PageID) ([]domain.PageDump, error) {
 
 	client := node.NewClient(fmt.Sprintf("http://%s:%d", peer.Hostname, peer.Port))
 
@@ -95,7 +99,7 @@ func (s *Service) GetPageDumpsFromPeer(peer *domain.Peer, pageIDs []domain.PageI
 		return nil, err
 	}
 
-	var pageDumps []*domain.PageDump
+	var pageDumps []domain.PageDump
 
 	for _, dump := range dumps {
 		pageDumps = append(pageDumps, domain.PageDumpFromDTO(dump))
@@ -108,7 +112,7 @@ func (s *Service) GetIndexMetas(pageIDs []string) ([]domain.IndexMeta, error) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 	var wg sync.WaitGroup
-	results := make(chan []*dto.IndexMeta, len(s.peers))
+	results := make(chan []dto.IndexMeta, len(s.peers))
 	semaphore := make(chan struct{}, 10) // Limit to 10 concurrent requests
 
 	for _, peer := range s.peers {
@@ -132,21 +136,19 @@ func (s *Service) GetIndexMetas(pageIDs []string) ([]domain.IndexMeta, error) {
 	var allMetas []domain.IndexMeta
 
 	for metas := range results {
-		if metas != nil {
-			for _, meta := range metas {
-				allMetas = append(allMetas, domain.IndexMeta{
-					PeerID:        domain.PeerID(meta.PeerID),
-					PageID:        domain.PageID(meta.PageID),
-					LastIndexedAt: meta.LastIndexedAt,
-				})
-			}
+		for _, meta := range metas {
+			allMetas = append(allMetas, domain.IndexMeta{
+				PeerID:        domain.PeerID(meta.PeerID),
+				PageID:        domain.PageID(meta.PageID),
+				LastIndexedAt: meta.LastIndexedAt,
+			})
 		}
 	}
 
 	return allMetas, nil
 }
 
-func (s *Service) GetIndexMetasFromPeer(peer *domain.Peer, pageIDs []string) ([]*dto.IndexMeta, error) {
+func (s *Service) GetIndexMetasFromPeer(peer *domain.Peer, pageIDs []string) ([]dto.IndexMeta, error) {
 	client := node.NewClient(fmt.Sprintf("http://%s:%d", peer.Hostname, peer.Port))
 
 	metas, err := client.GetIndexMetas(pageIDs)

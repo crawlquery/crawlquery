@@ -363,11 +363,11 @@ func TestGetPageDumpsFromPeer(t *testing.T) {
 			Post("/repair/get-page-dumps").
 			Reply(200).
 			JSON(&nodeDto.GetPageDumpsResponse{
-				PageDumps: []*nodeDto.PageDump{
+				PageDumps: []nodeDto.PageDump{
 					{
 						PeerID: "peer1",
 						PageID: "page1",
-						Page: &nodeDto.Page{
+						Page: nodeDto.Page{
 							ID:          "page1",
 							URL:         "http://example.com",
 							Title:       "Example",
@@ -423,7 +423,7 @@ func TestGetIndexMetas(t *testing.T) {
 		defer gock.Off()
 
 		expectedResponse := &nodeDto.GetIndexMetasResponse{
-			IndexMetas: []*nodeDto.IndexMeta{
+			IndexMetas: []nodeDto.IndexMeta{
 				{
 					PeerID:        "peer1",
 					PageID:        "page1",
@@ -482,7 +482,7 @@ func TestGetIndexMetasFromPeer(t *testing.T) {
 		defer gock.Off()
 
 		expectedResponse := &nodeDto.GetIndexMetasResponse{
-			IndexMetas: []*nodeDto.IndexMeta{
+			IndexMetas: []nodeDto.IndexMeta{
 				{
 					PageID:        "page1",
 					LastIndexedAt: time.Now(),

@@ -9,10 +9,10 @@ import (
 
 func TestPageDumpFromDTO(t *testing.T) {
 	t.Run("can create page dump from DTO", func(t *testing.T) {
-		dto := &dto.PageDump{
+		dto := dto.PageDump{
 			PeerID: "peer1",
 			PageID: "page1",
-			Page: &dto.Page{
+			Page: dto.Page{
 				ID:            "page1",
 				URL:           "http://google.com",
 				Title:         "Google",
