@@ -28,12 +28,14 @@ type RepairJob struct {
 
 type RepairService interface {
 	CreateRepairJobs(pageID []string) error
+	GetAllIndexMetas() ([]IndexMeta, error)
 	GetIndexMetas(pageIDs []string) ([]IndexMeta, error)
 	GetPageDumps(pageIDs []string) ([]PageDump, error)
 }
 
 type RepairHandler interface {
 	GetIndexMetas(c *gin.Context)
+	GetAllIndexMetas(c *gin.Context)
 	GetPageDumps(c *gin.Context)
 }
 

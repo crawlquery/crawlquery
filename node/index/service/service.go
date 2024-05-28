@@ -109,7 +109,8 @@ func (s *Service) Index(pageID string) error {
 	}
 
 	go s.peerService.BroadcastPageUpdatedEvent(&domain.PageUpdatedEvent{
-		Page: page,
+		Page:               page,
+		KeywordOccurrences: occurrences,
 	})
 
 	return nil
@@ -135,7 +136,8 @@ func (s *Service) ApplyPageUpdatedEvent(event *domain.PageUpdatedEvent) error {
 		return err
 	}
 
-	return nil
+	// update the keyword occurrences
+	return s.keywordService.UpdateOccurrences(event.Page.ID, event.KeywordOccurrences)
 }
 
 func (s *Service) Hash() (string, error) {

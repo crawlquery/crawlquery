@@ -5,6 +5,7 @@ import (
 	"crawlquery/node/index/service"
 	"crawlquery/pkg/testutil"
 	"fmt"
+	"time"
 
 	htmlRepo "crawlquery/node/html/repository/mem"
 	htmlService "crawlquery/node/html/service"
@@ -18,6 +19,8 @@ import (
 	keywordService "crawlquery/node/keyword/service"
 
 	"testing"
+
+	"github.com/h2non/gock"
 )
 
 func setupTestRepos() (
@@ -203,6 +206,141 @@ func TestIndex(t *testing.T) {
 
 		if count != 1500 {
 			t.Fatalf("Expected 1500 keywords, got %d", count)
+		}
+	})
+
+	t.Run("sends page updated event", func(t *testing.T) {
+		pageRepo, pageService, htmlRepo, htmlService, peerService, keywordService := setupTestRepos()
+
+		logger := testutil.NewTestLogger()
+		s := service.NewService(pageService, htmlService, peerService, keywordService, logger)
+
+		pageRepo.Save("page1", &domain.Page{
+			ID:  "page1",
+			URL: "http://example.com",
+		})
+
+		htmlRepo.Save("page1", []byte(`
+		<html>
+			<head>
+				<title>Test Page</title>
+				<meta name="og:description" content="This is a test page">
+			</head>
+
+			<body>
+				<h1>Test Page</h1>
+				<p>This is a test page, with some good english words.</p>
+			</body>
+		</html>
+	`))
+
+		peerService.AddPeer(&domain.Peer{
+			ID:       "peer1",
+			Hostname: "node1.cluster.com",
+			Port:     8080,
+		})
+
+		defer gock.Off()
+
+		gock.New("http://node1.cluster.com:8080").
+			Post("/event").
+			Reply(200)
+
+		err := s.Index("page1")
+
+		time.Sleep(50 * time.Millisecond)
+		if err != nil {
+			t.Fatalf("Expected no error, got %v", err)
+		}
+
+		if !gock.IsDone() {
+			t.Fatalf("Expected all mocks to be called")
+		}
+	})
+}
+
+func TestApplyPageUpdatedEvent(t *testing.T) {
+	t.Run("updates a page", func(t *testing.T) {
+		pageRepo, pageService, htmlRepo, htmlService, peerService, keywordService := setupTestRepos()
+
+		logger := testutil.NewTestLogger()
+		s := service.NewService(pageService, htmlService, peerService, keywordService, logger)
+
+		pageRepo.Save("page1", &domain.Page{
+			ID:  "page1",
+			URL: "http://example.com",
+		})
+
+		htmlRepo.Save("page1", []byte(`
+		<html>
+			<head>
+				<title>Test Page</title>
+				<meta name="og:description" content="This is a test page">
+			</head>
+
+			<body>
+				<h1>Test Page</h1>
+				<p>This is a test page, with some good english words.</p>
+			</body>
+		</html>
+	`))
+
+		err := s.Index("page1")
+
+		if err != nil {
+			t.Fatalf("Expected no error, got %v", err)
+		}
+
+		page, err := pageRepo.Get("page1")
+
+		if err != nil {
+			t.Fatalf("Expected no error, got %v", err)
+		}
+
+		if page == nil {
+			t.Fatalf("Expected page to be found, got nil")
+		}
+
+		page.Title = "New Title"
+		page.Description = "New Description"
+
+		err = s.ApplyPageUpdatedEvent(&domain.PageUpdatedEvent{
+			Page: page,
+			KeywordOccurrences: map[domain.Keyword]domain.KeywordOccurrence{
+				"keyword1": {
+					PageID:    "page1",
+					Frequency: 1,
+					Positions: []int{1, 2, 3},
+				},
+			},
+		})
+
+		if err != nil {
+			t.Fatalf("Expected no error, got %v", err)
+		}
+
+		page, err = pageRepo.Get("page1")
+
+		if err != nil {
+			t.Fatalf("Expected no error, got %v", err)
+		}
+
+		if page.Title != "New Title" {
+			t.Fatalf("Expected title to be New Title, got %s", page.Title)
+		}
+
+		if page.Description != "New Description" {
+			t.Fatalf("Expected description to be New Description, got %s", page.Description)
+		}
+
+		checkOccurrences, err := keywordService.GetForPageID("page1")
+
+		if err != nil {
+			t.Fatalf("Error getting occurrences: %v", err)
+		}
+
+		if len(checkOccurrences) != 1 {
+			t.Fatalf("Expected 1 occurrence, got %d", len(checkOccurrences))
 		}
 	})
 }

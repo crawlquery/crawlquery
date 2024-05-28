@@ -143,6 +143,29 @@ func (c *Client) GetIndexMetas(pageIDs []string) ([]dto.IndexMeta, error) {
 	return indexMetaResponse.IndexMetas, nil
 }
 
+func (c *Client) GetAllIndexMetas() ([]dto.IndexMeta, error) {
+
+	res, err := http.Get(fmt.Sprintf("%s/repair/get-all-index-metas", c.BaseURL))
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer res.Body.Close()
+
+	if res.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("unexpected status code: %d", res.StatusCode)
+	}
+
+	var indexMetaResponse dto.GetIndexMetasResponse
+
+	if err := json.NewDecoder(res.Body).Decode(&indexMetaResponse); err != nil {
+		return nil, err
+	}
+
+	return indexMetaResponse.IndexMetas, nil
+}
+
 func (c *Client) GetPageDumps(pageIDs []string) ([]dto.PageDump, error) {
 
 	var req dto.GetPageDumpsRequest

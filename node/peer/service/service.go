@@ -148,6 +148,59 @@ func (s *Service) GetIndexMetas(pageIDs []string) ([]domain.IndexMeta, error) {
 	return allMetas, nil
 }
 
+func (s *Service) GetAllIndexMetas() ([]domain.IndexMeta, error) {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+	var wg sync.WaitGroup
+	results := make(chan []dto.IndexMeta, len(s.peers))
+	semaphore := make(chan struct{}, 10) // Limit to 10 concurrent requests
+
+	for _, peer := range s.peers {
+		wg.Add(1)
+		go func(peer *domain.Peer) {
+			defer wg.Done()
+			semaphore <- struct{}{}
+			metas, err := s.GetIndexAllMetasFromPeer(peer)
+			<-semaphore
+			if err != nil {
+				results <- nil
+			} else {
+				results <- metas
+			}
+		}(peer)
+	}
+
+	wg.Wait()
+	close(results)
+
+	var allMetas []domain.IndexMeta
+
+	for metas := range results {
+		for _, meta := range metas {
+			allMetas = append(allMetas, domain.IndexMeta{
+				PeerID:        domain.PeerID(meta.PeerID),
+				PageID:        domain.PageID(meta.PageID),
+				LastIndexedAt: meta.LastIndexedAt,
+			})
+		}
+	}
+
+	return allMetas, nil
+}
+
+func (s *Service) GetIndexAllMetasFromPeer(peer *domain.Peer) ([]dto.IndexMeta, error) {
+	client := node.NewClient(fmt.Sprintf("http://%s:%d", peer.Hostname, peer.Port))
+
+	metas, err := client.GetAllIndexMetas()
+
+	if err != nil {
+		s.logger.Errorf("Error getting index metas from peer: %v", err)
+		return nil, err
+	}
+
+	return metas, nil
+}
+
 func (s *Service) GetIndexMetasFromPeer(peer *domain.Peer, pageIDs []string) ([]dto.IndexMeta, error) {
 	client := node.NewClient(fmt.Sprintf("http://%s:%d", peer.Hostname, peer.Port))
 

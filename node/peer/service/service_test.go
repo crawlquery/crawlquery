@@ -477,6 +477,65 @@ func TestGetIndexMetas(t *testing.T) {
 	})
 }
 
+func TestGetAllIndexMetas(t *testing.T) {
+	t.Run("can get all index metas", func(t *testing.T) {
+		defer gock.Off()
+
+		expectedResponse := &nodeDto.GetIndexMetasResponse{
+			IndexMetas: []nodeDto.IndexMeta{
+				{
+					PeerID:        "peer1",
+					PageID:        "page1",
+					LastIndexedAt: time.Now(),
+				},
+			},
+		}
+
+		gock.New("http://localhost:8080").
+			Get("/repair/get-all-index-metas").
+			Reply(200).
+			JSON(expectedResponse)
+
+		api := api.NewClient("http://localhost:8080", testutil.NewTestLogger())
+
+		service := service.NewService(api, &domain.Peer{
+			ID:       "host",
+			Hostname: "localhost",
+			Port:     8080,
+			ShardID:  1,
+		}, testutil.NewTestLogger())
+
+		service.AddPeer(&domain.Peer{
+			ID:       "peer1",
+			Hostname: "localhost",
+			Port:     8080,
+			ShardID:  1,
+		})
+
+		metas, err := service.GetAllIndexMetas()
+
+		if err != nil {
+			t.Fatalf("Expected no error, got %v", err)
+		}
+
+		if len(metas) != 1 {
+			t.Fatalf("Expected 1 meta, got %d", len(metas))
+		}
+
+		if metas[0].PageID != "page1" {
+			t.Fatalf("Expected page1, got %s", metas[0].PageID)
+		}
+
+		if metas[0].LastIndexedAt.Round(time.Second) != expectedResponse.IndexMetas[0].LastIndexedAt.Round(time.Second) {
+			t.Fatalf("Expected last indexed at to be %v, got %v", expectedResponse.IndexMetas[0].LastIndexedAt, metas[0].LastIndexedAt)
+		}
+
+		if metas[0].PeerID != "peer1" {
+			t.Fatalf("Expected peer1, got %s", metas[0].PeerID)
+		}
+	})
+}
+
 func TestGetIndexMetasFromPeer(t *testing.T) {
 	t.Run("can get index metas from peer", func(t *testing.T) {
 		defer gock.Off()

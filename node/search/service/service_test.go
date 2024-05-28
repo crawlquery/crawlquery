@@ -8,7 +8,6 @@ import (
 	pageRepo "crawlquery/node/page/repository/mem"
 	pageService "crawlquery/node/page/service"
 	"crawlquery/node/search/service"
-	"crawlquery/pkg/testutil"
 
 	keywordOccurrenceRepo "crawlquery/node/keyword/occurrence/repository/mem"
 	keywordService "crawlquery/node/keyword/service"
@@ -118,7 +117,6 @@ func TestService_Search(t *testing.T) {
 		},
 	}
 
-	testutil.PrettyPrint(results)
 	for i, result := range results {
 		checkResult(t, result, expectedResults[i])
 	}

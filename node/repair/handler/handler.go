@@ -17,6 +17,29 @@ func NewHandler(repairService domain.RepairService) *Handler {
 	}
 }
 
+func (h *Handler) GetAllIndexMetas(c *gin.Context) {
+	metas, err := h.repairService.GetAllIndexMetas()
+
+	if err != nil {
+		c.JSON(500, gin.H{"error": err.Error()})
+		return
+	}
+
+	var dtoIndexMetas []dto.IndexMeta
+
+	for _, meta := range metas {
+		dtoIndexMetas = append(dtoIndexMetas, dto.IndexMeta{
+			PageID:        string(meta.PageID),
+			PeerID:        string(meta.PeerID),
+			LastIndexedAt: meta.LastIndexedAt,
+		})
+	}
+
+	c.JSON(200, dto.GetIndexMetasResponse{
+		IndexMetas: dtoIndexMetas,
+	})
+}
+
 func (h *Handler) GetIndexMetas(c *gin.Context) {
 
 	var req dto.GetIndexMetasRequest

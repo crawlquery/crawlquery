@@ -59,5 +59,7 @@ func NewRouter(
 
 	router.POST("/repair/get-index-metas", repairHandler.GetIndexMetas)
 	router.POST("/repair/get-page-dumps", repairHandler.GetPageDumps)
+	router.GET("/repair/get-all-index-metas", repairHandler.GetAllIndexMetas)
+
 	return router
 }

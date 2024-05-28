@@ -21,6 +21,70 @@ import (
 	"github.com/h2non/gock"
 )
 
+func TestGetAllIndexMetas(t *testing.T) {
+	t.Run("can get all index metas", func(t *testing.T) {
+		defer gock.Off()
+
+		now := time.Now().Round(time.Second)
+		oneHourAgo := now.Add(-time.Hour).Round(time.Second)
+
+		expectedMetas := []domain.IndexMeta{
+			{
+				PageID:        "1",
+				PeerID:        "peer1",
+				LastIndexedAt: now,
+			},
+			{
+				PageID:        "2",
+				PeerID:        "peer1",
+				LastIndexedAt: oneHourAgo,
+			},
+		}
+
+		pageRepo := pageRepo.NewRepository()
+		pageService := pageService.NewService(pageRepo, nil)
+
+		pageRepo.Save("1", &domain.Page{
+			ID:            "1",
+			LastIndexedAt: &now,
+		})
+
+		pageRepo.Save("2", &domain.Page{
+			ID:            "2",
+			LastIndexedAt: &oneHourAgo,
+		})
+
+		pageRepo.Save("3", &domain.Page{
+			ID:            "3",
+			LastIndexedAt: nil,
+		})
+
+		peerService := peerService.NewService(nil, &domain.Peer{
+			ID:       "peer1",
+			Hostname: "node1",
+			Port:     8080,
+		}, testutil.NewTestLogger())
+
+		repairJobService := repairJobService.NewService(nil, pageService, nil, peerService, testutil.NewTestLogger())
+
+		metas, err := repairJobService.GetAllIndexMetas()
+
+		if err != nil {
+			t.Fatalf("Expected no error, got %v", err)
+		}
+
+		if len(metas) != 2 {
+			t.Fatalf("Expected 2 metas, got %v", len(metas))
+		}
+
+		for i, meta := range expectedMetas {
+			if !reflect.DeepEqual(meta, metas[i]) {
+				t.Errorf("Expected meta %v, got %v", expectedMetas[i], meta)
+			}
+		}
+	})
+}
+
 func TestGetIndexMetas(t *testing.T) {
 	t.Run("can get index metas", func(t *testing.T) {
 		defer gock.Off()
@@ -698,6 +762,432 @@ func TestProcessRepairJobs(t *testing.T) {
 
 		if len(keywordOccurrences) > 0 {
 			t.Fatalf("Expected no keyword occurrences to be found")
+		}
+	})
+}
+
+func TestAuditAndRepair(t *testing.T) {
+	t.Run("can audit and repair pages (all out of date)", func(t *testing.T) {
+		defer gock.Off()
+
+		now := time.Now().Round(time.Second)
+		oneHourAgo := now.Add(-time.Hour).Round(time.Second)
+		twoHoursAgo := now.Add(-time.Hour * 2).Round(time.Second)
+		peer1 := "peer1"
+		peer2 := "peer2"
+
+		pageRepo := pageRepo.NewRepository()
+		pageService := pageService.NewService(pageRepo, nil)
+
+		keywordOccurrenceRepo := keywordOccurrenceRepo.NewRepository()
+		keywordService := keywordService.NewService(keywordOccurrenceRepo)
+
+		pageRepo.Save("1", &domain.Page{
+			ID:            "1",
+			URL:           "http://google.com",
+			Title:         "Google",
+			Description:   "Search engine",
+			Language:      "English",
+			LastIndexedAt: &twoHoursAgo,
+		})
+
+		pageRepo.Save("2", &domain.Page{
+			ID:            "2",
+			URL:           "http://example.com",
+			Title:         "Example",
+			Description:   "Description",
+			Language:      "English",
+			LastIndexedAt: &twoHoursAgo,
+		})
+
+		pageRepo.Save("3", &domain.Page{
+			ID:            "3",
+			URL:           "http://example.org",
+			Title:         "Example Org",
+			Description:   "Another Description",
+			Language:      "English",
+			LastIndexedAt: &twoHoursAgo,
+		})
+
+		peerService := peerService.NewService(nil, &domain.Peer{
+			ID:       "node4",
+			Hostname: "node4",
+			Port:     8080,
+		}, testutil.NewTestLogger())
+
+		peerService.AddPeer(&domain.Peer{
+			ID:       peer1,
+			Hostname: "peer1",
+			Port:     8080,
+		})
+
+		peerService.AddPeer(&domain.Peer{
+			ID:       "peer2",
+			Hostname: "peer2",
+			Port:     8080,
+		})
+
+		repairJobRepo := repairJobRepo.NewRepository()
+		repairJobService := repairJobService.NewService(repairJobRepo, pageService, keywordService, peerService, testutil.NewTestLogger())
+
+		expectedMetas := []domain.IndexMeta{
+			{
+				PageID:        "1",
+				PeerID:        domain.PeerID(peer1),
+				LastIndexedAt: now,
+			},
+			{
+				PageID:        "2",
+				PeerID:        domain.PeerID(peer1),
+				LastIndexedAt: oneHourAgo,
+			},
+			{
+				PageID:        "3",
+				PeerID:        domain.PeerID(peer2),
+				LastIndexedAt: now,
+			},
+		}
+
+		expectedPeer1Metas := []dto.IndexMeta{
+			{
+				PageID:        "1",
+				PeerID:        peer1,
+				LastIndexedAt: now,
+			},
+			{
+				PageID:        "2",
+				PeerID:        peer1,
+				LastIndexedAt: oneHourAgo,
+			},
+		}
+
+		expectedPeer1PageDumps := []dto.PageDump{
+			{
+				PeerID: "peer1",
+				PageID: "1",
+				Page: dto.Page{
+					ID:            "1",
+					Title:         "Google",
+					LastIndexedAt: now,
+				},
+				KeywordOccurrences: map[string]dto.KeywordOccurrence{
+					"keyword1": {
+						PageID:    "1",
+						Frequency: 1,
+						Positions: []int{1, 2, 3},
+					},
+				},
+			},
+
+			{
+				PeerID: "peer1",
+				PageID: "2",
+				Page: dto.Page{
+					ID:            "2",
+					Title:         "Example",
+					LastIndexedAt: oneHourAgo,
+				},
+				KeywordOccurrences: map[string]dto.KeywordOccurrence{
+					"keyword1": {
+						PageID:    "2",
+						Frequency: 1,
+						Positions: []int{1},
+					},
+				},
+			},
+		}
+
+		expectedPeer2Metas := []dto.IndexMeta{
+			{
+				PageID:        "3",
+				PeerID:        peer2,
+				LastIndexedAt: now,
+			},
+		}
+
+		expectedPeer2PageDumps := []dto.PageDump{
+			{
+				PeerID: "peer2",
+				PageID: "3",
+				Page: dto.Page{
+					ID:            "3",
+					Title:         "Example Org",
+					LastIndexedAt: now,
+				},
+				KeywordOccurrences: map[string]dto.KeywordOccurrence{
+					"keyword1": {
+						PageID:    "3",
+						Frequency: 1,
+						Positions: []int{1},
+					},
+				},
+			},
+		}
+
+		expectedPeer1MetasResponse := &dto.GetIndexMetasResponse{
+			IndexMetas: expectedPeer1Metas,
+		}
+		expectedPeer2MetasResponse := &dto.GetIndexMetasResponse{
+			IndexMetas: expectedPeer2Metas,
+		}
+
+		gock.New("http://peer1:8080").
+			Get("/repair/get-all-index-metas").
+			Reply(200).
+			JSON(expectedPeer1MetasResponse)
+
+		gock.New("http://peer2:8080").
+			Get("/repair/get-all-index-metas").
+			Reply(200).
+			JSON(expectedPeer2MetasResponse)
+
+		gock.New("http://peer1:8080").
+			Post("/repair/get-index-metas").
+			Reply(200).
+			JSON(expectedPeer1MetasResponse)
+
+		gock.New("http://peer2:8080").
+			Post("/repair/get-index-metas").
+			Reply(200).
+			JSON(expectedPeer2MetasResponse)
+
+		gock.New("http://peer1:8080").
+			Post("/repair/get-page-dumps").
+			JSON(&dto.GetPageDumpsRequest{
+				PageIDs: []string{"1", "2"},
+			}).
+			Reply(200).
+			JSON(&dto.GetPageDumpsResponse{
+				PageDumps: expectedPeer1PageDumps,
+			})
+
+		gock.New("http://peer2:8080").
+			Post("/repair/get-page-dumps").
+			JSON(&dto.GetPageDumpsRequest{
+				PageIDs: []string{"3"},
+			}).
+			Reply(200).
+			JSON(&dto.GetPageDumpsResponse{
+				PageDumps: expectedPeer2PageDumps,
+			})
+
+		err := repairJobService.AuditAndRepair()
+
+		if err != nil {
+			t.Fatalf("Expected no error, got %v", err)
+		}
+
+		for _, meta := range expectedMetas {
+			page, err := pageRepo.Get(string(meta.PageID))
+			if err != nil {
+				t.Fatalf("Expected no error, got %v", err)
+			}
+
+			if page.LastIndexedAt == nil || !page.LastIndexedAt.Round(time.Second).Equal(meta.LastIndexedAt.Round(time.Second)) {
+				t.Errorf("Expected page %s last indexed at to be %v, got %v", meta.PageID, meta.LastIndexedAt, page.LastIndexedAt)
+			}
+		}
+
+		if !gock.IsDone() {
+			t.Errorf("Expected all mocks to be called")
+		}
+	})
+
+	t.Run("can audit and repair pages (non exist)", func(t *testing.T) {
+		defer gock.Off()
+
+		now := time.Now().Round(time.Second)
+		oneHourAgo := now.Add(-time.Hour).Round(time.Second)
+		peer1 := "peer1"
+		peer2 := "peer2"
+
+		pageRepo := pageRepo.NewRepository()
+		pageService := pageService.NewService(pageRepo, nil)
+
+		keywordOccurrenceRepo := keywordOccurrenceRepo.NewRepository()
+		keywordService := keywordService.NewService(keywordOccurrenceRepo)
+
+		peerService := peerService.NewService(nil, &domain.Peer{
+			ID:       "node4",
+			Hostname: "node4",
+			Port:     8080,
+		}, testutil.NewTestLogger())
+
+		peerService.AddPeer(&domain.Peer{
+			ID:       peer1,
+			Hostname: "peer1",
+			Port:     8080,
+		})
+
+		peerService.AddPeer(&domain.Peer{
+			ID:       "peer2",
+			Hostname: "peer2",
+			Port:     8080,
+		})
+
+		repairJobRepo := repairJobRepo.NewRepository()
+		repairJobService := repairJobService.NewService(repairJobRepo, pageService, keywordService, peerService, testutil.NewTestLogger())
+
+		expectedMetas := []domain.IndexMeta{
+			{
+				PageID:        "1",
+				PeerID:        domain.PeerID(peer1),
+				LastIndexedAt: now,
+			},
+			{
+				PageID:        "2",
+				PeerID:        domain.PeerID(peer1),
+				LastIndexedAt: oneHourAgo,
+			},
+			{
+				PageID:        "3",
+				PeerID:        domain.PeerID(peer2),
+				LastIndexedAt: now,
+			},
+		}
+
+		expectedPeer1Metas := []dto.IndexMeta{
+			{
+				PageID:        "1",
+				PeerID:        peer1,
+				LastIndexedAt: now,
+			},
+			{
+				PageID:        "2",
+				PeerID:        peer1,
+				LastIndexedAt: oneHourAgo,
+			},
+		}
+
+		expectedPeer1PageDumps := []dto.PageDump{
+			{
+				PeerID: "peer1",
+				PageID: "1",
+				Page: dto.Page{
+					ID:            "1",
+					Title:         "Google",
+					LastIndexedAt: now,
+				},
+				KeywordOccurrences: map[string]dto.KeywordOccurrence{
+					"keyword1": {
+						PageID:    "1",
+						Frequency: 1,
+						Positions: []int{1, 2, 3},
+					},
+				},
+			},
+
+			{
+				PeerID: "peer1",
+				PageID: "2",
+				Page: dto.Page{
+					ID:            "2",
+					Title:         "Example",
+					LastIndexedAt: oneHourAgo,
+				},
+				KeywordOccurrences: map[string]dto.KeywordOccurrence{
+					"keyword1": {
+						PageID:    "2",
+						Frequency: 1,
+						Positions: []int{1},
+					},
+				},
+			},
+		}
+
+		expectedPeer2Metas := []dto.IndexMeta{
+			{
+				PageID:        "3",
+				PeerID:        peer2,
+				LastIndexedAt: now,
+			},
+		}
+
+		expectedPeer2PageDumps := []dto.PageDump{
+			{
+				PeerID: "peer2",
+				PageID: "3",
+				Page: dto.Page{
+					ID:            "3",
+					Title:         "Example Org",
+					LastIndexedAt: now,
+				},
+				KeywordOccurrences: map[string]dto.KeywordOccurrence{
+					"keyword1": {
+						PageID:    "3",
+						Frequency: 1,
+						Positions: []int{1},
+					},
+				},
+			},
+		}
+
+		expectedPeer1MetasResponse := &dto.GetIndexMetasResponse{
+			IndexMetas: expectedPeer1Metas,
+		}
+		expectedPeer2MetasResponse := &dto.GetIndexMetasResponse{
+			IndexMetas: expectedPeer2Metas,
+		}
+
+		gock.New("http://peer1:8080").
+			Get("/repair/get-all-index-metas").
+			Reply(200).
+			JSON(expectedPeer1MetasResponse)
+
+		gock.New("http://peer2:8080").
+			Get("/repair/get-all-index-metas").
+			Reply(200).
+			JSON(expectedPeer2MetasResponse)
+
+		gock.New("http://peer1:8080").
+			Post("/repair/get-index-metas").
+			Reply(200).
+			JSON(expectedPeer1MetasResponse)
+
+		gock.New("http://peer2:8080").
+			Post("/repair/get-index-metas").
+			Reply(200).
+			JSON(expectedPeer2MetasResponse)
+
+		gock.New("http://peer1:8080").
+			Post("/repair/get-page-dumps").
+			JSON(&dto.GetPageDumpsRequest{
+				PageIDs: []string{"1", "2"},
+			}).
+			Reply(200).
+			JSON(&dto.GetPageDumpsResponse{
+				PageDumps: expectedPeer1PageDumps,
+			})
+
+		gock.New("http://peer2:8080").
+			Post("/repair/get-page-dumps").
+			JSON(&dto.GetPageDumpsRequest{
+				PageIDs: []string{"3"},
+			}).
+			Reply(200).
+			JSON(&dto.GetPageDumpsResponse{
+				PageDumps: expectedPeer2PageDumps,
+			})
+
+		err := repairJobService.AuditAndRepair()
+
+		if err != nil {
+			t.Fatalf("Expected no error, got %v", err)
+		}
+
+		for _, meta := range expectedMetas {
+			page, err := pageRepo.Get(string(meta.PageID))
+			if err != nil {
+				t.Fatalf("Expected no error, got %v", err)
+			}
+
+			if page.LastIndexedAt == nil || !page.LastIndexedAt.Round(time.Second).Equal(meta.LastIndexedAt.Round(time.Second)) {
+				t.Errorf("Expected page %s last indexed at to be %v, got %v", meta.PageID, meta.LastIndexedAt, page.LastIndexedAt)
+			}
+		}
+
+		if !gock.IsDone() {
+			t.Errorf("Expected all mocks to be called")
 		}
 	})
 }

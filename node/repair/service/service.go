@@ -2,6 +2,7 @@ package service
 
 import (
 	"crawlquery/node/domain"
+	"time"
 
 	"go.uber.org/zap"
 )
@@ -28,6 +29,86 @@ func NewService(
 		peerService:    peersService,
 		logger:         logger,
 	}
+}
+
+func (s *Service) AuditAndRepair() error {
+	currentPages, err := s.pageService.GetAll()
+
+	if err != nil {
+		s.logger.Errorw("Error getting all index metas", "error", err)
+		return err
+	}
+
+	peerMetas, err := s.peerService.GetAllIndexMetas()
+
+	if err != nil {
+		s.logger.Errorw("Error getting peer index metas", "error", err)
+		return err
+	}
+
+	latestIndexedAtPeers := s.MapLatestPages(peerMetas, currentPages)
+
+	peerPages := s.GroupPageIDsByThePeerID(latestIndexedAtPeers)
+
+	var pageIDs []string
+
+	for _, ids := range peerPages {
+		for _, id := range ids {
+			pageIDs = append(pageIDs, string(id))
+		}
+	}
+
+	err = s.ProcessRepairJobs(pageIDs)
+
+	if err != nil {
+		s.logger.Errorw("Error processing repair jobs", "error", err)
+		return err
+	}
+
+	return nil
+}
+
+func (s *Service) AuditAndRepairEvery(interval int) {
+	err := s.AuditAndRepair()
+
+	if err != nil {
+		s.logger.Errorw("Error auditing and repairing", "error", err)
+	}
+
+	ticker := time.NewTicker(time.Duration(interval) * time.Second)
+	defer ticker.Stop()
+
+	for range ticker.C {
+		err := s.AuditAndRepair()
+
+		if err != nil {
+			s.logger.Errorw("Error auditing and repairing", "error", err)
+		}
+	}
+}
+
+func (s *Service) GetAllIndexMetas() ([]domain.IndexMeta, error) {
+	var metas []domain.IndexMeta
+
+	pages, err := s.pageService.GetAll()
+
+	if err != nil {
+		s.logger.Errorw("Error getting pages", "error", err)
+		return nil, err
+	}
+
+	for _, page := range pages {
+		if page.LastIndexedAt == nil {
+			continue
+		}
+		metas = append(metas, domain.IndexMeta{
+			PageID:        domain.PageID(page.ID),
+			PeerID:        domain.PeerID(s.peerService.Self().ID),
+			LastIndexedAt: *page.LastIndexedAt,
+		})
+	}
+
+	return metas, nil
 }
 
 func (s *Service) GetIndexMetas(pageIDs []string) ([]domain.IndexMeta, error) {
@@ -152,11 +233,11 @@ func (s *Service) ProcessRepairJobs(pageIDs []string) error {
 
 	latestIndexedAtPeers := s.MapLatestPages(metas, currentPages)
 
-	peerIDToPageIDs := s.GroupPageIDsByThePeerID(latestIndexedAtPeers)
+	peerPages := s.GroupPageIDsByThePeerID(latestIndexedAtPeers)
 
 	var dumps []domain.PageDump
 
-	for peerID, pageIDs := range peerIDToPageIDs {
+	for peerID, pageIDs := range peerPages {
 		peer, err := s.peerService.GetPeer(string(peerID))
 
 		if err != nil {
@@ -175,9 +256,9 @@ func (s *Service) ProcessRepairJobs(pageIDs []string) error {
 	}
 
 	for _, dump := range dumps {
-		page := &dump.Page
 
-		err := s.pageService.UpdateQuietly(page)
+		page := dump.Page
+		err := s.pageService.UpdateQuietly(&page)
 
 		if err != nil {
 			s.logger.Errorw("Error updating page", "error", err)

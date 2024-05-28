@@ -96,12 +96,6 @@ func (s *Service) Update(page *domain.Page) error {
 		return err
 	}
 
-	if s.peerService != nil {
-		s.peerService.BroadcastPageUpdatedEvent(&domain.PageUpdatedEvent{
-			Page: page,
-		})
-	}
-
 	return s.UpdatePageHash(page)
 }
 

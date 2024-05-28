@@ -25,6 +25,7 @@ type PeerService interface {
 	GetPeers() []*Peer
 	GetPeer(id string) (*Peer, error)
 	GetIndexMetas(pageIDs []string) ([]IndexMeta, error)
+	GetAllIndexMetas() ([]IndexMeta, error)
 	GetPageDumpsFromPeer(peer *Peer, pageIDs []PageID) ([]PageDump, error)
 	SendPageUpdatedEvent(peer *Peer, event *PageUpdatedEvent) error
 	BroadcastPageUpdatedEvent(event *PageUpdatedEvent) error

@@ -111,6 +111,42 @@ func TestGetIndexMetas(t *testing.T) {
 	})
 }
 
+func TestGetAllIndexMetas(t *testing.T) {
+	t.Run("returns results", func(t *testing.T) {
+		defer gock.Off()
+
+		expectedRes := &dto.GetIndexMetasResponse{
+			IndexMetas: []dto.IndexMeta{
+				{
+					PageID:        "page1",
+					LastIndexedAt: time.Now(),
+				},
+			},
+		}
+
+		gock.New("http://node.com").
+			Get("/repair/get-all-index-metas").
+			Reply(200).
+			JSON(expectedRes)
+
+		node := node.NewClient("http://node.com")
+
+		indexMetas, err := node.GetAllIndexMetas()
+
+		if err != nil {
+			t.Fatalf("Expected no error, got %v", err)
+		}
+
+		if indexMetas[0].PageID != expectedRes.IndexMetas[0].PageID {
+			t.Fatalf("Expected %s, got %s", expectedRes.IndexMetas[0].PageID, indexMetas[0].PageID)
+		}
+
+		if !gock.IsDone() {
+			t.Fatalf("Expected all mocks to be called")
+		}
+	})
+}
+
 func TestGetPageDumps(t *testing.T) {
 	t.Run("returns results", func(t *testing.T) {
 		defer gock.Off()
