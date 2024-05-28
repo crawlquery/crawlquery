@@ -45,29 +45,63 @@ func TestGetKeywordMatches(t *testing.T) {
 }
 
 func TestUpdate(t *testing.T) {
-	repo := mem.NewRepository()
-	svc := service.NewService(repo)
+	t.Run("can update occurrences", func(t *testing.T) {
+		repo := mem.NewRepository()
+		svc := service.NewService(repo)
 
-	keyword := domain.Keyword("example")
-	occurrence := domain.KeywordOccurrence{PageID: "page1", Frequency: 1, Positions: []int{1}}
+		keyword := domain.Keyword("example")
+		occurrence := domain.KeywordOccurrence{PageID: "page1", Frequency: 1, Positions: []int{1}}
 
-	err := svc.UpdateOccurrences("page1", map[domain.Keyword]domain.KeywordOccurrence{keyword: occurrence})
-	if err != nil {
-		t.Fatalf("Error updating keyword occurrences: %v", err)
-	}
+		err := svc.UpdateOccurrences("page1", map[domain.Keyword]domain.KeywordOccurrence{keyword: occurrence})
+		if err != nil {
+			t.Fatalf("Error updating keyword occurrences: %v", err)
+		}
 
-	gotOccurrences, err := repo.GetAll(keyword)
-	if err != nil {
-		t.Fatalf("Error getting occurrences: %v", err)
-	}
+		gotOccurrences, err := repo.GetAll(keyword)
+		if err != nil {
+			t.Fatalf("Error getting occurrences: %v", err)
+		}
 
-	if len(gotOccurrences) != 1 {
-		t.Fatalf("Expected 1 occurrence, got %d", len(gotOccurrences))
-	}
+		if len(gotOccurrences) != 1 {
+			t.Fatalf("Expected 1 occurrence, got %d", len(gotOccurrences))
+		}
 
-	if !reflect.DeepEqual(gotOccurrences[0], occurrence) {
-		t.Errorf("Expected occurrence %v, got %v", occurrence, gotOccurrences[0])
-	}
+		if !reflect.DeepEqual(gotOccurrences[0], occurrence) {
+			t.Errorf("Expected occurrence %v, got %v", occurrence, gotOccurrences[0])
+		}
+	})
+
+	t.Run("removes any existing occurrences", func(t *testing.T) {
+		repo := mem.NewRepository()
+		svc := service.NewService(repo)
+
+		keyword := domain.Keyword("example")
+		occurrence := domain.KeywordOccurrence{PageID: "page1", Frequency: 1, Positions: []int{1}}
+
+		err := svc.UpdateOccurrences("page1", map[domain.Keyword]domain.KeywordOccurrence{keyword: occurrence})
+		if err != nil {
+			t.Fatalf("Error updating keyword occurrences: %v", err)
+		}
+
+		occurrence2 := domain.KeywordOccurrence{PageID: "page1", Frequency: 2, Positions: []int{2, 3}}
+		err = svc.UpdateOccurrences("page1", map[domain.Keyword]domain.KeywordOccurrence{keyword: occurrence2})
+		if err != nil {
+			t.Fatalf("Error updating keyword occurrences: %v", err)
+		}
+
+		gotOccurrences, err := repo.GetAll(keyword)
+		if err != nil {
+			t.Fatalf("Error getting occurrences: %v", err)
+		}
+
+		if len(gotOccurrences) != 1 {
+			t.Fatalf("Expected 1 occurrence, got %d", len(gotOccurrences))
+		}
+
+		if !reflect.DeepEqual(gotOccurrences[0], occurrence2) {
+			t.Errorf("Expected occurrence %v, got %v", occurrence2, gotOccurrences[0])
+		}
+	})
 }
 
 func TestRemovePageOccurrences(t *testing.T) {

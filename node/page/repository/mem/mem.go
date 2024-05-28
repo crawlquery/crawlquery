@@ -38,6 +38,17 @@ func (r *Repository) Count() (int, error) {
 	return len(r.pages), nil
 }
 
+func (r *Repository) GetByIDs(pageIDs []string) (map[string]*domain.Page, error) {
+	pages := make(map[string]*domain.Page)
+	for _, pageID := range pageIDs {
+		page, ok := r.pages[pageID]
+		if ok {
+			pages[pageID] = page
+		}
+	}
+	return pages, nil
+}
+
 func (r *Repository) GetAll() (map[string]*domain.Page, error) {
 	return r.pages, nil
 }

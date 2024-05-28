@@ -38,10 +38,21 @@ func TestCreateRepairJobs(t *testing.T) {
 }
 
 func TestMapLatestPages(t *testing.T) {
-	t.Run("can map latest pages", func(t *testing.T) {
+	t.Run("can map latest pages with no current pages to refernece", func(t *testing.T) {
 		repairJobRepo := repairJobRepo.NewRepository()
 		repairJobService := repairJobService.NewService(repairJobRepo, nil, nil, nil, testutil.NewTestLogger())
 
+		threeHoursAgo := time.Now().Add(-time.Hour * 3)
+		currentPages := map[string]*domain.Page{
+			"1": {
+				ID:            "1",
+				URL:           "http://google.com",
+				Title:         "Google",
+				Description:   "Search engine",
+				Language:      "English",
+				LastIndexedAt: &threeHoursAgo,
+			},
+		}
 		metas := []domain.IndexMeta{
 			{
 				PageID:        "1",
@@ -65,7 +76,7 @@ func TestMapLatestPages(t *testing.T) {
 			},
 		}
 
-		latestIndexedAtPeers := repairJobService.MapLatestPages(metas)
+		latestIndexedAtPeers := repairJobService.MapLatestPages(metas, currentPages)
 
 		if len(latestIndexedAtPeers) != 2 {
 			t.Fatalf("Expected 2 latest indexed pages, got %v", len(latestIndexedAtPeers))
@@ -73,6 +84,55 @@ func TestMapLatestPages(t *testing.T) {
 
 		if latestIndexedAtPeers["1"].PeerID != "peer2" {
 			t.Fatalf("Expected peer ID to be peer2, got %s", latestIndexedAtPeers["1"].PeerID)
+		}
+
+		if latestIndexedAtPeers["2"].PeerID != "peer3" {
+			t.Fatalf("Expected peer ID to be peer3, got %s", latestIndexedAtPeers["2"].PeerID)
+		}
+	})
+
+	t.Run("only maps index meta when current page LastIndexedAt is older", func(t *testing.T) {
+		repairJobRepo := repairJobRepo.NewRepository()
+		repairJobService := repairJobService.NewService(repairJobRepo, nil, nil, nil, testutil.NewTestLogger())
+		date := time.Now()
+		currentPages := map[string]*domain.Page{
+			"1": {
+				ID:            "1",
+				URL:           "http://google.com",
+				Title:         "Google",
+				Description:   "Search engine",
+				Language:      "English",
+				LastIndexedAt: &date,
+			},
+		}
+
+		metas := []domain.IndexMeta{
+			{
+				PageID:        "1",
+				PeerID:        "peer1",
+				LastIndexedAt: time.Now().Add(-time.Hour),
+			},
+			{
+				PageID:        "1",
+				PeerID:        "peer2",
+				LastIndexedAt: time.Now().Add(-time.Minute * 2),
+			},
+			{
+				PageID:        "2",
+				PeerID:        "peer2",
+				LastIndexedAt: time.Now().Add(-time.Hour * 2),
+			},
+			{
+				PageID:        "2",
+				PeerID:        "peer3",
+				LastIndexedAt: time.Now().Add(-time.Hour),
+			},
+		}
+
+		latestIndexedAtPeers := repairJobService.MapLatestPages(metas, currentPages)
+
+		if len(latestIndexedAtPeers) != 1 {
+			t.Fatalf("Expected 2 latest indexed pages, got %v", len(latestIndexedAtPeers))
 		}
 
 		if latestIndexedAtPeers["2"].PeerID != "peer3" {
@@ -138,6 +198,11 @@ func TestProcessRepairJobs(t *testing.T) {
 					PeerID:        "peer1",
 					LastIndexedAt: time.Now(),
 				},
+				{
+					PageID:        "4",
+					PeerID:        "peer1",
+					LastIndexedAt: time.Now().Add(-time.Minute * 30),
+				},
 			},
 		}
 
@@ -181,6 +246,11 @@ func TestProcessRepairJobs(t *testing.T) {
 					PageID:        "3",
 					PeerID:        "peer2",
 					LastIndexedAt: time.Now().Add(-time.Hour),
+				},
+				{
+					PageID:        "4",
+					PeerID:        "peer2",
+					LastIndexedAt: time.Now().Add(-time.Minute * 45),
 				},
 			},
 		}
@@ -231,7 +301,7 @@ func TestProcessRepairJobs(t *testing.T) {
 		gock.New("http://node1:8080").
 			Post("/repair/get-index-metas").
 			JSON(&dto.GetIndexMetasRequest{
-				PageIDs: []string{"1", "2", "3"},
+				PageIDs: []string{"1", "2", "3", "4"},
 			}).
 			Reply(200).
 			JSON(expectedNode1MetasResponse)
@@ -239,7 +309,7 @@ func TestProcessRepairJobs(t *testing.T) {
 		gock.New("http://node2:8080").
 			Post("/repair/get-index-metas").
 			JSON(&dto.GetIndexMetasRequest{
-				PageIDs: []string{"1", "2", "3"},
+				PageIDs: []string{"1", "2", "3", "4"},
 			}).
 			Reply(200).
 			JSON(expectedNode2MetasResponse)
@@ -260,7 +330,7 @@ func TestProcessRepairJobs(t *testing.T) {
 			Reply(200).
 			JSON(expectedNode1PageDumpsResponse)
 
-		jobs := []string{"1", "2", "3"}
+		jobs := []string{"1", "2", "3", "4"}
 
 		repairJobRepo := repairJobRepo.NewRepository()
 
@@ -286,9 +356,31 @@ func TestProcessRepairJobs(t *testing.T) {
 
 		repairJobService := repairJobService.NewService(repairJobRepo, pageService, keywordService, peerService, testutil.NewTestLogger())
 
+		now := time.Now()
+		// Create page 4 with a last indexed at time of now and make sure it is not updated
+		pageRepo.Save("4", &domain.Page{
+			ID:            "4",
+			URL:           "http://example.com",
+			Title:         "Example",
+			Description:   "Description",
+			Language:      "English",
+			LastIndexedAt: &now,
+		})
+
+		// add a keyword occurrence for page 3 and make sure it is removed when the page is updated
+		err := keywordOccurrenceRepo.Add("check removed", domain.KeywordOccurrence{
+			PageID:    "3",
+			Frequency: 1,
+			Positions: []int{1},
+		})
+
+		if err != nil {
+			t.Fatalf("Error adding keyword occurrence: %v", err)
+		}
+
 		repairJobService.CreateRepairJobs(jobs)
 
-		err := repairJobService.ProcessRepairJobs(jobs)
+		err = repairJobService.ProcessRepairJobs(jobs)
 
 		if err != nil {
 			t.Fatalf("Expected no error, got %v", err)
@@ -333,7 +425,7 @@ func TestProcessRepairJobs(t *testing.T) {
 		}
 
 		// check all 3 pages have keyword occurrences
-		for _, job := range jobs {
+		for _, job := range jobs[:3] {
 			keywordOccurrences, err := keywordOccurrenceRepo.GetForPageID(job)
 			if err != nil {
 				t.Fatalf("Error getting keyword occurrences: %v", err)
@@ -360,6 +452,41 @@ func TestProcessRepairJobs(t *testing.T) {
 				keywordOccurrences[0].Frequency = 1
 				keywordOccurrences[0].Positions = []int{1}
 			}
+		}
+
+		checkRemoved, err := keywordOccurrenceRepo.GetAll("check removed")
+
+		if err == nil || len(checkRemoved) > 0 {
+			t.Fatalf("Expected no keyword occurrences to be found")
+		}
+
+		// check page 4 is not updated
+		page, err := pageRepo.Get("4")
+
+		if err != nil {
+			t.Fatalf("Error getting page: %v", err)
+		}
+
+		if page == nil {
+			t.Fatalf("Expected page to be found")
+		}
+
+		if page.ID != "4" {
+			t.Fatalf("Expected page ID to be 4, got %s", page.ID)
+		}
+
+		if page.LastIndexedAt.Round(time.Second) != now.Round(time.Second) {
+			t.Fatalf("Expected last indexed at to be %v, got %v", now, page.LastIndexedAt)
+		}
+
+		keywordOccurrences, err := keywordOccurrenceRepo.GetForPageID("4")
+
+		if err != nil {
+			t.Fatalf("Error getting keyword occurrences: %v", err)
+		}
+
+		if len(keywordOccurrences) > 0 {
+			t.Fatalf("Expected no keyword occurrences to be found")
 		}
 	})
 }

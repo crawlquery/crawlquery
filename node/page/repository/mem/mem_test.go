@@ -83,6 +83,38 @@ func TestGetAll(t *testing.T) {
 	}
 }
 
+func TestGetByIDs(t *testing.T) {
+	r := NewRepository()
+	r.Save("page1", &domain.Page{
+		ID: "page1",
+	})
+
+	r.Save("page2", &domain.Page{
+		ID: "page2",
+	})
+
+	r.Save("page3", &domain.Page{
+		ID: "page3",
+	})
+
+	pages, err := r.GetByIDs([]string{"page1", "page2"})
+	if err != nil {
+		t.Fatalf("error getting pages by IDs: %v", err)
+	}
+
+	if len(pages) != 2 {
+		t.Fatalf("expected 2 pages, got %d", len(pages))
+	}
+
+	if pages["page1"].ID != "page1" {
+		t.Fatalf("expected page1, got %s", pages["page1"].ID)
+	}
+
+	if pages["page2"].ID != "page2" {
+		t.Fatalf("expected page2, got %s", pages["page2"].ID)
+	}
+}
+
 func TestDelete(t *testing.T) {
 	r := NewRepository()
 

@@ -38,6 +38,13 @@ func (s *Service) GetKeywordMatches(keywords []domain.Keyword) ([]domain.Keyword
 }
 
 func (s *Service) UpdateOccurrences(pageID string, keywordOccurrences map[domain.Keyword]domain.KeywordOccurrence) error {
+
+	err := s.repo.RemoveForPageID(pageID)
+
+	if err != nil {
+		return err
+	}
+
 	for keyword, occurrence := range keywordOccurrences {
 		err := s.repo.Add(keyword, occurrence)
 		if err != nil {

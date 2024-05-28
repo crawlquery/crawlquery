@@ -110,6 +110,33 @@ func (repo *Repository) GetAll() (map[string]*domain.Page, error) {
 	return pages, nil
 }
 
+func (repo *Repository) GetByIDs(pageIDs []string) (map[string]*domain.Page, error) {
+	pages := make(map[string]*domain.Page)
+
+	err := repo.db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket(pageBucket)
+		for _, pageID := range pageIDs {
+			v := b.Get([]byte(pageID))
+			if v == nil {
+				return fmt.Errorf("page not found")
+			}
+			page := &domain.Page{}
+			err := json.Unmarshal(v, page)
+			if err != nil {
+				return err
+			}
+			pages[pageID] = page
+		}
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return pages, nil
+}
+
 func (repo *Repository) UpdateHash(pageID string, hash string) error {
 	return repo.db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket(hashBucket)

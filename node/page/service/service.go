@@ -42,6 +42,10 @@ func (s *Service) Count() (int, error) {
 	return s.pageRepo.Count()
 }
 
+func (s *Service) GetByIDs(pageIDs []string) (map[string]*domain.Page, error) {
+	return s.pageRepo.GetByIDs(pageIDs)
+}
+
 func (s *Service) Create(pageID, url, hash string) (*domain.Page, error) {
 
 	page := &domain.Page{

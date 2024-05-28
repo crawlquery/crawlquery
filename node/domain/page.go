@@ -24,6 +24,7 @@ type Page struct {
 type PageRepository interface {
 	Get(pageID string) (*Page, error)
 	GetAll() (map[string]*Page, error)
+	GetByIDs(pageIDs []string) (map[string]*Page, error)
 	Count() (int, error)
 	Save(pageID string, page *Page) error
 	Delete(pageID string) error
@@ -36,6 +37,7 @@ type PageRepository interface {
 type PageService interface {
 	Get(pageID string) (*Page, error)
 	GetAll() (map[string]*Page, error)
+	GetByIDs(pageIDs []string) (map[string]*Page, error)
 	Create(pageID, url, hash string) (*Page, error)
 	Update(page *Page) error
 	UpdateQuietly(page *Page) error

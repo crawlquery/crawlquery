@@ -49,10 +49,16 @@ func (s *Service) CreateRepairJobs(pageIDs []string) error {
 	return nil
 }
 
-func (s *Service) MapLatestPages(metas []domain.IndexMeta) domain.LatestIndexedPages {
+func (s *Service) MapLatestPages(metas []domain.IndexMeta, currentPages map[string]*domain.Page) domain.LatestIndexedPages {
 	latestIndexedAtPeers := make(domain.LatestIndexedPages)
 
 	for _, meta := range metas {
+
+		if currentPage, ok := currentPages[string(meta.PageID)]; ok {
+			if currentPage.LastIndexedAt != nil && currentPage.LastIndexedAt.After(meta.LastIndexedAt) {
+				continue
+			}
+		}
 
 		if latestIndexedAtPeers[meta.PageID].LatestIndexedAt.Before(meta.LastIndexedAt) {
 			latestIndexedAtPeers[meta.PageID] = domain.PeerWithLatestIndexedAt{
@@ -77,6 +83,13 @@ func (s *Service) GroupPageIDsByThePeerID(latestIndexedAtPeers domain.LatestInde
 
 func (s *Service) ProcessRepairJobs(pageIDs []string) error {
 
+	currentPages, err := s.pageService.GetByIDs(pageIDs)
+
+	if err != nil {
+		s.logger.Errorw("Error getting indexed at times", "error", err)
+		return err
+	}
+
 	metas, err := s.peerService.GetIndexMetas(pageIDs)
 
 	if err != nil {
@@ -84,7 +97,7 @@ func (s *Service) ProcessRepairJobs(pageIDs []string) error {
 		return err
 	}
 
-	latestIndexedAtPeers := s.MapLatestPages(metas)
+	latestIndexedAtPeers := s.MapLatestPages(metas, currentPages)
 
 	peerIDToPageIDs := s.GroupPageIDsByThePeerID(latestIndexedAtPeers)
 
