@@ -24,7 +24,7 @@ func TestQuery(t *testing.T) {
 		ctx, _ := gin.CreateTestContext(w)
 
 		req := dto.QueryRequest{
-			Query: "SELECT title FROM pages WHERE title LIKE '%example%'",
+			Query: "SELECT title FROM pages WHERE title LIKE '%example%';",
 		}
 
 		reqBody, _ := json.Marshal(req)

@@ -152,7 +152,7 @@ func main() {
 	peerService.SyncPeerList()
 
 	go peerService.SyncPeerListEvery(30 * time.Second)
-	go repairService.AuditAndRepairEvery(30 * time.Second)
+	go repairService.AuditAndRepairEvery(30 * time.Minute)
 
 	r := router.NewRouter(
 		indexHandler,

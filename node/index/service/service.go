@@ -76,6 +76,8 @@ func (s *Service) Index(pageID string) error {
 		s.logger.Errorw("Error parsing keywords", "error", err, "pageID", pageID)
 	}
 
+	language, _ := parse.Language(doc)
+
 	if len(keywords) > 1500 {
 		keywords = keywords[:1500]
 
@@ -98,6 +100,8 @@ func (s *Service) Index(pageID string) error {
 
 	page.Title = title
 	page.Description = desc
+	page.Language = language
+
 	now := time.Now()
 	page.LastIndexedAt = &now
 

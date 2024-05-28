@@ -108,6 +108,10 @@ func TestIndex(t *testing.T) {
 			t.Fatalf("Expected last indexed at to be set, got zero")
 		}
 
+		if page.Language != "English" {
+			t.Fatalf("Expected language to be English, got %s", page.Language)
+		}
+
 		checkOccurrences := map[domain.Keyword]domain.KeywordOccurrence{
 			"page": {
 				PageID:    "page1",

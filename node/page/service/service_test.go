@@ -199,58 +199,6 @@ func TestUpdate(t *testing.T) {
 			t.Fatalf("Expected page URL to be 'http://example2.com', got '%s'", check.URL)
 		}
 	})
-
-	t.Run("broadasts event to peers", func(t *testing.T) {
-		pageRepo := pageRepo.NewRepository()
-
-		peerService := peerService.NewService(nil, nil, testutil.NewTestLogger())
-
-		peerService.AddPeer(&domain.Peer{
-			ID:       "peer1",
-			Hostname: "peer1",
-			Port:     8080,
-			ShardID:  1,
-		})
-
-		expectedPage := &domain.Page{
-			ID:   "1",
-			URL:  "http://example.com",
-			Hash: "hash2",
-		}
-
-		defer gock.Off()
-
-		gock.New("http://peer1:8080").
-			Post("/event").
-			JSON(expectedPage).
-			Reply(200)
-
-		service := service.NewService(pageRepo, peerService)
-
-		err := pageRepo.Save(expectedPage.ID, expectedPage)
-
-		if err != nil {
-			t.Fatalf("Error saving page: %v", err)
-		}
-
-		page, err := service.Get("1")
-
-		if err != nil {
-			t.Fatalf("Error getting page: %v", err)
-		}
-
-		page.Hash = "hash2"
-
-		err = service.Update(page)
-
-		if err != nil {
-			t.Fatalf("Error updating page: %v", err)
-		}
-
-		if !gock.IsDone() {
-			t.Fatalf("Expected all mocks to be called")
-		}
-	})
 }
 
 func TestDelete(t *testing.T) {

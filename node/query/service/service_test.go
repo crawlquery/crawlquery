@@ -9,7 +9,7 @@ func TestQuery(t *testing.T) {
 	t.Run("returns results", func(t *testing.T) {
 		queryService := queryService.NewService(nil)
 
-		results, err := queryService.Query("SELECT title FROM pages WHERE title LIKE '%example%'")
+		results, err := queryService.Query("SELECT title FROM pages WHERE title LIKE '%example%';")
 
 		if err != nil {
 			t.Errorf("Error querying: %v", err)
