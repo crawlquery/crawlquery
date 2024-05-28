@@ -27,6 +27,7 @@ func CORSMiddleware() gin.HandlerFunc {
 func NewRouter(
 	indexHandler domain.IndexHandler,
 	searchHandler domain.SearchHandler,
+	queryHandler domain.QueryHandler,
 	crawlHandler domain.CrawlHandler,
 	dumpHandler domain.DumpHandler,
 	statHandler domain.StatHandler,
@@ -48,6 +49,8 @@ func NewRouter(
 
 	router.GET("/pages/:pageID/index", indexHandler.GetIndex)
 	router.POST("/pages/:pageID/index", indexHandler.Index)
+
+	router.POST("/query", queryHandler.Query)
 
 	router.GET("/dump/page", dumpHandler.Page)
 

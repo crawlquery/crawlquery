@@ -336,6 +336,65 @@ func TestNext(t *testing.T) {
 		}
 	})
 
+	t.Run("can return job when older jobs have backoff", func(t *testing.T) {
+		db := testutil.CreateTestMysqlDB()
+		defer db.Close()
+
+		migration.Up(db)
+
+		repo := mysql.NewRepository(db)
+
+		job1 := &domain.IndexJob{
+			ID:     "job1-older-jobs-have-backoff",
+			PageID: "page1",
+			BackoffUntil: sql.NullTime{
+				Time:  time.Now().Add(1 * time.Hour),
+				Valid: true,
+			},
+			CreatedAt: time.Now().Add(-2 * time.Hour),
+		}
+
+		job2 := &domain.IndexJob{
+			ID:        "job2-older-jobs-have-backoff",
+			PageID:    "page2",
+			CreatedAt: time.Now(),
+		}
+
+		job3 := &domain.IndexJob{
+			ID:        "job3-older-jobs-have-backoff",
+			PageID:    "page3",
+			CreatedAt: time.Now(),
+		}
+
+		job4 := &domain.IndexJob{
+			ID:        "job4-older-jobs-have-backoff",
+			PageID:    "page4",
+			CreatedAt: time.Now(),
+		}
+
+		for _, j := range []*domain.IndexJob{job1, job2, job3, job4} {
+			_, err := db.Exec("INSERT INTO index_jobs (id, page_id, backoff_until, last_indexed_at, failed_reason, created_at) VALUES (?, ?, ?, ?, ?, ?)",
+				j.ID, j.PageID, j.BackoffUntil, j.LastIndexedAt, j.FailedReason, j.CreatedAt)
+
+			if err != nil {
+				t.Fatalf("Error inserting index job: %v", err)
+			}
+
+			defer db.Exec("DELETE FROM index_jobs WHERE id = ?", j.ID)
+		}
+
+		result, err := repo.Next()
+
+		if err != nil {
+			t.Fatalf("Error getting next index job: %v", err)
+		}
+
+		if result.ID != job2.ID {
+			t.Errorf("Expected job ID to be %s, got %s", job2.ID, result.ID)
+		}
+
+	})
+
 	t.Run("does not return job if backoff is not expired", func(t *testing.T) {
 		db := testutil.CreateTestMysqlDB()
 		defer db.Close()

@@ -66,6 +66,61 @@ func TestAddOccurence(t *testing.T) {
 	}
 }
 
+func TestGetOccurrencesForPageID(t *testing.T) {
+	repo := mem.NewRepository()
+	keyword := domain.Keyword("example")
+
+	// Add occurrences to the repository
+	occurrences := []domain.KeywordOccurrence{
+		{PageID: "page1", Frequency: 3, Positions: []int{1, 2, 3}},
+		{PageID: "page2", Frequency: 2, Positions: []int{4, 5}},
+	}
+	for _, occ := range occurrences {
+		err := repo.Add(keyword, occ)
+		if err != nil {
+			t.Fatalf("Error adding occurrence: %v", err)
+		}
+	}
+
+	// Get occurrences for page1
+	gotOccurrences, err := repo.GetForPageID("page1")
+	if err != nil {
+		t.Fatalf("Error getting occurrences: %v", err)
+	}
+
+	expectedOccurrences := []domain.KeywordOccurrence{
+		{PageID: "page1", Frequency: 3, Positions: []int{1, 2, 3}},
+	}
+
+	if !reflect.DeepEqual(gotOccurrences, expectedOccurrences) {
+		t.Errorf("Expected occurrences %v, got %v", expectedOccurrences, gotOccurrences)
+	}
+
+	// Get occurrences for page2
+	gotOccurrences, err = repo.GetForPageID("page2")
+	if err != nil {
+		t.Fatalf("Error getting occurrences: %v", err)
+	}
+
+	expectedOccurrences = []domain.KeywordOccurrence{
+		{PageID: "page2", Frequency: 2, Positions: []int{4, 5}},
+	}
+
+	if !reflect.DeepEqual(gotOccurrences, expectedOccurrences) {
+		t.Errorf("Expected occurrences %v, got %v", expectedOccurrences, gotOccurrences)
+	}
+
+	// Get occurrences for a non-existing page
+	gotOccurrences, err = repo.GetForPageID("nonexistent")
+	if err != nil {
+		t.Fatalf("Error getting occurrences: %v", err)
+	}
+
+	if len(gotOccurrences) != 0 {
+		t.Errorf("Expected no occurrences, got %v", gotOccurrences)
+	}
+}
+
 func TestRemoveOccurencesForPageID(t *testing.T) {
 	repo := mem.NewRepository()
 	keyword := domain.Keyword("example")

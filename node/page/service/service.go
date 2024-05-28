@@ -38,6 +38,10 @@ func (s *Service) UpdatePageHash(page *domain.Page) error {
 	return s.pageRepo.UpdateHash(page.ID, hash)
 }
 
+func (s *Service) Count() (int, error) {
+	return s.pageRepo.Count()
+}
+
 func (s *Service) Create(pageID, url, hash string) (*domain.Page, error) {
 
 	page := &domain.Page{

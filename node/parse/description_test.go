@@ -56,4 +56,45 @@ func TestDescriptionParser(t *testing.T) {
 			})
 		}
 	})
+
+	t.Run("limits to 200 characters", func(t *testing.T) {
+
+		html := []byte(`
+		<html>
+			<head>
+				<title>Test Page</title>
+				</head>
+			<body>
+
+				<h1>Test Page</h1>
+				<p>`)
+
+		expected := ""
+		for i := 0; i < 100; i++ {
+			html = append(html, []byte("This is a test description. ")...)
+
+			expected += "This is a test description. "
+		}
+
+		html = append(html, []byte(`</p>
+			</body>
+		</html>
+	`)...)
+
+		doc, err := goquery.NewDocumentFromReader(bytes.NewReader(html))
+
+		if err != nil {
+			t.Errorf("Error parsing html: %v", err)
+		}
+
+		description, err := parse.Description(doc)
+
+		if err != nil {
+			t.Errorf("Error parsing description: %v", err)
+		}
+
+		if description != expected[:200] {
+			t.Errorf("Expected description to be less than 200 characters, got %d", len(description))
+		}
+	})
 }

@@ -109,3 +109,69 @@ func (c *Client) Index(pageID string) error {
 
 	return errors.New("indexing returned success=false")
 }
+
+func (c *Client) GetIndexMetas(pageIDs []string) ([]*dto.IndexMeta, error) {
+
+	var req dto.GetIndexMetasRequest
+
+	req.PageIDs = append(req.PageIDs, pageIDs...)
+
+	jsonBody, err := json.Marshal(req)
+
+	if err != nil {
+		return nil, err
+	}
+
+	res, err := http.Post(fmt.Sprintf("%s/repair/get-index-metas", c.BaseURL), "application/json", bytes.NewBuffer(jsonBody))
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer res.Body.Close()
+
+	if res.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("unexpected status code: %d", res.StatusCode)
+	}
+
+	var indexMetaResponse dto.GetIndexMetasResponse
+
+	if err := json.NewDecoder(res.Body).Decode(&indexMetaResponse); err != nil {
+		return nil, err
+	}
+
+	return indexMetaResponse.IndexMetas, nil
+}
+
+func (c *Client) GetPageDumps(pageIDs []string) ([]*dto.PageDump, error) {
+
+	var req dto.GetPageDumpsRequest
+
+	req.PageIDs = append(req.PageIDs, pageIDs...)
+
+	jsonBody, err := json.Marshal(req)
+
+	if err != nil {
+		return nil, err
+	}
+
+	res, err := http.Post(fmt.Sprintf("%s/repair/get-page-dumps", c.BaseURL), "application/json", bytes.NewBuffer(jsonBody))
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer res.Body.Close()
+
+	if res.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("unexpected status code: %d", res.StatusCode)
+	}
+
+	var pageDumpResponse dto.GetPageDumpsResponse
+
+	if err := json.NewDecoder(res.Body).Decode(&pageDumpResponse); err != nil {
+		return nil, err
+	}
+
+	return pageDumpResponse.PageDumps, nil
+}

@@ -39,6 +39,22 @@ func TestPageRepo(t *testing.T) {
 	}
 }
 
+func TestCount(t *testing.T) {
+	r := NewRepository()
+	r.Save("page1", &domain.Page{
+		ID: "page1",
+	})
+
+	count, err := r.Count()
+	if err != nil {
+		t.Fatalf("error counting pages: %v", err)
+	}
+
+	if count != 1 {
+		t.Fatalf("expected 1 page, got %d", count)
+	}
+}
+
 func TestGetAll(t *testing.T) {
 	r := NewRepository()
 	r.Save("page1", &domain.Page{

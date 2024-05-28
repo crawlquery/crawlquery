@@ -3,6 +3,7 @@ package service_test
 import (
 	"crawlquery/api/dto"
 	"crawlquery/node/domain"
+	nodeDto "crawlquery/node/dto"
 	"crawlquery/node/peer/service"
 	"crawlquery/pkg/client/api"
 	"crawlquery/pkg/testutil"
@@ -65,7 +66,11 @@ func TestGetPeer(t *testing.T) {
 
 	service.AddPeer(peer)
 
-	p := service.GetPeer("peer1")
+	p, err := service.GetPeer("peer1")
+
+	if err != nil {
+		t.Fatalf("Expected no error, got %v", err)
+	}
 
 	if p == nil {
 		t.Fatalf("Expected to get peer, got nil")
@@ -73,6 +78,12 @@ func TestGetPeer(t *testing.T) {
 
 	if p.ID != "peer1" {
 		t.Fatalf("Expected peer ID to be peer1, got %s", p.ID)
+	}
+
+	_, err = service.GetPeer("peer2")
+
+	if err == nil {
+		t.Fatalf("Expected error, got nil")
 	}
 }
 
@@ -342,4 +353,177 @@ func TestSyncPeerListEvery(t *testing.T) {
 	if !gock.IsDone() {
 		t.Fatalf("Expected requests to be made")
 	}
+}
+
+func TestGetPageDumpsFromPeer(t *testing.T) {
+	t.Run("can get page dumps from peer", func(t *testing.T) {
+		defer gock.Off()
+
+		gock.New("http://localhost:8080").
+			Post("/repair/get-page-dumps").
+			Reply(200).
+			JSON(&nodeDto.GetPageDumpsResponse{
+				PageDumps: []*nodeDto.PageDump{
+					{
+						PeerID: "peer1",
+						PageID: "page1",
+						Page: &nodeDto.Page{
+							ID:          "page1",
+							URL:         "http://example.com",
+							Title:       "Example",
+							Description: "An example page",
+							Language:    "English",
+						},
+						KeywordOccurrences: map[string]nodeDto.KeywordOccurrence{
+							"keyword1": {
+								PageID:    "page1",
+								Frequency: 1,
+								Positions: []int{1},
+							},
+						},
+					},
+				},
+			})
+
+		api := api.NewClient("http://localhost:8080", testutil.NewTestLogger())
+
+		service := service.NewService(api, &domain.Peer{
+			ID:       "host",
+			Hostname: "localhost",
+			Port:     8080,
+			ShardID:  1,
+		}, testutil.NewTestLogger())
+
+		dumps, err := service.GetPageDumpsFromPeer(&domain.Peer{
+			ID:       "peer1",
+			Hostname: "localhost",
+			Port:     8080,
+		}, []domain.PageID{"page1"})
+
+		if err != nil {
+			t.Fatalf("Expected no error, got %v", err)
+		}
+
+		if len(dumps) != 1 {
+			t.Fatalf("Expected 1 dump, got %d", len(dumps))
+		}
+
+		if dumps[0].PageID != "page1" {
+			t.Fatalf("Expected page1, got %s", dumps[0].PageID)
+		}
+
+		if dumps[0].PeerID != "peer1" {
+			t.Fatalf("Expected peer1, got %s", dumps[0].PeerID)
+		}
+	})
+}
+
+func TestGetIndexMetas(t *testing.T) {
+	t.Run("can get index metas", func(t *testing.T) {
+		defer gock.Off()
+
+		expectedResponse := &nodeDto.GetIndexMetasResponse{
+			IndexMetas: []*nodeDto.IndexMeta{
+				{
+					PeerID:        "peer1",
+					PageID:        "page1",
+					LastIndexedAt: time.Now(),
+				},
+			},
+		}
+
+		gock.New("http://localhost:8080").
+			Post("/repair/get-index-metas").
+			Reply(200).
+			JSON(expectedResponse)
+
+		api := api.NewClient("http://localhost:8080", testutil.NewTestLogger())
+
+		service := service.NewService(api, &domain.Peer{
+			ID:       "host",
+			Hostname: "localhost",
+			Port:     8080,
+			ShardID:  1,
+		}, testutil.NewTestLogger())
+
+		service.AddPeer(&domain.Peer{
+			ID:       "peer1",
+			Hostname: "localhost",
+			Port:     8080,
+			ShardID:  1,
+		})
+
+		metas, err := service.GetIndexMetas([]string{"index1"})
+
+		if err != nil {
+			t.Fatalf("Expected no error, got %v", err)
+		}
+
+		if len(metas) != 1 {
+			t.Fatalf("Expected 1 meta, got %d", len(metas))
+		}
+
+		if metas[0].PageID != "page1" {
+			t.Fatalf("Expected page1, got %s", metas[0].PageID)
+		}
+
+		if metas[0].LastIndexedAt.Round(time.Second) != expectedResponse.IndexMetas[0].LastIndexedAt.Round(time.Second) {
+			t.Fatalf("Expected last indexed at to be %v, got %v", expectedResponse.IndexMetas[0].LastIndexedAt, metas[0].LastIndexedAt)
+		}
+
+		if metas[0].PeerID != "peer1" {
+			t.Fatalf("Expected peer1, got %s", metas[0].PeerID)
+		}
+	})
+}
+
+func TestGetIndexMetasFromPeer(t *testing.T) {
+	t.Run("can get index metas from peer", func(t *testing.T) {
+		defer gock.Off()
+
+		expectedResponse := &nodeDto.GetIndexMetasResponse{
+			IndexMetas: []*nodeDto.IndexMeta{
+				{
+					PageID:        "page1",
+					LastIndexedAt: time.Now(),
+				},
+			},
+		}
+
+		gock.New("http://localhost:8080").
+			Post("/repair/get-index-metas").
+			Reply(200).
+			JSON(expectedResponse)
+
+		api := api.NewClient("http://localhost:8080", testutil.NewTestLogger())
+
+		service := service.NewService(api, &domain.Peer{
+			ID:       "host",
+			Hostname: "localhost",
+			Port:     8080,
+			ShardID:  1,
+		}, testutil.NewTestLogger())
+
+		metas, err := service.GetIndexMetasFromPeer(&domain.Peer{
+			ID:       "peer1",
+			Hostname: "localhost",
+			Port:     8080,
+		}, []string{"index1"})
+
+		if err != nil {
+			t.Fatalf("Expected no error, got %v", err)
+		}
+
+		if len(metas) != 1 {
+			t.Fatalf("Expected 1 meta, got %d", len(metas))
+		}
+
+		if metas[0].PageID != "page1" {
+			t.Fatalf("Expected page1, got %s", metas[0].PageID)
+		}
+
+		if metas[0].LastIndexedAt.Round(time.Second) != expectedResponse.IndexMetas[0].LastIndexedAt.Round(time.Second) {
+			t.Fatalf("Expected last indexed at to be %v, got %v", expectedResponse.IndexMetas[0].LastIndexedAt, metas[0].LastIndexedAt)
+		}
+	})
 }

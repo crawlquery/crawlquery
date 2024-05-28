@@ -5,6 +5,8 @@ import (
 	"time"
 )
 
+type PageID string
+
 var ErrPageNotFound = errors.New("page not found")
 var ErrHashNotFound = errors.New("hash not found")
 
@@ -22,6 +24,7 @@ type Page struct {
 type PageRepository interface {
 	Get(pageID string) (*Page, error)
 	GetAll() (map[string]*Page, error)
+	Count() (int, error)
 	Save(pageID string, page *Page) error
 	Delete(pageID string) error
 	GetHashes() (map[string]string, error)

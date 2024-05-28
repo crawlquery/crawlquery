@@ -50,6 +50,41 @@ func (r *Repository) GetAll(keyword domain.Keyword) ([]domain.KeywordOccurrence,
 	return occurrences, nil
 }
 
+func (r *Repository) GetForPageID(pageID string) ([]domain.KeywordOccurrence, error) {
+	var occurrences []domain.KeywordOccurrence
+
+	err := r.db.View(func(tx *bolt.Tx) error {
+		bucket := tx.Bucket(occurrencesBucket)
+		if bucket == nil {
+			return domain.ErrKeywordNotFound
+		}
+
+		err := bucket.ForEach(func(k, v []byte) error {
+			var keywordOccurrences []domain.KeywordOccurrence
+			err := json.Unmarshal(v, &keywordOccurrences)
+			if err != nil {
+				return err
+			}
+
+			for _, occ := range keywordOccurrences {
+				if occ.PageID == pageID {
+					occurrences = append(occurrences, occ)
+				}
+			}
+
+			return nil
+		})
+
+		return err
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return occurrences, nil
+}
+
 func (r *Repository) Add(keyword domain.Keyword, occurrence domain.KeywordOccurrence) error {
 	return r.db.Update(func(tx *bolt.Tx) error {
 		bucket := tx.Bucket(occurrencesBucket)

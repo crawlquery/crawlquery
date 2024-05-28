@@ -28,6 +28,9 @@ import (
 	searchHandler "crawlquery/node/search/handler"
 	searchService "crawlquery/node/search/service"
 
+	queryHandler "crawlquery/node/query/handler"
+	queryService "crawlquery/node/query/service"
+
 	dumpHandler "crawlquery/node/dump/handler"
 	dumpService "crawlquery/node/dump/service"
 
@@ -131,6 +134,7 @@ func main() {
 	dumpService := dumpService.NewService(pageService)
 	statService := statService.NewService(pageService, keywordService, dumpService)
 	searchService := searchService.NewService(pageService, keywordService)
+	queryService := queryService.NewService(pageService)
 
 	// handlers
 	indexHandler := indexHandler.NewHandler(indexService, sugar)
@@ -138,11 +142,12 @@ func main() {
 	dumpHandler := dumpHandler.NewHandler(dumpService)
 	statHandler := statHandler.NewHandler(statService)
 	searchHandler := searchHandler.NewHandler(searchService, sugar)
+	queryHandler := queryHandler.NewHandler(queryService)
 
 	peerService.SyncPeerList()
 	go peerService.SyncPeerListEvery(30 * time.Second)
 
-	r := router.NewRouter(indexHandler, searchHandler, crawlHandler, dumpHandler, statHandler)
+	r := router.NewRouter(indexHandler, searchHandler, queryHandler, crawlHandler, dumpHandler, statHandler)
 
 	r.Run(fmt.Sprintf(":%d", node.Port))
 }

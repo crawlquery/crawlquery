@@ -3,6 +3,7 @@ package bolt_test
 import (
 	"crawlquery/node/domain"
 	"crawlquery/node/page/repository/bolt"
+	"fmt"
 	"os"
 	"testing"
 )
@@ -45,6 +46,37 @@ func TestRepo(t *testing.T) {
 
 	if page.Title != "Google" {
 		t.Fatalf("expected title to be Google, got %s", page.Title)
+	}
+}
+
+func TestCount(t *testing.T) {
+	r, err := bolt.NewRepository("/tmp/inverted_count_test.db")
+	defer os.Remove("/tmp/inverted_count_test.db")
+
+	if err != nil {
+		t.Fatalf("error creating repository: %v", err)
+	}
+
+	for i := 0; i < 10; i++ {
+		err = r.Save(fmt.Sprintf("page%d", i), &domain.Page{
+			ID:    "page1",
+			URL:   "http://google.com",
+			Title: "Google",
+		})
+
+		if err != nil {
+			t.Fatalf("error saving page: %v", err)
+		}
+	}
+
+	count, err := r.Count()
+
+	if err != nil {
+		t.Fatalf("error counting pages: %v", err)
+	}
+
+	if count != 10 {
+		t.Fatalf("expected 10 pages, got %d", count)
 	}
 }
 

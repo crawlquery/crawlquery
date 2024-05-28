@@ -3,7 +3,9 @@ package service
 import (
 	"bytes"
 	"crawlquery/node/domain"
+	"crawlquery/node/dto"
 	"crawlquery/pkg/client/api"
+	"crawlquery/pkg/client/node"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -36,7 +38,7 @@ func NewService(
 }
 
 func (s *Service) AddPeer(peer *domain.Peer) {
-	if s.GetPeer(peer.ID) != nil {
+	if _, err := s.GetPeer(peer.ID); err == nil {
 		return
 	}
 
@@ -53,14 +55,14 @@ func (s *Service) GetPeers() []*domain.Peer {
 	return s.peers
 }
 
-func (s *Service) GetPeer(id string) *domain.Peer {
+func (s *Service) GetPeer(id string) (*domain.Peer, error) {
 	for _, peer := range s.peers {
 		if peer.ID == id {
-			return peer
+			return peer, nil
 		}
 	}
 
-	return nil
+	return nil, fmt.Errorf("peer not found")
 }
 
 func (s *Service) RemoveAllPeers() {
@@ -74,6 +76,87 @@ func (s *Service) RemovePeer(id string) {
 			return
 		}
 	}
+}
+
+func (s *Service) GetPageDumpsFromPeer(peer *domain.Peer, pageIDs []domain.PageID) ([]*domain.PageDump, error) {
+
+	client := node.NewClient(fmt.Sprintf("http://%s:%d", peer.Hostname, peer.Port))
+
+	var strPageIDs []string
+
+	for _, id := range pageIDs {
+		strPageIDs = append(strPageIDs, string(id))
+	}
+
+	dumps, err := client.GetPageDumps(strPageIDs)
+
+	if err != nil {
+		s.logger.Errorf("Error getting page dumps from peer: %v", err)
+		return nil, err
+	}
+
+	var pageDumps []*domain.PageDump
+
+	for _, dump := range dumps {
+		pageDumps = append(pageDumps, domain.PageDumpFromDTO(dump))
+	}
+
+	return pageDumps, nil
+}
+
+func (s *Service) GetIndexMetas(pageIDs []string) ([]domain.IndexMeta, error) {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+	var wg sync.WaitGroup
+	results := make(chan []*dto.IndexMeta, len(s.peers))
+	semaphore := make(chan struct{}, 10) // Limit to 10 concurrent requests
+
+	for _, peer := range s.peers {
+		wg.Add(1)
+		go func(peer *domain.Peer) {
+			defer wg.Done()
+			semaphore <- struct{}{}
+			metas, err := s.GetIndexMetasFromPeer(peer, pageIDs)
+			<-semaphore
+			if err != nil {
+				results <- nil
+			} else {
+				results <- metas
+			}
+		}(peer)
+	}
+
+	wg.Wait()
+	close(results)
+
+	var allMetas []domain.IndexMeta
+
+	for metas := range results {
+		if metas != nil {
+			for _, meta := range metas {
+				allMetas = append(allMetas, domain.IndexMeta{
+					PeerID:        domain.PeerID(meta.PeerID),
+					PageID:        domain.PageID(meta.PageID),
+					LastIndexedAt: meta.LastIndexedAt,
+				})
+			}
+		}
+	}
+
+	return allMetas, nil
+}
+
+func (s *Service) GetIndexMetasFromPeer(peer *domain.Peer, pageIDs []string) ([]*dto.IndexMeta, error) {
+	client := node.NewClient(fmt.Sprintf("http://%s:%d", peer.Hostname, peer.Port))
+
+	metas, err := client.GetIndexMetas(pageIDs)
+
+	if err != nil {
+		s.logger.Errorf("Error getting index metas from peer: %v", err)
+		return nil, err
+	}
+
+	return metas, nil
 }
 
 func (s *Service) SendPageUpdatedEvent(peer *domain.Peer, event *domain.PageUpdatedEvent) error {

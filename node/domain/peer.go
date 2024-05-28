@@ -1,5 +1,11 @@
 package domain
 
+import (
+	"time"
+)
+
+type PeerID string
+
 type Peer struct {
 	ID       string `json:"id"`
 	Hostname string `json:"hostname"`
@@ -7,10 +13,18 @@ type Peer struct {
 	ShardID  uint   `json:"shard_id"`
 }
 
+type PageMetadata struct {
+	PeerID        string
+	PageID        string
+	LastIndexedAt time.Time
+}
+
 type PeerService interface {
 	AddPeer(peer *Peer)
 	GetPeers() []*Peer
-	GetPeer(id string) *Peer
+	GetPeer(id string) (*Peer, error)
+	GetIndexMetas(pageIDs []string) ([]IndexMeta, error)
+	GetPageDumpsFromPeer(peer *Peer, pageIDs []PageID) ([]*PageDump, error)
 	SendPageUpdatedEvent(peer *Peer, event *PageUpdatedEvent) error
 	BroadcastPageUpdatedEvent(event *PageUpdatedEvent) error
 	SyncPeerList() error

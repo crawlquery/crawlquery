@@ -119,9 +119,7 @@ func main() {
 	searchService := searchService.NewService(nodeService, pageRankService, sugar)
 	searchHandler := searchHandler.NewHandler(searchService)
 
-	for i := 0; i < 4; i++ {
-		go crawlJobService.ProcessCrawlJobs()
-	}
+	go crawlJobService.ProcessCrawlJobs()
 
 	go pageRankService.UpdatePageRanksEvery(time.Minute)
 

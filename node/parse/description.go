@@ -30,6 +30,9 @@ func Description(doc *goquery.Document) (string, error) {
 	}
 
 	if firstParagraph != "" {
+		if len(firstParagraph) > 200 {
+			return firstParagraph[:200], nil
+		}
 		return firstParagraph, nil
 	}
 

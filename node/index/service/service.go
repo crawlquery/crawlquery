@@ -62,24 +62,31 @@ func (s *Service) Index(pageID string) error {
 	title, err := parse.Title(doc)
 	if err != nil {
 		s.logger.Errorw("Error parsing title", "error", err, "pageID", pageID)
-		return err
 	}
 
 	desc, err := parse.Description(doc)
 
 	if err != nil {
 		s.logger.Errorw("Error parsing description", "error", err, "pageID", pageID)
-		return err
 	}
 
 	keywords, err := parse.Keywords(doc)
 
 	if err != nil {
 		s.logger.Errorw("Error parsing keywords", "error", err, "pageID", pageID)
-		return err
+	}
+
+	if len(keywords) > 1500 {
+		keywords = keywords[:1500]
+
+		s.logger.Warnw("Truncating keywords", "pageID", pageID)
 	}
 
 	occurrences, err := keyword.MakeKeywordOccurrences(keywords, page.ID)
+
+	if err != nil {
+		s.logger.Errorw("Error making keyword occurrences", "error", err, "pageID", pageID)
+	}
 
 	// Update keywords
 	err = s.keywordService.UpdateOccurrences(page.ID, occurrences)

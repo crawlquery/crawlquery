@@ -34,6 +34,10 @@ func (r *Repository) Get(pageID string) (*domain.Page, error) {
 	return page, nil
 }
 
+func (r *Repository) Count() (int, error) {
+	return len(r.pages), nil
+}
+
 func (r *Repository) GetAll() (map[string]*domain.Page, error) {
 	return r.pages, nil
 }

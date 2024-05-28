@@ -26,6 +26,20 @@ func (r *Repository) Add(keyword domain.Keyword, occurrence domain.KeywordOccurr
 	return nil
 }
 
+func (r *Repository) GetForPageID(pageID string) ([]domain.KeywordOccurrence, error) {
+	var occurrences []domain.KeywordOccurrence
+
+	for _, occurrencesForKeyword := range r.occurrences {
+		for _, occurrence := range occurrencesForKeyword {
+			if occurrence.PageID == pageID {
+				occurrences = append(occurrences, occurrence)
+			}
+		}
+	}
+
+	return occurrences, nil
+}
+
 func (r *Repository) RemoveForPageID(pageID string) error {
 	for keyword, occurrences := range r.occurrences {
 		var newOccurrences []domain.KeywordOccurrence

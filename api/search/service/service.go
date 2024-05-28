@@ -128,5 +128,9 @@ func (s *Service) Search(term string) ([]nodeDomain.Result, error) {
 		return results[i].Score > results[j].Score
 	})
 
+	if len(results) > 10 {
+		results = results[:10]
+	}
+
 	return results, nil
 }

@@ -89,6 +89,27 @@ func TestCreate(t *testing.T) {
 	})
 }
 
+func TestCount(t *testing.T) {
+	pageRepo := pageRepo.NewRepository()
+	service := service.NewService(pageRepo, nil)
+
+	_, err := service.Create("1", "http://example.com", "hash1")
+
+	if err != nil {
+		t.Fatalf("Error saving page: %v", err)
+	}
+
+	count, err := service.Count()
+
+	if err != nil {
+		t.Fatalf("Error counting pages: %v", err)
+	}
+
+	if count != 1 {
+		t.Fatalf("Expected 1 page, got %d", count)
+	}
+}
+
 func TestGet(t *testing.T) {
 	pageRepo := pageRepo.NewRepository()
 	service := service.NewService(pageRepo, nil)

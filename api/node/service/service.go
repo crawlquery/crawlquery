@@ -3,7 +3,7 @@ package service
 import (
 	"crawlquery/api/domain"
 	"crawlquery/node/dto"
-	"crawlquery/pkg/client/api/node"
+	"crawlquery/pkg/client/node"
 	"crawlquery/pkg/util"
 	"fmt"
 	"math/rand"

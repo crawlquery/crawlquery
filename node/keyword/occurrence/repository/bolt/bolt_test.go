@@ -63,6 +63,53 @@ func TestGet(t *testing.T) {
 	}
 }
 
+func TestGetForPageID(t *testing.T) {
+	db := setupTestDB(t)
+	defer teardownTestDB(db)
+
+	repo, err := occRepo.NewRepository(db)
+	if err != nil {
+		t.Fatalf("Failed to create repository: %v", err)
+	}
+
+	keyword := domain.Keyword("example")
+	occurrences := []domain.KeywordOccurrence{
+		{PageID: "page1", Frequency: 3, Positions: []int{1, 2, 3}},
+		{PageID: "page2", Frequency: 2, Positions: []int{4, 5}},
+	}
+
+	for _, occ := range occurrences {
+		err := repo.Add(keyword, occ)
+		if err != nil {
+			t.Fatalf("Error adding occurrence: %v", err)
+		}
+	}
+
+	gotOccurrences, err := repo.GetForPageID("page1")
+	if err != nil {
+		t.Fatalf("Error getting occurrences: %v", err)
+	}
+
+	expectedOccurrences := []domain.KeywordOccurrence{
+		{PageID: "page1", Frequency: 3, Positions: []int{1, 2, 3}},
+	}
+
+	if !reflect.DeepEqual(gotOccurrences, expectedOccurrences) {
+		t.Errorf("Expected occurrences %v, got %v", expectedOccurrences, gotOccurrences)
+	}
+
+	empty, err := repo.GetForPageID("nonexistent")
+
+	if err != nil {
+		t.Fatalf("Error getting occurrences: %v", err)
+	}
+
+	if len(empty) != 0 {
+		t.Errorf("Expected 0 occurrences, got %v", len(empty))
+	}
+
+}
+
 func TestAddOccurence(t *testing.T) {
 	db := setupTestDB(t)
 	defer teardownTestDB(db)
