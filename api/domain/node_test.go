@@ -146,23 +146,4 @@ func TestNodeValidate(t *testing.T) {
 		}
 	})
 
-	t.Run("invalid shard id", func(t *testing.T) {
-		node := &domain.Node{
-			ID:        util.UUIDString(),
-			AccountID: util.UUIDString(),
-			Hostname:  "testnode",
-			Port:      8080,
-			ShardID:   2000000,
-		}
-
-		err := node.Validate()
-
-		if err == nil {
-			t.Errorf("Expected node to be invalid, got nil")
-		}
-
-		if !strings.Contains(err.Error(), "Node.ShardID") {
-			t.Errorf("Expected error to contain 'Node.ShardID', got %v", err)
-		}
-	})
 }

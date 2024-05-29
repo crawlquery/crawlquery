@@ -39,7 +39,7 @@ func TestCreate(t *testing.T) {
 			t.Errorf("Error querying for shard: %v", err)
 		}
 
-		var id uint
+		var id domain.ShardID
 		var createdAt time.Time
 
 		for res.Next() {

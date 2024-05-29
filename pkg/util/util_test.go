@@ -1,6 +1,7 @@
 package util_test
 
 import (
+	"crawlquery/api/domain"
 	"crawlquery/pkg/util"
 	"testing"
 )
@@ -121,9 +122,9 @@ func TestValidatePageID(t *testing.T) {
 
 // TestPageID is a simple test function for PageID.
 func TestPageID(t *testing.T) {
-	url1 := "https://example.com"
-	url2 := "https://example.com/page"
-	url3 := "https://example.org"
+	url1 := domain.URL("https://example.com")
+	url2 := domain.URL("https://example.com/page")
+	url3 := domain.URL("https://example.org")
 
 	hash1 := util.PageID(url1)
 	hash2 := util.PageID(url2)

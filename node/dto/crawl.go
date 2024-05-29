@@ -10,5 +10,6 @@ type CrawlRequest struct {
 }
 
 type CrawlResponse struct {
-	Page *Page `json:"page"`
+	Hash  string   `json:"hash"`
+	Links []string `json:"links"`
 }

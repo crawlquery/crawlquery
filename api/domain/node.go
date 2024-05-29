@@ -18,7 +18,7 @@ type Node struct {
 	AccountID string    `validate:"required,uuid"`
 	Hostname  string    `validate:"required,hostname"`
 	Port      uint      `validate:"min=0,max=65535"`
-	ShardID   uint      `validate:"min=0,max=30000"`
+	ShardID   ShardID   `validate:"min=0,max=65535"`
 	CreatedAt time.Time `validate:"required"`
 }
 
@@ -37,11 +37,11 @@ type NodeService interface {
 	Create(accountID, hostname string, port uint) (*Node, error)
 	List() ([]*Node, error)
 	RandomizedList() ([]*Node, error)
-	ListGroupByShard() (map[uint][]*Node, error)
+	RandomizedListGroupByShard() (map[ShardID][]*Node, error)
 	ListByAccountID(accountID string) ([]*Node, error)
-	ListByShardID(shardID uint) ([]*Node, error)
+	ListByShardID(shardID ShardID) ([]*Node, error)
 	Randomize(nodes []*Node) []*Node
-	SendCrawlJob(node *Node, crawlJob *CrawlJob) (*dto.Page, error)
+	SendCrawlJob(node *Node, crawlJob *CrawlJob) (*dto.CrawlResponse, error)
 	SendIndexJob(node *Node, indexJob *IndexJob) error
 	Auth(key string) (*Node, error)
 }

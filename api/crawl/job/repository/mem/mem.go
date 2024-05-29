@@ -24,3 +24,16 @@ func (r *Repository) Save(cj *domain.CrawlJob) error {
 	r.jobs[cj.PageID] = cj
 	return nil
 }
+
+func (r *Repository) ListByStatus(limit int, status domain.CrawlStatus) ([]*domain.CrawlJob, error) {
+	var jobs []*domain.CrawlJob
+	for _, job := range r.jobs {
+		if job.Status == status {
+			jobs = append(jobs, job)
+		}
+	}
+	if len(jobs) > limit {
+		jobs = jobs[:limit]
+	}
+	return jobs, nil
+}

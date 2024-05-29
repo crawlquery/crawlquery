@@ -2,6 +2,7 @@ package mem
 
 import (
 	"crawlquery/api/domain"
+	"fmt"
 	"testing"
 )
 
@@ -58,6 +59,43 @@ func TestSave(t *testing.T) {
 
 		if crawlJobRepo.jobs["page1"] != crawlJob {
 			t.Errorf("expected job to be saved")
+		}
+	})
+}
+
+func TestListByStatus(t *testing.T) {
+	t.Run("can list jobs by status", func(t *testing.T) {
+		crawlJobRepo := NewRepository()
+		for i := 0; i < 5; i++ {
+			crawlJob := &domain.CrawlJob{
+				PageID: domain.PageID(fmt.Sprintf("page%d", i)),
+				Status: domain.CrawlStatusPending,
+			}
+			crawlJobRepo.jobs[crawlJob.PageID] = crawlJob
+		}
+
+		for i := 5; i < 10; i++ {
+			crawlJob := &domain.CrawlJob{
+				PageID: domain.PageID(fmt.Sprintf("page%d", i+5)),
+				Status: domain.CrawlStatusInProgress,
+			}
+			crawlJobRepo.jobs[crawlJob.PageID] = crawlJob
+		}
+
+		jobs, err := crawlJobRepo.ListByStatus(3, domain.CrawlStatusPending)
+
+		if err != nil {
+			t.Errorf("expected no error, got %v", err)
+		}
+
+		if len(jobs) != 3 {
+			t.Errorf("expected 3 jobs, got %v", len(jobs))
+		}
+
+		for _, job := range jobs {
+			if job.Status != domain.CrawlStatusPending {
+				t.Errorf("expected pending, got %v", job.Status)
+			}
 		}
 	})
 }

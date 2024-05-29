@@ -1,14 +1,19 @@
 package service_test
 
 import (
+	"crawlquery/api/domain"
 	linkRepo "crawlquery/api/link/repository/mem"
 	linkService "crawlquery/api/link/service"
 
 	crawlJobRepo "crawlquery/api/crawl/job/repository/mem"
-	crawlJobService "crawlquery/api/crawl/job/service"
+	crawlLogRepo "crawlquery/api/crawl/log/repository/mem"
+	crawlService "crawlquery/api/crawl/service"
 
-	crawlRestrictionRepo "crawlquery/api/crawl/restriction/repository/mem"
-	crawlRestrictionService "crawlquery/api/crawl/restriction/service"
+	shardRepo "crawlquery/api/shard/repository/mem"
+	shardService "crawlquery/api/shard/service"
+
+	pageRepo "crawlquery/api/page/repository/mem"
+	pageService "crawlquery/api/page/service"
 
 	"crawlquery/pkg/testutil"
 	"crawlquery/pkg/util"
@@ -16,20 +21,42 @@ import (
 )
 
 func TestCreate(t *testing.T) {
-	t.Run("can create a link", func(t *testing.T) {
+	t.Run("creates a link with page", func(t *testing.T) {
 		// Arrange
 		linkRepo := linkRepo.NewRepository()
+		crawlLogRepo := crawlLogRepo.NewRepository()
 
-		crawlRestrictionRepo := crawlRestrictionRepo.NewRepository()
-		crawlRestrictionService := crawlRestrictionService.NewService(crawlRestrictionRepo, testutil.NewTestLogger())
+		crawlService := crawlService.NewService(
+			crawlService.WithLogger(testutil.NewTestLogger()),
+			crawlService.WithCrawlJobRepo(crawlJobRepo.NewRepository()),
+			crawlService.WithCrawlLogRepo(crawlLogRepo),
+		)
 
-		crawlJobRepo := crawlJobRepo.NewRepository()
-		crawlJobService := crawlJobService.NewService(crawlJobRepo, nil, nil, crawlRestrictionService, nil, nil, testutil.NewTestLogger())
+		shardRepo := shardRepo.NewRepository()
+		shardService := shardService.NewService(
+			shardService.WithLogger(testutil.NewTestLogger()),
+			shardService.WithRepo(shardRepo),
+		)
+		shardRepo.Create(&domain.Shard{
+			ID: 0,
+		})
 
-		linkService := linkService.NewService(linkRepo, crawlJobService, testutil.NewTestLogger())
+		pageRepo := pageRepo.NewRepository()
+		pageService := pageService.NewService(
+			pageService.WithLogger(testutil.NewTestLogger()),
+			pageService.WithPageRepo(pageRepo),
+			pageService.WithCrawlService(crawlService),
+			pageService.WithShardService(shardService),
+		)
 
-		src := "https://cancreatealink.com"
-		dst := "https://cancreatealink.com/about"
+		linkService := linkService.NewService(
+			linkService.WithPageService(pageService),
+			linkService.WithLinkRepo(linkRepo),
+			linkService.WithLogger(testutil.NewTestLogger()),
+		)
+
+		src := util.PageID("https://cancreatealink.com")
+		dst := domain.URL("https://cancreatealink.com/about")
 
 		// Act
 		link, err := linkService.Create(src, dst)
@@ -39,8 +66,8 @@ func TestCreate(t *testing.T) {
 			t.Errorf("Error adding link: %v", err)
 		}
 
-		if link.SrcID != util.PageID(src) {
-			t.Errorf("Expected srcID %s, got %s", util.PageID(src), link.SrcID)
+		if link.SrcID != src {
+			t.Errorf("Expected srcID %s, got %s", src, link.SrcID)
 		}
 
 		if link.DstID != util.PageID(dst) {
@@ -56,43 +83,15 @@ func TestCreate(t *testing.T) {
 		if len(repoCheck) != 1 {
 			t.Errorf("Expected 1 link, got %d", len(repoCheck))
 		}
-	})
 
-	t.Run("creates a crawl job if the link is new", func(t *testing.T) {
-		// Arrange
-		linkRepo := linkRepo.NewRepository()
-
-		crawlRestrictionRepo := crawlRestrictionRepo.NewRepository()
-		crawlRestrictionService := crawlRestrictionService.NewService(crawlRestrictionRepo, testutil.NewTestLogger())
-
-		crawlJobRepo := crawlJobRepo.NewRepository()
-		crawlJobService := crawlJobService.NewService(crawlJobRepo, nil, nil, crawlRestrictionService, nil, nil, testutil.NewTestLogger())
-
-		linkService := linkService.NewService(linkRepo, crawlJobService, testutil.NewTestLogger())
-
-		src := "https://newcrawljob.com"
-		dst := "https://newcrawljob.com/about"
-
-		// Act
-		_, err := linkService.Create(src, dst)
-
-		// Assert
-		if err != nil {
-			t.Errorf("Error adding link: %v", err)
-		}
-
-		job, err := crawlJobRepo.First()
+		page, err := pageRepo.Get(util.PageID("https://cancreatealink.com/about"))
 
 		if err != nil {
-			t.Errorf("Error getting crawl job: %v", err)
+			t.Errorf("Error getting page: %v", err)
 		}
 
-		if job == nil {
-			t.Fatalf("Expected a crawl job to be created")
-		}
-
-		if job.URL != dst {
-			t.Errorf("Expected URL %s, got %s", dst, job.URL)
+		if page.URL != "https://cancreatealink.com/about" {
+			t.Errorf("Expected page URL to be https://cancreatealink.com/about, got %s", page.URL)
 		}
 	})
 }

@@ -21,22 +21,35 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+func setup() (*mem.Repository, *service.Service, *domain.Account) {
+	account := &domain.Account{
+		ID: util.UUIDString(),
+	}
+	accSvc, _ := factory.AccountServiceWithAccount(account)
+
+	shardRepo := shardRepo.NewRepository()
+	shardRepo.Create(&domain.Shard{
+		ID: 0,
+	})
+	shardSvc := shardSvc.NewService(
+		shardSvc.WithRepo(shardRepo),
+		shardSvc.WithLogger(testutil.NewTestLogger()),
+	)
+	repo := mem.NewRepository()
+	nodeService := service.NewService(
+		service.WithAccountService(accSvc),
+		service.WithShardService(shardSvc),
+		service.WithNodeRepo(repo),
+		service.WithLogger(testutil.NewTestLogger()),
+	)
+
+	return repo, nodeService, account
+}
+
 func TestCreate(t *testing.T) {
 	t.Run("should create a node", func(t *testing.T) {
 
-		account := &domain.Account{
-			ID: util.UUIDString(),
-		}
-		accSvc, _ := factory.AccountServiceWithAccount(account)
-
-		shardRepo := shardRepo.NewRepository()
-		shardRepo.Create(&domain.Shard{
-			ID: 0,
-		})
-		shardSvc := shardSvc.NewService(shardRepo, testutil.NewTestLogger())
-
-		repo := mem.NewRepository()
-		svc := service.NewService(repo, accSvc, shardSvc, testutil.NewTestLogger())
+		_, svc, account := setup()
 		handler := handler.NewHandler(svc)
 
 		// given
@@ -82,13 +95,7 @@ func TestCreate(t *testing.T) {
 
 	t.Run("should return 400 if malformed JSON", func(t *testing.T) {
 
-		account := &domain.Account{
-			ID: util.UUIDString(),
-		}
-		accSvc, _ := factory.AccountServiceWithAccount(account)
-
-		repo := mem.NewRepository()
-		svc := service.NewService(repo, accSvc, nil, testutil.NewTestLogger())
+		_, svc, account := setup()
 		handler := handler.NewHandler(svc)
 
 		responseWriter := httptest.NewRecorder()
@@ -105,13 +112,7 @@ func TestCreate(t *testing.T) {
 
 	t.Run("should return 400 if hostname is empty", func(t *testing.T) {
 
-		account := &domain.Account{
-			ID: util.UUIDString(),
-		}
-		accSvc, _ := factory.AccountServiceWithAccount(account)
-
-		repo := mem.NewRepository()
-		svc := service.NewService(repo, accSvc, nil, testutil.NewTestLogger())
+		_, svc, account := setup()
 		handler := handler.NewHandler(svc)
 
 		a := &dto.CreateNodeRequest{
@@ -141,8 +142,7 @@ func TestCreate(t *testing.T) {
 func TestAuth(t *testing.T) {
 	t.Run("should return 401 if no account", func(t *testing.T) {
 
-		repo := mem.NewRepository()
-		svc := service.NewService(repo, nil, nil, testutil.NewTestLogger())
+		_, svc, _ := setup()
 		handler := handler.NewHandler(svc)
 
 		responseWriter := httptest.NewRecorder()
@@ -159,13 +159,7 @@ func TestAuth(t *testing.T) {
 
 	t.Run("should return 400 if no key set", func(t *testing.T) {
 
-		account := &domain.Account{
-			ID: util.UUIDString(),
-		}
-		accSvc, _ := factory.AccountServiceWithAccount(account)
-
-		repo := mem.NewRepository()
-		svc := service.NewService(repo, accSvc, nil, testutil.NewTestLogger())
+		_, svc, account := setup()
 		handler := handler.NewHandler(svc)
 
 		responseWriter := httptest.NewRecorder()
@@ -183,13 +177,7 @@ func TestAuth(t *testing.T) {
 
 	t.Run("should return node if key is correct", func(t *testing.T) {
 
-		account := &domain.Account{
-			ID: util.UUIDString(),
-		}
-		accSvc, _ := factory.AccountServiceWithAccount(account)
-
-		repo := mem.NewRepository()
-		svc := service.NewService(repo, accSvc, nil, testutil.NewTestLogger())
+		repo, svc, account := setup()
 		handler := handler.NewHandler(svc)
 
 		node := &domain.Node{
@@ -242,7 +230,7 @@ func TestAuth(t *testing.T) {
 			t.Errorf("Expected Port to be %d, got %d", node.Port, res.Node.Port)
 		}
 
-		if res.Node.ShardID != node.ShardID {
+		if domain.ShardID(res.Node.ShardID) != node.ShardID {
 			t.Errorf("Expected ShardID to be %d, got %d", node.ShardID, res.Node.ShardID)
 		}
 	})
@@ -251,19 +239,7 @@ func TestAuth(t *testing.T) {
 func TestListByShard(t *testing.T) {
 	t.Run("should return nodes by shard", func(t *testing.T) {
 
-		account := &domain.Account{
-			ID: util.UUIDString(),
-		}
-		accSvc, _ := factory.AccountServiceWithAccount(account)
-
-		shardRepo := shardRepo.NewRepository()
-		shardRepo.Create(&domain.Shard{
-			ID: 0,
-		})
-		shardSvc := shardSvc.NewService(shardRepo, testutil.NewTestLogger())
-
-		repo := mem.NewRepository()
-		svc := service.NewService(repo, accSvc, shardSvc, testutil.NewTestLogger())
+		repo, svc, account := setup()
 		handler := handler.NewHandler(svc)
 
 		node1 := &domain.Node{

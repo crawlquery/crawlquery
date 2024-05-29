@@ -49,7 +49,7 @@ func (h *NodeHandler) ListByShardID(c *gin.Context) {
 		return
 	}
 
-	nodes, err := h.nodeService.ListByShardID(uint(shardIdUint))
+	nodes, err := h.nodeService.ListByShardID(domain.ShardID(shardIdUint))
 
 	if err != nil {
 		errorutil.HandleGinError(c, err, http.StatusBadRequest)

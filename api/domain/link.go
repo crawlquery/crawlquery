@@ -10,8 +10,8 @@ import (
 var ErrLinkAlreadyExists = errors.New("link already exists")
 
 type Link struct {
-	SrcID     string    `json:"src_id"`
-	DstID     string    `json:"dst_id"`
+	SrcID     PageID    `json:"src_id"`
+	DstID     PageID    `json:"dst_id"`
 	CreatedAt time.Time `json:"created_at"`
 }
 
@@ -21,7 +21,7 @@ type LinkRepository interface {
 }
 
 type LinkService interface {
-	Create(srcID, dstID string) (*Link, error)
+	Create(srcID PageID, url URL) (*Link, error)
 	GetAll() ([]*Link, error)
 }
 

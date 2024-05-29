@@ -45,7 +45,7 @@ func (r *Repository) GetAll() ([]*domain.Link, error) {
 	return links, nil
 }
 
-func (r *Repository) GetAllBySrcID(srcID string) ([]*domain.Link, error) {
+func (r *Repository) GetAllBySrcID(srcID domain.PageID) ([]*domain.Link, error) {
 	rows, err := r.db.Query("SELECT src_id, dst_id, created_at FROM links WHERE src_id = ?", srcID)
 	if err != nil {
 		return nil, err

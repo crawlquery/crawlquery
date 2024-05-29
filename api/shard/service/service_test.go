@@ -34,7 +34,7 @@ func TestGetURLShardID(t *testing.T) {
 			)
 
 			for i := 0; i < tc.numShards; i++ {
-				repo.Create(&domain.Shard{ID: uint(i)})
+				repo.Create(&domain.Shard{ID: domain.ShardID(i)})
 			}
 
 			shardID, err := service.GetURLShardID(tc.url)
@@ -47,5 +47,41 @@ func TestGetURLShardID(t *testing.T) {
 				t.Errorf("getShardID(%q, %d) = %d; want %d", tc.url, tc.numShards, shardID, tc.expectedID)
 			}
 		})
+	}
+}
+
+func TestList(t *testing.T) {
+	repo := mem.NewRepository()
+	service := service.NewService(
+		service.WithRepo(repo),
+		service.WithLogger(testutil.NewTestLogger()),
+	)
+
+	shards := []*domain.Shard{
+		{ID: 0},
+		{ID: 1},
+		{ID: 2},
+	}
+
+	for _, shard := range shards {
+		if err := repo.Create(shard); err != nil {
+			t.Fatalf("Failed to create shard: %v", err)
+		}
+	}
+
+	list, err := service.List()
+
+	if err != nil {
+		t.Fatalf("Failed to list shards: %v", err)
+	}
+
+	if len(list) != len(shards) {
+		t.Fatalf("Expected %d shards, got %d", len(shards), len(list))
+	}
+
+	for i, shard := range shards {
+		if list[i].ID != shard.ID {
+			t.Errorf("Expected shard ID %d, got %d", shard.ID, list[i].ID)
+		}
 	}
 }

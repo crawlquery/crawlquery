@@ -18,12 +18,14 @@ func TestGet(t *testing.T) {
 		crawlJobRepo := crawlJobRepo.NewRepository(db)
 		crawlJob := &domain.CrawlJob{
 			PageID:    "page1",
+			URL:       "http://example.com",
+			ShardID:   1,
 			Status:    domain.CrawlStatusPending,
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
 		}
 
-		_, err := db.Exec("INSERT INTO crawl_jobs (page_id, status, created_at, updated_at) VALUES (?, ?, ?, ?)", crawlJob.PageID, crawlJob.Status, crawlJob.CreatedAt, crawlJob.UpdatedAt)
+		_, err := db.Exec("INSERT INTO crawl_jobs (page_id, url, shard_id, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)", crawlJob.PageID, crawlJob.URL, crawlJob.ShardID, crawlJob.Status, crawlJob.CreatedAt, crawlJob.UpdatedAt)
 		defer db.Exec("DELETE FROM crawl_jobs WHERE page_id = ?", crawlJob.PageID)
 
 		if err != nil {
@@ -38,6 +40,10 @@ func TestGet(t *testing.T) {
 
 		if job.PageID != "page1" {
 			t.Errorf("expected page1, got %v", job.PageID)
+		}
+
+		if job.URL != "http://example.com" {
+			t.Errorf("expected http://example.com, got %v", job.URL)
 		}
 
 		if job.Status != domain.CrawlStatusPending {
@@ -72,6 +78,8 @@ func TestSave(t *testing.T) {
 		now := time.Now()
 		crawlJob := &domain.CrawlJob{
 			PageID:    "page1",
+			URL:       "http://example.com",
+			ShardID:   1,
 			Status:    domain.CrawlStatusPending,
 			CreatedAt: now,
 			UpdatedAt: now,
@@ -92,6 +100,10 @@ func TestSave(t *testing.T) {
 
 		if job.PageID != "page1" {
 			t.Errorf("expected page1, got %v", job.PageID)
+		}
+
+		if job.URL != "http://example.com" {
+			t.Errorf("expected http://example.com, got %v", job.URL)
 		}
 
 		if job.Status != domain.CrawlStatusPending {
@@ -115,12 +127,13 @@ func TestSave(t *testing.T) {
 		now := time.Now()
 		crawlJob := &domain.CrawlJob{
 			PageID:    "page1",
+			URL:       "http://example.com",
 			Status:    domain.CrawlStatusPending,
 			CreatedAt: now,
 			UpdatedAt: now,
 		}
 
-		_, err := db.Exec("INSERT INTO crawl_jobs (page_id, status, created_at, updated_at) VALUES (?, ?, ?, ?)", crawlJob.PageID, crawlJob.Status, crawlJob.CreatedAt, crawlJob.UpdatedAt)
+		_, err := db.Exec("INSERT INTO crawl_jobs (page_id, url, shard_id, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)", crawlJob.PageID, crawlJob.URL, crawlJob.ShardID, crawlJob.Status, crawlJob.CreatedAt, crawlJob.UpdatedAt)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -144,7 +157,7 @@ func TestSave(t *testing.T) {
 
 		var job domain.CrawlJob
 
-		err = db.QueryRow("SELECT page_id, status, created_at, updated_at FROM crawl_jobs WHERE page_id = ?", crawlJob.PageID).Scan(&job.PageID, &job.Status, &job.CreatedAt, &job.UpdatedAt)
+		err = db.QueryRow("SELECT page_id, url, shard_id, status, created_at, updated_at FROM crawl_jobs WHERE page_id = ?", crawlJob.PageID).Scan(&job.PageID, &job.URL, &job.ShardID, &job.Status, &job.CreatedAt, &job.UpdatedAt)
 
 		if err != nil {
 			t.Errorf("expected no error, got %v", err)
@@ -152,6 +165,10 @@ func TestSave(t *testing.T) {
 
 		if job.PageID != "page1" {
 			t.Errorf("expected page1, got %v", job.PageID)
+		}
+
+		if job.URL != "http://example.com" {
+			t.Errorf("expected http://example.com, got %v", job.URL)
 		}
 
 		if job.Status != domain.CrawlStatusInProgress {

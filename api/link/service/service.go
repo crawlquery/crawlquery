@@ -11,29 +11,47 @@ import (
 )
 
 type Service struct {
-	linkRepo        domain.LinkRepository
-	crawlJobService domain.CrawlJobService
-	logger          *zap.SugaredLogger
+	linkRepo    domain.LinkRepository
+	pageService domain.PageService
+	logger      *zap.SugaredLogger
 }
 
-func NewService(
-	linkRepo domain.LinkRepository,
-	crawlJobService domain.CrawlJobService,
-	logger *zap.SugaredLogger,
-) *Service {
-	return &Service{
-		linkRepo:        linkRepo,
-		logger:          logger,
-		crawlJobService: crawlJobService,
+type Option func(*Service)
+
+func WithLinkRepo(linkRepo domain.LinkRepository) Option {
+	return func(s *Service) {
+		s.linkRepo = linkRepo
 	}
+}
+
+func WithPageService(pageService domain.PageService) Option {
+	return func(s *Service) {
+		s.pageService = pageService
+	}
+}
+
+func WithLogger(logger *zap.SugaredLogger) Option {
+	return func(s *Service) {
+		s.logger = logger
+	}
+}
+
+func NewService(opts ...Option) *Service {
+	s := &Service{}
+
+	for _, opt := range opts {
+		opt(s)
+	}
+
+	return s
 }
 
 var trackingParams = []string{
 	"utm_source", "utm_medium", "utm_platform", "utm_campaign", "utm_term", "utm_content", "gclid", "fbclid",
 }
 
-func normalizeURL(rawURL string) (string, error) {
-	parsedURL, err := url.Parse(rawURL)
+func normalizeURL(rawURL domain.URL) (domain.URL, error) {
+	parsedURL, err := url.Parse(string(rawURL))
 	if err != nil {
 		return "", err
 	}
@@ -47,21 +65,16 @@ func normalizeURL(rawURL string) (string, error) {
 	parsedURL.Host = strings.ToLower(parsedURL.Host)
 	parsedURL.Scheme = strings.ToLower(parsedURL.Scheme)
 
-	return parsedURL.String(), nil
+	return domain.URL(parsedURL.String()), nil
 }
 
-func (s *Service) Create(src, dst string) (*domain.Link, error) {
-	normalizedSrc, err := normalizeURL(src)
-	if err != nil {
-		return nil, err
-	}
-
+func (s *Service) Create(src domain.PageID, dst domain.URL) (*domain.Link, error) {
 	normalizedDst, err := normalizeURL(dst)
 	if err != nil {
 		return nil, err
 	}
 	link := &domain.Link{
-		SrcID:     util.PageID(normalizedSrc),
+		SrcID:     src,
 		DstID:     util.PageID(normalizedDst),
 		CreatedAt: time.Now(),
 	}
@@ -72,7 +85,7 @@ func (s *Service) Create(src, dst string) (*domain.Link, error) {
 		return nil, err
 	}
 
-	_, err = s.crawlJobService.Create(normalizedDst)
+	_, err = s.pageService.Create(normalizedDst)
 	if err != nil {
 		return nil, err
 	}

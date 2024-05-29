@@ -90,8 +90,8 @@ func (s *Service) Create(url domain.URL) (*domain.Page, error) {
 		return nil, err
 	}
 
-	if err := s.crawlService.CreateJob(pageID); err != nil {
-		s.logger.Errorw("Error creating crawl job", "error", err, "pageID", pageID)
+	if err := s.crawlService.CreateJob(page); err != nil {
+		s.logger.Errorw("Error creating crawl job", "error", err, "page", page)
 		return nil, err
 	}
 

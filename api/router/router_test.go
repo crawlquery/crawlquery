@@ -37,13 +37,13 @@ func (m *MockAccountHandler) Create(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Account created"})
 }
 
-type MockCrawlJobHandler struct {
+type MockPageHandler struct {
 	mock.Mock
 }
 
-func (m *MockCrawlJobHandler) Create(c *gin.Context) {
+func (m *MockPageHandler) Create(c *gin.Context) {
 	m.Called(c)
-	c.JSON(http.StatusCreated, gin.H{"message": "Crawl job created"})
+	c.JSON(http.StatusCreated, gin.H{"message": "Page created"})
 }
 
 type MockNodeHandler struct {
@@ -97,8 +97,8 @@ func setupRouterWithMocks() map[string]interface{} {
 	mockAccountHandler := new(MockAccountHandler)
 	mockAccountHandler.On("Create", mock.Anything).Return()
 
-	mockCrawlJobHandler := new(MockCrawlJobHandler)
-	mockCrawlJobHandler.On("Create", mock.Anything).Return()
+	mockPageHandler := new(MockPageHandler)
+	mockPageHandler.On("Create", mock.Anything).Return()
 
 	mockNodeHandler := new(MockNodeHandler)
 	mockNodeHandler.On("Create", mock.Anything).Return()
@@ -119,21 +119,21 @@ func setupRouterWithMocks() map[string]interface{} {
 		accountService,
 		mockAuthHandler,
 		mockAccountHandler,
-		mockCrawlJobHandler,
+		mockPageHandler,
 		mockNodeHandler,
 		mockSearchHandler,
 		MockLinkHandler,
 	)
 
 	return map[string]interface{}{
-		"testRouter":          testRouter,
-		"mockAccountHandler":  mockAccountHandler,
-		"mockCrawlJobHandler": mockCrawlJobHandler,
-		"mockNodeHandler":     mockNodeHandler,
-		"mockSearchHandler":   mockSearchHandler,
-		"mockLinkHandler":     MockLinkHandler,
-		"accountService":      accountService,
-		"accountRepo":         accountRepo,
+		"testRouter":         testRouter,
+		"mockAccountHandler": mockAccountHandler,
+		"mockPageHandler":    mockPageHandler,
+		"mockNodeHandler":    mockNodeHandler,
+		"mockSearchHandler":  mockSearchHandler,
+		"mockLinkHandler":    MockLinkHandler,
+		"accountService":     accountService,
+		"accountRepo":        accountRepo,
 	}
 }
 
@@ -185,24 +185,24 @@ func TestAccountCreationEndpoint(t *testing.T) {
 	mockAccountHandler.AssertExpectations(t)
 }
 
-func TestCrawlJobCreationEndpoint(t *testing.T) {
+func TestCreatePageEndoint(t *testing.T) {
 	// Set the router to test mode
 	ifs := setupRouterWithMocks()
 
 	testRouter := ifs["testRouter"].(*gin.Engine)
-	mockCrawlJobHandler := ifs["mockCrawlJobHandler"].(*MockCrawlJobHandler)
+	mockPageHandler := ifs["mockPageHandler"].(*MockPageHandler)
 
 	w := httptest.NewRecorder()
 
-	req, _ := http.NewRequest("POST", "/crawl-jobs", bytes.NewBufferString(`{"url":"http://example.com"}`))
+	req, _ := http.NewRequest("POST", "/pages", bytes.NewBufferString(`{"url":"http://example.com"}`))
 	req.Header.Set("Content-Type", "application/json")
 
 	testRouter.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusCreated, w.Code)
-	assert.Contains(t, w.Body.String(), "Crawl job created")
+	assert.Contains(t, w.Body.String(), "Page created")
 
-	mockCrawlJobHandler.AssertExpectations(t)
+	mockPageHandler.AssertExpectations(t)
 }
 
 func TestNodeCreationEndpoint(t *testing.T) {

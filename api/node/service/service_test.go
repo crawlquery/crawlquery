@@ -30,12 +30,17 @@ func TestCreate(t *testing.T) {
 		})
 
 		shardSvc, _ := factory.ShardServiceWithShard(&domain.Shard{
-			ID: 1,
+			ID: domain.ShardID(1),
 		})
 
 		nodeRepo := nodeRepo.NewRepository()
 
-		svc := service.NewService(nodeRepo, accSvc, shardSvc, testutil.NewTestLogger())
+		svc := service.NewService(
+			service.WithNodeRepo(nodeRepo),
+			service.WithAccountService(accSvc),
+			service.WithShardService(shardSvc),
+			service.WithLogger(testutil.NewTestLogger()),
+		)
 
 		node, err := svc.Create(
 			accountID,
@@ -161,11 +166,17 @@ func TestCreate(t *testing.T) {
 		})
 
 		shardSvc, _ := factory.ShardServiceWithShard(&domain.Shard{
-			ID: 1,
+			ID: domain.ShardID(1),
 		})
 
 		nodeRepo := nodeRepo.NewRepository()
-		svc := service.NewService(nodeRepo, accSvc, shardSvc, testutil.NewTestLogger())
+
+		svc := service.NewService(
+			service.WithNodeRepo(nodeRepo),
+			service.WithAccountService(accSvc),
+			service.WithShardService(shardSvc),
+			service.WithLogger(testutil.NewTestLogger()),
+		)
 
 		nodeRepo.ForceCreateError(errors.New("db locked"))
 
@@ -318,19 +329,26 @@ func TestGetShardWithLeastNodes(t *testing.T) {
 	t.Run("can get shard with least nodes", func(t *testing.T) {
 		nodeRepo := nodeRepo.NewRepository()
 		shardRepo := shardRepo.NewRepository()
-		shardService := shardService.NewService(shardRepo, testutil.NewTestLogger())
-		nodeService := service.NewService(nodeRepo, nil, shardService, testutil.NewTestLogger())
+		shardService := shardService.NewService(
+			shardService.WithRepo(shardRepo),
+			shardService.WithLogger(testutil.NewTestLogger()),
+		)
+		nodeService := service.NewService(
+			service.WithNodeRepo(nodeRepo),
+			service.WithShardService(shardService),
+			service.WithLogger(testutil.NewTestLogger()),
+		)
 
 		shard := &domain.Shard{
-			ID: 1,
+			ID: domain.ShardID(1),
 		}
 
 		shard2 := &domain.Shard{
-			ID: 2,
+			ID: domain.ShardID(2),
 		}
 
 		shard3 := &domain.Shard{
-			ID: 3,
+			ID: domain.ShardID(3),
 		}
 
 		shardRepo.Create(shard)
@@ -338,11 +356,11 @@ func TestGetShardWithLeastNodes(t *testing.T) {
 		shardRepo.Create(shard3)
 
 		nodes := []*domain.Node{
-			{ID: "1", ShardID: 1},
-			{ID: "2", ShardID: 1},
-			{ID: "3", ShardID: 2},
-			{ID: "4", ShardID: 2},
-			{ID: "5", ShardID: 3},
+			{ID: "1", ShardID: domain.ShardID(1)},
+			{ID: "2", ShardID: domain.ShardID(1)},
+			{ID: "3", ShardID: domain.ShardID(2)},
+			{ID: "4", ShardID: domain.ShardID(2)},
+			{ID: "5", ShardID: domain.ShardID(3)},
 		}
 
 		for _, n := range nodes {
@@ -355,7 +373,7 @@ func TestGetShardWithLeastNodes(t *testing.T) {
 			t.Fatalf("Error getting shard with least nodes: %v", err)
 		}
 
-		if found.ID != 3 {
+		if found.ID != domain.ShardID(3) {
 			t.Errorf("Expected shard ID to be 3, got %d", shard.ID)
 		}
 	})
@@ -363,19 +381,26 @@ func TestGetShardWithLeastNodes(t *testing.T) {
 	t.Run("can get shard with least nodes when all shards have the same number of nodes", func(t *testing.T) {
 		nodeRepo := nodeRepo.NewRepository()
 		shardRepo := shardRepo.NewRepository()
-		shardService := shardService.NewService(shardRepo, testutil.NewTestLogger())
-		nodeService := service.NewService(nodeRepo, nil, shardService, testutil.NewTestLogger())
+		shardService := shardService.NewService(
+			shardService.WithRepo(shardRepo),
+			shardService.WithLogger(testutil.NewTestLogger()),
+		)
+		nodeService := service.NewService(
+			service.WithNodeRepo(nodeRepo),
+			service.WithShardService(shardService),
+			service.WithLogger(testutil.NewTestLogger()),
+		)
 
 		shard := &domain.Shard{
-			ID: 1,
+			ID: domain.ShardID(1),
 		}
 
 		shard2 := &domain.Shard{
-			ID: 2,
+			ID: domain.ShardID(2),
 		}
 
 		shard3 := &domain.Shard{
-			ID: 3,
+			ID: domain.ShardID(3),
 		}
 
 		shardRepo.Create(shard)
@@ -383,12 +408,12 @@ func TestGetShardWithLeastNodes(t *testing.T) {
 		shardRepo.Create(shard3)
 
 		nodes := []*domain.Node{
-			{ID: "1", ShardID: 1},
-			{ID: "2", ShardID: 1},
-			{ID: "3", ShardID: 2},
-			{ID: "4", ShardID: 2},
-			{ID: "5", ShardID: 3},
-			{ID: "6", ShardID: 3},
+			{ID: "1", ShardID: domain.ShardID(1)},
+			{ID: "2", ShardID: domain.ShardID(1)},
+			{ID: "3", ShardID: domain.ShardID(2)},
+			{ID: "4", ShardID: domain.ShardID(2)},
+			{ID: "5", ShardID: domain.ShardID(3)},
+			{ID: "6", ShardID: domain.ShardID(3)},
 		}
 
 		for _, n := range nodes {
@@ -409,19 +434,26 @@ func TestGetShardWithLeastNodes(t *testing.T) {
 	t.Run("can get shard with least nodes when no nodes exist", func(t *testing.T) {
 		nodeRepo := nodeRepo.NewRepository()
 		shardRepo := shardRepo.NewRepository()
-		shardService := shardService.NewService(shardRepo, testutil.NewTestLogger())
-		nodeService := service.NewService(nodeRepo, nil, shardService, testutil.NewTestLogger())
+		shardService := shardService.NewService(
+			shardService.WithRepo(shardRepo),
+			shardService.WithLogger(testutil.NewTestLogger()),
+		)
+		nodeService := service.NewService(
+			service.WithNodeRepo(nodeRepo),
+			service.WithShardService(shardService),
+			service.WithLogger(testutil.NewTestLogger()),
+		)
 
 		shard := &domain.Shard{
-			ID: 1,
+			ID: domain.ShardID(1),
 		}
 
 		shard2 := &domain.Shard{
-			ID: 2,
+			ID: domain.ShardID(2),
 		}
 
 		shard3 := &domain.Shard{
-			ID: 3,
+			ID: domain.ShardID(3),
 		}
 
 		shardRepo.Create(shard)
@@ -444,24 +476,31 @@ func TestAllocateNode(t *testing.T) {
 	t.Run("can allocate a node", func(t *testing.T) {
 		nodeRepo := nodeRepo.NewRepository()
 		shardRepo := shardRepo.NewRepository()
-		shardService := shardService.NewService(shardRepo, testutil.NewTestLogger())
-		nodeService := service.NewService(nodeRepo, nil, shardService, testutil.NewTestLogger())
+		shardService := shardService.NewService(
+			shardService.WithRepo(shardRepo),
+			shardService.WithLogger(testutil.NewTestLogger()),
+		)
+		nodeService := service.NewService(
+			service.WithNodeRepo(nodeRepo),
+			service.WithShardService(shardService),
+			service.WithLogger(testutil.NewTestLogger()),
+		)
 
 		shard := &domain.Shard{
-			ID: 1,
+			ID: domain.ShardID(1),
 		}
 
 		shardRepo.Create(shard)
 
 		shard2 := &domain.Shard{
-			ID: 2,
+			ID: domain.ShardID(2),
 		}
 
 		shardRepo.Create(shard2)
 
 		nodeRepo.Create(&domain.Node{
 			ID:        "1",
-			ShardID:   1,
+			ShardID:   domain.ShardID(1),
 			Hostname:  "testnode",
 			Port:      8080,
 			CreatedAt: time.Now(),
@@ -469,7 +508,7 @@ func TestAllocateNode(t *testing.T) {
 
 		nodeRepo.Create(&domain.Node{
 			ID:        "2",
-			ShardID:   1,
+			ShardID:   domain.ShardID(1),
 			Hostname:  "testnode2",
 			Port:      8080,
 			CreatedAt: time.Now(),
@@ -496,17 +535,24 @@ func TestAllocateNode(t *testing.T) {
 	t.Run("can allocate a node when no nodes exist", func(t *testing.T) {
 		nodeRepo := nodeRepo.NewRepository()
 		shardRepo := shardRepo.NewRepository()
-		shardService := shardService.NewService(shardRepo, testutil.NewTestLogger())
-		nodeService := service.NewService(nodeRepo, nil, shardService, testutil.NewTestLogger())
+		shardService := shardService.NewService(
+			shardService.WithRepo(shardRepo),
+			shardService.WithLogger(testutil.NewTestLogger()),
+		)
+		nodeService := service.NewService(
+			service.WithNodeRepo(nodeRepo),
+			service.WithShardService(shardService),
+			service.WithLogger(testutil.NewTestLogger()),
+		)
 
 		shard := &domain.Shard{
-			ID: 1,
+			ID: domain.ShardID(1),
 		}
 
 		shardRepo.Create(shard)
 
 		shard2 := &domain.Shard{
-			ID: 2,
+			ID: domain.ShardID(2),
 		}
 
 		shardRepo.Create(shard2)
@@ -533,21 +579,24 @@ func TestAllocateNode(t *testing.T) {
 func TestListGroupByShard(t *testing.T) {
 	t.Run("can group nodes by shard", func(t *testing.T) {
 		nodeRepo := nodeRepo.NewRepository()
-		nodeService := service.NewService(nodeRepo, nil, nil, testutil.NewTestLogger())
+		nodeService := service.NewService(
+			service.WithNodeRepo(nodeRepo),
+			service.WithLogger(testutil.NewTestLogger()),
+		)
 
 		nodes := []*domain.Node{
-			{ID: "1", ShardID: 1},
-			{ID: "2", ShardID: 1},
-			{ID: "3", ShardID: 2},
-			{ID: "4", ShardID: 2},
-			{ID: "5", ShardID: 3},
+			{ID: "1", ShardID: domain.ShardID(1)},
+			{ID: "2", ShardID: domain.ShardID(1)},
+			{ID: "3", ShardID: domain.ShardID(2)},
+			{ID: "4", ShardID: domain.ShardID(2)},
+			{ID: "5", ShardID: domain.ShardID(3)},
 		}
 
 		for _, n := range nodes {
 			nodeRepo.Create(n)
 		}
 
-		grouped, err := nodeService.ListGroupByShard()
+		grouped, err := nodeService.RandomizedListGroupByShard()
 
 		if err != nil {
 			t.Fatalf("Error grouping nodes by shard: %v", err)
@@ -572,9 +621,12 @@ func TestListGroupByShard(t *testing.T) {
 
 	t.Run("can group nodes by shard when no nodes exist", func(t *testing.T) {
 		nodeRepo := nodeRepo.NewRepository()
-		nodeService := service.NewService(nodeRepo, nil, nil, testutil.NewTestLogger())
+		nodeService := service.NewService(
+			service.WithNodeRepo(nodeRepo),
+			service.WithLogger(testutil.NewTestLogger()),
+		)
 
-		grouped, err := nodeService.ListGroupByShard()
+		grouped, err := nodeService.RandomizedListGroupByShard()
 
 		if err != nil {
 			t.Fatalf("Error grouping nodes by shard: %v", err)
@@ -658,21 +710,24 @@ func TestListByAccountID(t *testing.T) {
 func TestListByShardID(t *testing.T) {
 	t.Run("can list nodes by shard ID", func(t *testing.T) {
 		nodeRepo := nodeRepo.NewRepository()
-		nodeService := service.NewService(nodeRepo, nil, nil, testutil.NewTestLogger())
+		nodeService := service.NewService(
+			service.WithNodeRepo(nodeRepo),
+			service.WithLogger(testutil.NewTestLogger()),
+		)
 
 		node := &domain.Node{
 			ID:      "1",
-			ShardID: 1,
+			ShardID: domain.ShardID(1),
 		}
 
 		node2 := &domain.Node{
 			ID:      "2",
-			ShardID: 1,
+			ShardID: domain.ShardID(1),
 		}
 
 		node3 := &domain.Node{
 			ID:      "3",
-			ShardID: 2,
+			ShardID: domain.ShardID(2),
 		}
 
 		nodeRepo.Create(node)
@@ -698,7 +753,10 @@ func TestListByShardID(t *testing.T) {
 
 	t.Run("can list nodes by shard ID when no nodes exist", func(t *testing.T) {
 		nodeRepo := nodeRepo.NewRepository()
-		nodeService := service.NewService(nodeRepo, nil, nil, testutil.NewTestLogger())
+		nodeService := service.NewService(
+			service.WithNodeRepo(nodeRepo),
+			service.WithLogger(testutil.NewTestLogger()),
+		)
 
 		list, err := nodeService.ListByShardID(1)
 
@@ -721,7 +779,6 @@ func TestSendCrawlJob(t *testing.T) {
 		}
 
 		crawlJob := &domain.CrawlJob{
-			ID:     "1",
 			PageID: "1",
 			URL:    "http://google.com",
 		}
@@ -744,7 +801,9 @@ func TestSendCrawlJob(t *testing.T) {
 			Reply(200).
 			JSON(crawlResponse)
 
-		nodeService := service.NewService(nil, nil, nil, testutil.NewTestLogger())
+		nodeService := service.NewService(
+			service.WithLogger(testutil.NewTestLogger()),
+		)
 
 		crawledPage, err := nodeService.SendCrawlJob(node, crawlJob)
 
@@ -765,8 +824,8 @@ func TestSendCrawlJob(t *testing.T) {
 		}
 
 		crawlJob := &domain.CrawlJob{
-			ID:  "1",
-			URL: "http://google.com",
+			PageID: "1",
+			URL:    "http://google.com",
 		}
 
 		defer gock.Off()
@@ -776,7 +835,9 @@ func TestSendCrawlJob(t *testing.T) {
 			JSON(`{"url":"http://google.com"`).
 			Reply(500)
 
-		nodeService := service.NewService(nil, nil, nil, testutil.NewTestLogger())
+		nodeService := service.NewService(
+			service.WithLogger(testutil.NewTestLogger()),
+		)
 
 		_, err := nodeService.SendCrawlJob(node, crawlJob)
 
@@ -810,8 +871,9 @@ func TestSendIndexJob(t *testing.T) {
 			Reply(200).
 			JSON(indexResponse)
 
-		nodeService := service.NewService(nil, nil, nil, testutil.NewTestLogger())
-
+		nodeService := service.NewService(
+			service.WithLogger(testutil.NewTestLogger()),
+		)
 		err := nodeService.SendIndexJob(node, indexJob)
 
 		if err != nil {
@@ -837,8 +899,9 @@ func TestSendIndexJob(t *testing.T) {
 			Post("/pages/1/index").
 			Reply(500)
 
-		nodeService := service.NewService(nil, nil, nil, testutil.NewTestLogger())
-
+		nodeService := service.NewService(
+			service.WithLogger(testutil.NewTestLogger()),
+		)
 		err := nodeService.SendIndexJob(node, indexJob)
 
 		if err == nil {
@@ -850,8 +913,10 @@ func TestSendIndexJob(t *testing.T) {
 func TestRandomize(t *testing.T) {
 	t.Run("can randomize a list of nodes", func(t *testing.T) {
 		nodeRepo := nodeRepo.NewRepository()
-		nodeService := service.NewService(nodeRepo, nil, nil, testutil.NewTestLogger())
-
+		nodeService := service.NewService(
+			service.WithNodeRepo(nodeRepo),
+			service.WithLogger(testutil.NewTestLogger()),
+		)
 		nodes := []*domain.Node{
 			{ID: "1"},
 			{ID: "2"},

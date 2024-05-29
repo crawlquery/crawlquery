@@ -21,7 +21,7 @@ type Node struct {
 	AccountID string    `json:"account_id"`
 	Hostname  string    `json:"hostname"`
 	Port      uint      `json:"port"`
-	ShardID   uint      `json:"shard_id"`
+	ShardID   uint16    `json:"shard_id"`
 	CreatedAt time.Time `json:"created_at"`
 }
 
@@ -29,7 +29,7 @@ type PublicNode struct {
 	ID       string `json:"id"`
 	Hostname string `json:"hostname"`
 	Port     uint   `json:"port"`
-	ShardID  uint   `json:"shard_id"`
+	ShardID  uint16 `json:"shard_id"`
 }
 
 type CreateNodeResponse struct {
@@ -44,7 +44,7 @@ func NewCreateNodeResponse(n *domain.Node) *CreateNodeResponse {
 			AccountID: n.AccountID,
 			Hostname:  n.Hostname,
 			Port:      n.Port,
-			ShardID:   n.ShardID,
+			ShardID:   uint16(n.ShardID),
 			CreatedAt: n.CreatedAt,
 		},
 	}
@@ -66,7 +66,7 @@ func NewListNodesResponse(nodes []*domain.Node) *ListNodesResponse {
 			AccountID: n.AccountID,
 			Hostname:  n.Hostname,
 			Port:      n.Port,
-			ShardID:   n.ShardID,
+			ShardID:   uint16(n.ShardID),
 			CreatedAt: n.CreatedAt,
 		})
 	}
@@ -96,7 +96,7 @@ func NewAuthenticateNodeResponse(n *domain.Node) *AuthenticateNodeResponse {
 			AccountID: n.AccountID,
 			Hostname:  n.Hostname,
 			Port:      n.Port,
-			ShardID:   n.ShardID,
+			ShardID:   uint16(n.ShardID),
 			CreatedAt: n.CreatedAt,
 		},
 	}
@@ -116,7 +116,7 @@ func NewListNodesByShardResponse(nodes []*domain.Node) *ListNodesByShardResponse
 			ID:       n.ID,
 			Hostname: n.Hostname,
 			Port:     n.Port,
-			ShardID:  n.ShardID,
+			ShardID:  uint16(n.ShardID),
 		})
 	}
 

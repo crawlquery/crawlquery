@@ -58,3 +58,7 @@ func (ss *Service) GetURLShardID(url domain.URL) (domain.ShardID, error) {
 
 	return domain.ShardID(uint(hashURL(url) % uint32(count))), nil
 }
+
+func (ss *Service) List() ([]*domain.Shard, error) {
+	return ss.repo.List()
+}

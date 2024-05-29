@@ -15,7 +15,7 @@ func NewRepository(db *sql.DB) *Repository {
 	}
 }
 
-func (r *Repository) Get(id string) (*domain.Page, error) {
+func (r *Repository) Get(id domain.PageID) (*domain.Page, error) {
 	var page domain.Page
 
 	err := r.db.QueryRow("SELECT id, url, shard_id, created_at FROM pages WHERE id = ?", id).Scan(&page.ID, &page.URL, &page.ShardID, &page.CreatedAt)

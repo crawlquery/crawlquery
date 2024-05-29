@@ -2,7 +2,6 @@ package mem
 
 import (
 	"crawlquery/api/domain"
-	"crawlquery/pkg/util"
 	"testing"
 )
 
@@ -11,8 +10,8 @@ func TestCreate(t *testing.T) {
 		// Arrange
 		repo := NewRepository()
 		link := &domain.Link{
-			SrcID: util.UUIDString(),
-			DstID: util.UUIDString(),
+			SrcID: domain.PageID("page1"),
+			DstID: domain.PageID("page2"),
 		}
 
 		// Act
@@ -28,8 +27,8 @@ func TestCreate(t *testing.T) {
 		// Arrange
 		repo := NewRepository()
 		link := &domain.Link{
-			SrcID: util.UUIDString(),
-			DstID: util.UUIDString(),
+			SrcID: domain.PageID("page1"),
+			DstID: domain.PageID("page2"),
 		}
 
 		// Act
@@ -51,16 +50,16 @@ func TestGetAll(t *testing.T) {
 		// Arrange
 		repo := NewRepository()
 		link1 := &domain.Link{
-			SrcID: util.UUIDString(),
-			DstID: util.UUIDString(),
+			SrcID: domain.PageID("page1"),
+			DstID: domain.PageID("page2"),
 		}
 		link2 := &domain.Link{
-			SrcID: util.UUIDString(),
-			DstID: util.UUIDString(),
+			SrcID: domain.PageID("page2"),
+			DstID: domain.PageID("page3"),
 		}
 		link3 := &domain.Link{
-			SrcID: util.UUIDString(),
-			DstID: util.UUIDString(),
+			SrcID: domain.PageID("page3"),
+			DstID: domain.PageID("page1"),
 		}
 		repo.Create(link1)
 		repo.Create(link2)

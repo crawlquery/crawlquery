@@ -24,7 +24,7 @@ func (r *Repository) Create(shard *domain.Shard) error {
 	return nil
 }
 
-func (r *Repository) Get(id uint) (*domain.Shard, error) {
+func (r *Repository) Get(id domain.ShardID) (*domain.Shard, error) {
 	row := r.db.QueryRow("SELECT id, created_at FROM shards WHERE id = ?", id)
 
 	shard := &domain.Shard{}

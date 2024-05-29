@@ -19,18 +19,40 @@ type Service struct {
 	logger         *zap.SugaredLogger
 }
 
-func NewService(
-	repo domain.NodeRepository,
-	accountService domain.AccountService,
-	shardService domain.ShardService,
-	logger *zap.SugaredLogger,
-) *Service {
-	return &Service{
-		repo:           repo,
-		accountService: accountService,
-		shardService:   shardService,
-		logger:         logger,
+type Option func(*Service)
+
+func WithNodeRepo(repo domain.NodeRepository) Option {
+	return func(s *Service) {
+		s.repo = repo
 	}
+}
+
+func WithAccountService(accountService domain.AccountService) Option {
+	return func(s *Service) {
+		s.accountService = accountService
+	}
+}
+
+func WithShardService(shardService domain.ShardService) Option {
+	return func(s *Service) {
+		s.shardService = shardService
+	}
+}
+
+func WithLogger(logger *zap.SugaredLogger) Option {
+	return func(s *Service) {
+		s.logger = logger
+	}
+}
+
+func NewService(opts ...Option) *Service {
+	s := &Service{}
+
+	for _, opt := range opts {
+		opt(s)
+	}
+
+	return s
 }
 
 func (cs *Service) Create(accountID, hostname string, port uint) (*domain.Node, error) {
@@ -108,13 +130,7 @@ func (ss *Service) AllocateNode(node *domain.Node) error {
 
 	if err != nil {
 		ss.logger.Errorf("Node.Allocation.Service.AllocateNode: error getting shard with least nodes: %v", err)
-
-		shard, err = ss.shardService.First()
-
-		if err != nil {
-			ss.logger.Errorf("Node.Allocation.Service.AllocateNode: unable to create shard: %v", err)
-			return domain.ErrInternalError
-		}
+		return err
 	}
 
 	node.ShardID = shard.ID
@@ -169,13 +185,13 @@ func (ss *Service) GetShardWithLeastNodes() (*domain.Shard, error) {
 	return minShard, nil
 }
 
-func (s *Service) ListGroupByShard() (map[uint][]*domain.Node, error) {
+func (s *Service) RandomizedListGroupByShard() (map[domain.ShardID][]*domain.Node, error) {
 	nodes, err := s.RandomizedList()
 	if err != nil {
 		return nil, err
 	}
 
-	grouped := make(map[uint][]*domain.Node)
+	grouped := make(map[domain.ShardID][]*domain.Node)
 
 	for _, node := range nodes {
 		grouped[node.ShardID] = append(grouped[node.ShardID], node)
@@ -196,7 +212,7 @@ func (s *Service) Randomize(nodes []*domain.Node) []*domain.Node {
 	return nodes
 }
 
-func (s *Service) ListByShardID(shardID uint) ([]*domain.Node, error) {
+func (s *Service) ListByShardID(shardID domain.ShardID) ([]*domain.Node, error) {
 	nodes, err := s.List()
 	if err != nil {
 		return nil, err
@@ -213,11 +229,11 @@ func (s *Service) ListByShardID(shardID uint) ([]*domain.Node, error) {
 	return filtered, nil
 }
 
-func (s *Service) SendCrawlJob(n *domain.Node, job *domain.CrawlJob) (*dto.Page, error) {
+func (s *Service) SendCrawlJob(n *domain.Node, job *domain.CrawlJob) (*dto.CrawlResponse, error) {
 
 	c := node.NewClient(fmt.Sprintf("http://%s:%d", n.Hostname, n.Port))
 
-	return c.Crawl(job.PageID, job.URL)
+	return c.Crawl(string(job.PageID), string(job.URL))
 }
 
 func (s *Service) SendIndexJob(n *domain.Node, job *domain.IndexJob) error {

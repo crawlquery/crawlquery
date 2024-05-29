@@ -6,6 +6,7 @@ import (
 )
 
 var ErrCrawlJobNotFound = errors.New("crawl job not found")
+var ErrCrawlQueueEmpty = errors.New("crawl queue is empty")
 
 type CrawlLogID string
 type CrawlStatus uint8
@@ -13,7 +14,7 @@ type CrawlStatus uint8
 const (
 	CrawlStatusPending CrawlStatus = iota
 	CrawlStatusInProgress
-	CrawlStatusSuccess
+	CrawlStatusCompleted
 	CrawlStatusFailed
 )
 
@@ -23,8 +24,8 @@ func (cs CrawlStatus) String() string {
 		return "pending"
 	case CrawlStatusInProgress:
 		return "in_progress"
-	case CrawlStatusSuccess:
-		return "success"
+	case CrawlStatusCompleted:
+		return "completed"
 	case CrawlStatusFailed:
 		return "failed"
 	default:
@@ -34,6 +35,8 @@ func (cs CrawlStatus) String() string {
 
 type CrawlJob struct {
 	PageID    PageID
+	URL       URL
+	ShardID   ShardID
 	Status    CrawlStatus
 	CreatedAt time.Time
 	UpdatedAt time.Time
@@ -42,6 +45,7 @@ type CrawlJob struct {
 type CrawlJobRepository interface {
 	Get(pageID PageID) (*CrawlJob, error)
 	Save(cj *CrawlJob) error
+	ListByStatus(limit int, status CrawlStatus) ([]*CrawlJob, error)
 }
 
 type CrawlLog struct {
@@ -56,6 +60,15 @@ type CrawlLogRepository interface {
 	Save(cl *CrawlLog) error
 }
 
+type CrawlQueue interface {
+	Push(job *CrawlJob) error
+	Pop() (*CrawlJob, error)
+}
+
+type CrawlRateLimiter interface {
+	Limit(job *CrawlJob) bool
+}
+
 type CrawlService interface {
-	CreateJob(pageID PageID) error
+	CreateJob(page *Page) error
 }

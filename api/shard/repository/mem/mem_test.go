@@ -12,7 +12,7 @@ func TestCreate(t *testing.T) {
 		repo := NewRepository()
 
 		shard := &domain.Shard{
-			ID:        3,
+			ID:        domain.ShardID(3),
 			CreatedAt: time.Now(),
 		}
 
@@ -41,7 +41,7 @@ func TestGet(t *testing.T) {
 		repo := NewRepository()
 
 		shard := &domain.Shard{
-			ID:        3,
+			ID:        domain.ShardID(3),
 			CreatedAt: time.Now(),
 		}
 
@@ -71,7 +71,7 @@ func TestList(t *testing.T) {
 		repo := NewRepository()
 
 		shard := &domain.Shard{
-			ID:        3,
+			ID:        domain.ShardID(3),
 			CreatedAt: time.Now(),
 		}
 

@@ -19,7 +19,7 @@ func NewClient(baseURL string) *Client {
 	}
 }
 
-func (c *Client) Crawl(pageID, url string) (*dto.Page, error) {
+func (c *Client) Crawl(pageID, url string) (*dto.CrawlResponse, error) {
 	req := dto.CrawlRequest{
 		PageID: pageID,
 		URL:    url,
@@ -69,7 +69,7 @@ func (c *Client) Crawl(pageID, url string) (*dto.Page, error) {
 
 	defer res.Body.Close()
 
-	return crawlRes.Page, nil
+	return &crawlRes, nil
 }
 
 func (c *Client) Index(pageID string) error {

@@ -48,6 +48,8 @@ var migrations = []Migration{
 		Name: "create_crawl_jobs_table",
 		SQL: `CREATE TABLE crawl_jobs (
 			page_id VARCHAR(32) PRIMARY KEY,
+			url VARCHAR(2083) NOT NULL,
+			shard_id SMALLINT UNSIGNED NOT NULL,	
 			status TINYINT UNSIGNED NOT NULL,
 			created_at TIMESTAMP NOT NULL,
 			updated_at TIMESTAMP NOT NULL,

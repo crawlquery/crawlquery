@@ -3,12 +3,12 @@ package mem
 import "crawlquery/api/domain"
 
 type Repository struct {
-	shards map[uint]*domain.Shard
+	shards map[domain.ShardID]*domain.Shard
 }
 
 func NewRepository() *Repository {
 	return &Repository{
-		shards: make(map[uint]*domain.Shard),
+		shards: make(map[domain.ShardID]*domain.Shard),
 	}
 }
 
@@ -17,7 +17,7 @@ func (r *Repository) Create(s *domain.Shard) error {
 	return nil
 }
 
-func (r *Repository) Get(id uint) (*domain.Shard, error) {
+func (r *Repository) Get(id domain.ShardID) (*domain.Shard, error) {
 	s, ok := r.shards[id]
 	if !ok {
 		return nil, domain.ErrShardNotFound

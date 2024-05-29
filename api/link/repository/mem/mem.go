@@ -30,7 +30,7 @@ func (r *Repository) GetAll() ([]*domain.Link, error) {
 	return r.links, nil
 }
 
-func (r *Repository) GetAllBySrcID(srcID string) ([]*domain.Link, error) {
+func (r *Repository) GetAllBySrcID(srcID domain.PageID) ([]*domain.Link, error) {
 	var links []*domain.Link
 
 	for _, l := range r.links {

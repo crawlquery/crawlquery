@@ -15,12 +15,9 @@ import (
 	accountMysqlRepo "crawlquery/api/account/repository/mysql"
 	accountService "crawlquery/api/account/service"
 
-	crawlRestrictionMysqlRepo "crawlquery/api/crawl/restriction/repository/mysql"
-	crawlRestrictionService "crawlquery/api/crawl/restriction/service"
-
-	crawlHandler "crawlquery/api/crawl/job/handler"
 	crawlJobMysqlRepo "crawlquery/api/crawl/job/repository/mysql"
-	crawlJobService "crawlquery/api/crawl/job/service"
+	crawlLogMysqlRepo "crawlquery/api/crawl/log/repository/mysql"
+	crawlService "crawlquery/api/crawl/service"
 
 	nodeHandler "crawlquery/api/node/handler"
 	nodeMysqlRepo "crawlquery/api/node/repository/mysql"
@@ -81,32 +78,31 @@ func main() {
 	authHandler := authHandler.NewHandler(authService)
 
 	shardRepo := shardMysqlRepo.NewRepository(db)
-	shardService := shardService.NewService(shardRepo, sugar)
+	shardService := shardService.NewService(
+		shardService.WithRepo(shardRepo),
+		shardService.WithLogger(sugar),
+	)
 
 	nodeRepo := nodeMysqlRepo.NewRepository(db)
 	nodeService := nodeService.NewService(nodeRepo, accountService, shardService, sugar)
 	nodeHandler := nodeHandler.NewHandler(nodeService)
 
-	crawlRestrictionRepo := crawlRestrictionMysqlRepo.NewRepository(db)
-	crawlRestrictionService := crawlRestrictionService.NewService(crawlRestrictionRepo, sugar)
-
 	pageRepo := pageMysqlRepo.NewRepository(db)
-	pageService := pageService.NewService(pageRepo, nil, sugar)
+	pageService := pageService.NewService(
+		pageService.WithPageRepo(pageRepo),
+		pageService.WithShardService(shardService),
+		pageService.WithLogger(sugar),
+	)
 
 	indexJobRepo := indexJobMySQLRepo.NewRepository(db)
 	indexJobService := indexJobService.NewService(indexJobRepo, pageService, nodeService, sugar)
 
 	crawlJobRepo := crawlJobMysqlRepo.NewRepository(db)
-	crawlJobService := crawlJobService.NewService(
-		crawlJobRepo,
-		shardService,
-		nodeService,
-		crawlRestrictionService,
-		pageService,
-		indexJobService,
-		sugar,
+	crawlJobService := crawlService.NewService(
+		crawlService.WithCrawlJobRepo(crawlJobRepo),
+		crawlService.WithCrawlLogRepo(crawlLogMysqlRepo.NewRepository(db)),
+		crawlService.WithLogger(sugar),
 	)
-	crawlJobHandler := crawlHandler.NewHandler(crawlJobService)
 
 	linkRepo := linkMySQLRepo.NewRepository(db)
 	linkService := linkService.NewService(linkRepo, crawlJobService, sugar)

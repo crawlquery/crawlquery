@@ -36,7 +36,11 @@ func NodeServiceWithNode(
 	n *domain.Node,
 ) (*service.Service, *mem.Repository) {
 	repo := NodeRepoWithNode(n)
-	return service.NewService(repo, as, nil, testutil.NewTestLogger()), repo
+	return service.NewService(
+		service.WithNodeRepo(repo),
+		service.WithAccountService(as),
+		service.WithLogger(testutil.NewTestLogger()),
+	), repo
 }
 
 func NodeService(

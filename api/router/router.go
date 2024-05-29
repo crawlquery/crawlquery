@@ -13,7 +13,7 @@ func NewRouter(
 	as domain.AccountService,
 	authHandler domain.AuthHandler,
 	accountHandler domain.AccountHandler,
-	crawlJobHandler domain.CrawlJobHandler,
+	pageHandler domain.PageHandler,
 	nodeHandler domain.NodeHandler,
 	searchHandler domain.SearchHandler,
 	linkHandler domain.LinkHandler,
@@ -36,7 +36,7 @@ func NewRouter(
 
 	router.GET("/shards/:shardID/nodes", nodeHandler.ListByShardID)
 
-	router.POST("/crawl-jobs", crawlJobHandler.Create)
+	router.POST("/pages", pageHandler.Create)
 
 	router.GET("/search", searchHandler.Search)
 

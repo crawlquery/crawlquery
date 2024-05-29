@@ -19,5 +19,8 @@ func ShardRepoWithShard(s *domain.Shard) *mem.Repository {
 
 func ShardServiceWithShard(s *domain.Shard) (*service.Service, *mem.Repository) {
 	repo := ShardRepoWithShard(s)
-	return service.NewService(repo, testutil.NewTestLogger()), repo
+
+	return service.NewService(service.WithRepo(repo), service.WithLogger(
+		testutil.NewTestLogger(),
+	)), repo
 }
