@@ -10,7 +10,7 @@ func TestGet(t *testing.T) {
 		crawlJobRepo := NewRepository()
 		crawlJob := &domain.CrawlJob{
 			PageID: "page1",
-			Status: domain.CrawlJobStatusPending,
+			Status: domain.CrawlStatusPending,
 		}
 
 		crawlJobRepo.jobs["page1"] = crawlJob
@@ -25,7 +25,7 @@ func TestGet(t *testing.T) {
 			t.Errorf("expected page1, got %v", job.PageID)
 		}
 
-		if job.Status != domain.CrawlJobStatusPending {
+		if job.Status != domain.CrawlStatusPending {
 			t.Errorf("expected pending, got %v", job.Status)
 		}
 	})
@@ -47,7 +47,7 @@ func TestSave(t *testing.T) {
 		crawlJobRepo := NewRepository()
 		crawlJob := &domain.CrawlJob{
 			PageID: "page1",
-			Status: domain.CrawlJobStatusPending,
+			Status: domain.CrawlStatusPending,
 		}
 
 		err := crawlJobRepo.Save(crawlJob)

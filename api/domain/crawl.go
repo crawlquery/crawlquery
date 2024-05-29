@@ -7,18 +7,34 @@ import (
 
 var ErrCrawlJobNotFound = errors.New("crawl job not found")
 
-type CrawlJobStatus uint8
+type CrawlLogID string
+type CrawlStatus uint8
 
 const (
-	CrawlJobStatusPending CrawlJobStatus = iota
-	CrawlJobStatusInProgress
-	CrawlJobStatusDone
-	CrawlJobStatusFailed
+	CrawlStatusPending CrawlStatus = iota
+	CrawlStatusInProgress
+	CrawlStatusSuccess
+	CrawlStatusFailed
 )
+
+func (cs CrawlStatus) String() string {
+	switch cs {
+	case CrawlStatusPending:
+		return "pending"
+	case CrawlStatusInProgress:
+		return "in_progress"
+	case CrawlStatusSuccess:
+		return "success"
+	case CrawlStatusFailed:
+		return "failed"
+	default:
+		return "unknown"
+	}
+}
 
 type CrawlJob struct {
 	PageID    PageID
-	Status    CrawlJobStatus
+	Status    CrawlStatus
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }
@@ -29,8 +45,9 @@ type CrawlJobRepository interface {
 }
 
 type CrawlLog struct {
+	ID        CrawlLogID
 	PageID    PageID
-	Status    CrawlJobStatus
+	Status    CrawlStatus
 	Info      string
 	CreatedAt time.Time
 }
@@ -40,5 +57,5 @@ type CrawlLogRepository interface {
 }
 
 type CrawlService interface {
-	CreateJob(pageID string) error
+	CreateJob(pageID PageID) error
 }

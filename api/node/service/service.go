@@ -58,9 +58,9 @@ func (cs *Service) Create(accountID, hostname string, port uint) (*domain.Node, 
 	}
 
 	node := &domain.Node{
-		ID:        util.UUID(),
+		ID:        util.UUIDString(),
 		AccountID: accountID,
-		Key:       util.UUID(),
+		Key:       util.UUIDString(),
 		Hostname:  hostname,
 		Port:      port,
 		CreatedAt: time.Now(),

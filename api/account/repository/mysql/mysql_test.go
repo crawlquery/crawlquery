@@ -21,7 +21,7 @@ func TestCreate(t *testing.T) {
 
 		// Act
 		account := &domain.Account{
-			ID:        util.UUID(),
+			ID:        util.UUIDString(),
 			Email:     "test@example.com",
 			Password:  "password",
 			CreatedAt: time.Now().UTC(),
@@ -81,7 +81,7 @@ func TestCreate(t *testing.T) {
 		repo := mysql.NewRepository(db)
 
 		account := &domain.Account{
-			ID:        util.UUID(),
+			ID:        util.UUIDString(),
 			Email:     "test@example.com",
 			Password:  "password",
 			CreatedAt: time.Now().UTC(),
@@ -112,7 +112,7 @@ func TestCreate(t *testing.T) {
 		repo := mysql.NewRepository(db)
 
 		account := &domain.Account{
-			ID:        util.UUID(),
+			ID:        util.UUIDString(),
 			Email:     "test@example.com",
 			Password:  "password",
 			CreatedAt: time.Now().UTC(),
@@ -127,7 +127,7 @@ func TestCreate(t *testing.T) {
 		}
 
 		// Act
-		account.ID = util.UUID()
+		account.ID = util.UUIDString()
 
 		err = repo.Create(account)
 
@@ -148,7 +148,7 @@ func TestGet(t *testing.T) {
 		repo := mysql.NewRepository(db)
 
 		account := &domain.Account{
-			ID:        util.UUID(),
+			ID:        util.UUIDString(),
 			Email:     "test@example.com",
 			Password:  "password",
 			CreatedAt: time.Now().UTC(),
@@ -196,7 +196,7 @@ func TestGet(t *testing.T) {
 		repo := mysql.NewRepository(db)
 
 		// Act
-		_, err := repo.Get(util.UUID())
+		_, err := repo.Get(util.UUIDString())
 
 		// Assert
 		if err != domain.ErrAccountNotFound {
@@ -215,7 +215,7 @@ func TestGetByEmail(t *testing.T) {
 		repo := mysql.NewRepository(db)
 
 		account := &domain.Account{
-			ID:        util.UUID(),
+			ID:        util.UUIDString(),
 			Email:     "test@example.com",
 			Password:  "password",
 			CreatedAt: time.Now().UTC(),

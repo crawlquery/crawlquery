@@ -11,7 +11,7 @@ import (
 func TestAccountValidate(t *testing.T) {
 	t.Run("valid", func(t *testing.T) {
 		a := &domain.Account{
-			ID:        util.UUID(),
+			ID:        util.UUIDString(),
 			Email:     "test@example.com",
 			Password:  "password",
 			CreatedAt: time.Now(),
@@ -45,7 +45,7 @@ func TestAccountValidate(t *testing.T) {
 
 	t.Run("invalid email", func(t *testing.T) {
 		a := &domain.Account{
-			ID:        util.UUID(),
+			ID:        util.UUIDString(),
 			Email:     "test",
 			Password:  "password",
 			CreatedAt: time.Now(),
@@ -64,7 +64,7 @@ func TestAccountValidate(t *testing.T) {
 
 	t.Run("invalid password", func(t *testing.T) {
 		a := &domain.Account{
-			ID:        util.UUID(),
+			ID:        util.UUIDString(),
 			Email:     "test@example.com",
 			Password:  "pass",
 			CreatedAt: time.Now(),
@@ -83,7 +83,7 @@ func TestAccountValidate(t *testing.T) {
 
 	t.Run("invalid created at", func(t *testing.T) {
 		a := &domain.Account{
-			ID:        util.UUID(),
+			ID:        util.UUIDString(),
 			Email:     "test@example.com",
 			Password:  "password",
 			CreatedAt: time.Time{},

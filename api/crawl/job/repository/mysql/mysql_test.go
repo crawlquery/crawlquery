@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	crawlJobRepo "crawlquery/api/crawl/job/mysql"
+	crawlJobRepo "crawlquery/api/crawl/job/repository/mysql"
 )
 
 func TestGet(t *testing.T) {
@@ -18,7 +18,7 @@ func TestGet(t *testing.T) {
 		crawlJobRepo := crawlJobRepo.NewRepository(db)
 		crawlJob := &domain.CrawlJob{
 			PageID:    "page1",
-			Status:    domain.CrawlJobStatusPending,
+			Status:    domain.CrawlStatusPending,
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
 		}
@@ -40,7 +40,7 @@ func TestGet(t *testing.T) {
 			t.Errorf("expected page1, got %v", job.PageID)
 		}
 
-		if job.Status != domain.CrawlJobStatusPending {
+		if job.Status != domain.CrawlStatusPending {
 			t.Errorf("expected pending, got %v", job.Status)
 		}
 	})
@@ -72,7 +72,7 @@ func TestSave(t *testing.T) {
 		now := time.Now()
 		crawlJob := &domain.CrawlJob{
 			PageID:    "page1",
-			Status:    domain.CrawlJobStatusPending,
+			Status:    domain.CrawlStatusPending,
 			CreatedAt: now,
 			UpdatedAt: now,
 		}
@@ -94,7 +94,7 @@ func TestSave(t *testing.T) {
 			t.Errorf("expected page1, got %v", job.PageID)
 		}
 
-		if job.Status != domain.CrawlJobStatusPending {
+		if job.Status != domain.CrawlStatusPending {
 			t.Errorf("expected pending, got %v", job.Status)
 		}
 
@@ -115,7 +115,7 @@ func TestSave(t *testing.T) {
 		now := time.Now()
 		crawlJob := &domain.CrawlJob{
 			PageID:    "page1",
-			Status:    domain.CrawlJobStatusPending,
+			Status:    domain.CrawlStatusPending,
 			CreatedAt: now,
 			UpdatedAt: now,
 		}
@@ -133,7 +133,7 @@ func TestSave(t *testing.T) {
 			t.Errorf("expected no error, got %v", err)
 		}
 
-		crawlJob.Status = domain.CrawlJobStatusInProgress
+		crawlJob.Status = domain.CrawlStatusInProgress
 		crawlJob.UpdatedAt = time.Now()
 
 		err = crawlJobRepo.Save(crawlJob)
@@ -154,7 +154,7 @@ func TestSave(t *testing.T) {
 			t.Errorf("expected page1, got %v", job.PageID)
 		}
 
-		if job.Status != domain.CrawlJobStatusInProgress {
+		if job.Status != domain.CrawlStatusInProgress {
 			t.Errorf("expected in progress, got %v", job.Status)
 		}
 

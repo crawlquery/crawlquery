@@ -11,7 +11,7 @@ import (
 
 func ValidAccount() *domain.Account {
 	return &domain.Account{
-		ID:        util.UUID(),
+		ID:        util.UUIDString(),
 		Email:     "test@example.com",
 		Password:  "password",
 		CreatedAt: time.Now(),
@@ -23,7 +23,7 @@ func AccountRepoWithAccount(acc *domain.Account) domain.AccountRepository {
 
 	if acc != nil {
 		if acc.ID == "" {
-			acc.ID = util.UUID()
+			acc.ID = util.UUIDString()
 		}
 		if acc.CreatedAt.IsZero() {
 			acc.CreatedAt = time.Now()

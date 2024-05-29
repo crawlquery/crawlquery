@@ -15,7 +15,7 @@ func NodeRepoWithNode(n *domain.Node) *mem.Repository {
 
 	if n != nil {
 		if n.ID == "" {
-			n.ID = util.UUID()
+			n.ID = util.UUIDString()
 		}
 		if n.CreatedAt.IsZero() {
 			n.CreatedAt = time.Now()

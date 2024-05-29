@@ -12,8 +12,8 @@ func TestCreate(t *testing.T) {
 		repo := NewRepository()
 
 		node := &domain.Node{
-			ID:        util.UUID(),
-			AccountID: util.UUID(),
+			ID:        util.UUIDString(),
+			AccountID: util.UUIDString(),
 			Hostname:  "testnode",
 			Port:      8080,
 			ShardID:   1,
@@ -63,8 +63,8 @@ func TestList(t *testing.T) {
 		repo := NewRepository()
 
 		node1 := &domain.Node{
-			ID:        util.UUID(),
-			AccountID: util.UUID(),
+			ID:        util.UUIDString(),
+			AccountID: util.UUIDString(),
 			Hostname:  "testnode1",
 			Port:      8080,
 			ShardID:   1,
@@ -72,8 +72,8 @@ func TestList(t *testing.T) {
 		}
 
 		node2 := &domain.Node{
-			ID:        util.UUID(),
-			AccountID: util.UUID(),
+			ID:        util.UUIDString(),
+			AccountID: util.UUIDString(),
 			Hostname:  "testnode2",
 			Port:      8080,
 			ShardID:   1,
@@ -107,10 +107,10 @@ func TestListByAccountID(t *testing.T) {
 	t.Run("can list nodes by account ID", func(t *testing.T) {
 		repo := NewRepository()
 
-		accountID := util.UUID()
+		accountID := util.UUIDString()
 
 		node1 := &domain.Node{
-			ID:        util.UUID(),
+			ID:        util.UUIDString(),
 			AccountID: accountID,
 			Hostname:  "testnode1",
 			Port:      8080,
@@ -119,8 +119,8 @@ func TestListByAccountID(t *testing.T) {
 		}
 
 		node2 := &domain.Node{
-			ID:        util.UUID(),
-			AccountID: util.UUID(),
+			ID:        util.UUIDString(),
+			AccountID: util.UUIDString(),
 			Hostname:  "testnode2",
 			Port:      8080,
 			ShardID:   1,
@@ -151,8 +151,8 @@ func TestGetNodeByKey(t *testing.T) {
 		repo := NewRepository()
 
 		node := &domain.Node{
-			ID:        util.UUID(),
-			AccountID: util.UUID(),
+			ID:        util.UUIDString(),
+			AccountID: util.UUIDString(),
 			Hostname:  "testnode",
 			Port:      8080,
 			ShardID:   1,
@@ -196,8 +196,8 @@ func TestGetNodeByKey(t *testing.T) {
 		repo := NewRepository()
 
 		node := &domain.Node{
-			ID:        util.UUID(),
-			AccountID: util.UUID(),
+			ID:        util.UUIDString(),
+			AccountID: util.UUIDString(),
 			Hostname:  "testnode",
 			Port:      8080,
 			ShardID:   1,

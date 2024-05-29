@@ -11,9 +11,9 @@ import (
 func TestNodeValidate(t *testing.T) {
 	t.Run("valid", func(t *testing.T) {
 		node := &domain.Node{
-			ID:        util.UUID(),
-			Key:       util.UUID(),
-			AccountID: util.UUID(),
+			ID:        util.UUIDString(),
+			Key:       util.UUIDString(),
+			AccountID: util.UUIDString(),
 			Hostname:  "testnode",
 			Port:      8080,
 			ShardID:   1,
@@ -29,8 +29,8 @@ func TestNodeValidate(t *testing.T) {
 
 	t.Run("key is required", func(t *testing.T) {
 		node := &domain.Node{
-			ID:        util.UUID(),
-			AccountID: util.UUID(),
+			ID:        util.UUIDString(),
+			AccountID: util.UUIDString(),
 			Hostname:  "testnode",
 			Port:      8080,
 			ShardID:   1,
@@ -50,9 +50,9 @@ func TestNodeValidate(t *testing.T) {
 
 	t.Run("key is uuid", func(t *testing.T) {
 		node := &domain.Node{
-			ID:        util.UUID(),
+			ID:        util.UUIDString(),
 			Key:       "fails",
-			AccountID: util.UUID(),
+			AccountID: util.UUIDString(),
 			Hostname:  "testnode",
 			Port:      8080,
 			ShardID:   1,
@@ -72,9 +72,9 @@ func TestNodeValidate(t *testing.T) {
 
 	t.Run("key is valid", func(t *testing.T) {
 		node := &domain.Node{
-			ID:        util.UUID(),
-			Key:       util.UUID(),
-			AccountID: util.UUID(),
+			ID:        util.UUIDString(),
+			Key:       util.UUIDString(),
+			AccountID: util.UUIDString(),
 			Hostname:  "testnode",
 			Port:      8080,
 			ShardID:   1,
@@ -91,7 +91,7 @@ func TestNodeValidate(t *testing.T) {
 	t.Run("invalid id", func(t *testing.T) {
 		node := &domain.Node{
 			ID:        "aaa",
-			AccountID: util.UUID(),
+			AccountID: util.UUIDString(),
 			Hostname:  "testnode",
 			Port:      8080,
 			ShardID:   1,
@@ -111,8 +111,8 @@ func TestNodeValidate(t *testing.T) {
 
 	t.Run("invalid hostname", func(t *testing.T) {
 		node := &domain.Node{
-			ID:        util.UUID(),
-			AccountID: util.UUID(),
+			ID:        util.UUIDString(),
+			AccountID: util.UUIDString(),
 			Hostname:  "!!",
 		}
 
@@ -129,8 +129,8 @@ func TestNodeValidate(t *testing.T) {
 
 	t.Run("invalid port", func(t *testing.T) {
 		node := &domain.Node{
-			ID:        util.UUID(),
-			AccountID: util.UUID(),
+			ID:        util.UUIDString(),
+			AccountID: util.UUIDString(),
 			Hostname:  "testnode",
 			Port:      200000,
 		}
@@ -148,8 +148,8 @@ func TestNodeValidate(t *testing.T) {
 
 	t.Run("invalid shard id", func(t *testing.T) {
 		node := &domain.Node{
-			ID:        util.UUID(),
-			AccountID: util.UUID(),
+			ID:        util.UUIDString(),
+			AccountID: util.UUIDString(),
 			Hostname:  "testnode",
 			Port:      8080,
 			ShardID:   2000000,

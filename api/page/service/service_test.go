@@ -10,6 +10,10 @@ import (
 	shardRepo "crawlquery/api/shard/repository/mem"
 	shardService "crawlquery/api/shard/service"
 
+	crawlJobRepo "crawlquery/api/crawl/job/repository/mem"
+	crawlLogRepo "crawlquery/api/crawl/log/repository/mem"
+	crawlService "crawlquery/api/crawl/service"
+
 	pageRepo "crawlquery/api/page/repository/mem"
 	pageService "crawlquery/api/page/service"
 )
@@ -74,6 +78,13 @@ func TestCreate(t *testing.T) {
 
 		logger := testutil.NewTestLogger()
 		shardRepo := shardRepo.NewRepository()
+		crawlLogRepo := crawlLogRepo.NewRepository()
+		crawlJobRepo := crawlJobRepo.NewRepository()
+		crawlService := crawlService.NewService(
+			crawlService.WithCrawlLogRepo(crawlLogRepo),
+			crawlService.WithCrawlJobRepo(crawlJobRepo),
+			crawlService.WithLogger(logger),
+		)
 		shardRepo.Create(&domain.Shard{ID: 0})
 		shardService := shardService.NewService(
 			shardService.WithRepo(shardRepo),
@@ -84,6 +95,7 @@ func TestCreate(t *testing.T) {
 		pageService := pageService.NewService(
 			pageService.WithPageRepo(pageRepo),
 			pageService.WithShardService(shardService),
+			pageService.WithCrawlService(crawlService),
 			pageService.WithLogger(logger),
 		)
 
@@ -114,6 +126,20 @@ func TestCreate(t *testing.T) {
 
 		if page.URL != url {
 			t.Errorf("got page URL %s, want %s", page.URL, url)
+		}
+
+		job, err := crawlJobRepo.Get(page.ID)
+
+		if err != nil {
+			t.Fatalf("error getting crawl job: %v", err)
+		}
+
+		if job.PageID != page.ID {
+			t.Errorf("got crawl job PageID %s, want %s", job.PageID, page.ID)
+		}
+
+		if job.Status != domain.CrawlStatusPending {
+			t.Errorf("got crawl job Status %s, want %s", job.Status, domain.CrawlStatusPending)
 		}
 	})
 

@@ -27,7 +27,7 @@ func TestLogin(t *testing.T) {
 			t.Fatalf("Error hashing password: %v", err)
 		}
 
-		accountID := util.UUID()
+		accountID := util.UUIDString()
 		accSvc, _ := factory.AccountServiceWithAccount(&domain.Account{
 			ID:       accountID,
 			Email:    "test@example.com",
@@ -91,7 +91,7 @@ func TestLogin(t *testing.T) {
 
 	t.Run("should return 400 if malformed JSON", func(t *testing.T) {
 
-		accountID := util.UUID()
+		accountID := util.UUIDString()
 		accSvc, _ := factory.AccountServiceWithAccount(&domain.Account{
 			ID: accountID,
 		})
@@ -112,7 +112,7 @@ func TestLogin(t *testing.T) {
 
 	t.Run("should return 401 if email is empty", func(t *testing.T) {
 
-		accountID := util.UUID()
+		accountID := util.UUIDString()
 		accSvc, _ := factory.AccountServiceWithAccount(&domain.Account{
 			ID: accountID,
 		})

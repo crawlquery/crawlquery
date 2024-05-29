@@ -52,8 +52,12 @@ func ValidatePageID(pageID string) bool {
 	return check.MatchString(pageID)
 }
 
-func UUID() string {
+func UUIDString() string {
 	return uuid.New().String()
+}
+
+func UUID() uuid.UUID {
+	return uuid.New()
 }
 
 func SHA1(s string) string {

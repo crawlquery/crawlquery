@@ -25,7 +25,7 @@ func TestCreate(t *testing.T) {
 	t.Run("should create a node", func(t *testing.T) {
 
 		account := &domain.Account{
-			ID: util.UUID(),
+			ID: util.UUIDString(),
 		}
 		accSvc, _ := factory.AccountServiceWithAccount(account)
 
@@ -83,7 +83,7 @@ func TestCreate(t *testing.T) {
 	t.Run("should return 400 if malformed JSON", func(t *testing.T) {
 
 		account := &domain.Account{
-			ID: util.UUID(),
+			ID: util.UUIDString(),
 		}
 		accSvc, _ := factory.AccountServiceWithAccount(account)
 
@@ -106,7 +106,7 @@ func TestCreate(t *testing.T) {
 	t.Run("should return 400 if hostname is empty", func(t *testing.T) {
 
 		account := &domain.Account{
-			ID: util.UUID(),
+			ID: util.UUIDString(),
 		}
 		accSvc, _ := factory.AccountServiceWithAccount(account)
 
@@ -160,7 +160,7 @@ func TestAuth(t *testing.T) {
 	t.Run("should return 400 if no key set", func(t *testing.T) {
 
 		account := &domain.Account{
-			ID: util.UUID(),
+			ID: util.UUIDString(),
 		}
 		accSvc, _ := factory.AccountServiceWithAccount(account)
 
@@ -184,7 +184,7 @@ func TestAuth(t *testing.T) {
 	t.Run("should return node if key is correct", func(t *testing.T) {
 
 		account := &domain.Account{
-			ID: util.UUID(),
+			ID: util.UUIDString(),
 		}
 		accSvc, _ := factory.AccountServiceWithAccount(account)
 
@@ -193,7 +193,7 @@ func TestAuth(t *testing.T) {
 		handler := handler.NewHandler(svc)
 
 		node := &domain.Node{
-			ID:        util.UUID(),
+			ID:        util.UUIDString(),
 			Key:       "123",
 			AccountID: account.ID,
 			Hostname:  "localhost",
@@ -252,7 +252,7 @@ func TestListByShard(t *testing.T) {
 	t.Run("should return nodes by shard", func(t *testing.T) {
 
 		account := &domain.Account{
-			ID: util.UUID(),
+			ID: util.UUIDString(),
 		}
 		accSvc, _ := factory.AccountServiceWithAccount(account)
 
@@ -267,7 +267,7 @@ func TestListByShard(t *testing.T) {
 		handler := handler.NewHandler(svc)
 
 		node1 := &domain.Node{
-			ID:        util.UUID(),
+			ID:        util.UUIDString(),
 			Key:       "123",
 			AccountID: account.ID,
 			Hostname:  "localhost",
@@ -276,7 +276,7 @@ func TestListByShard(t *testing.T) {
 		}
 
 		node2 := &domain.Node{
-			ID:        util.UUID(),
+			ID:        util.UUIDString(),
 			Key:       "123",
 			AccountID: account.ID,
 			Hostname:  "localhost",

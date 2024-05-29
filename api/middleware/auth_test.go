@@ -18,7 +18,7 @@ func TestAuthMiddleware(t *testing.T) {
 		os.Setenv("JWT_SECRET", "secret")
 
 		account := &domain.Account{
-			ID:    util.UUID(),
+			ID:    util.UUIDString(),
 			Email: "test@example.com",
 		}
 

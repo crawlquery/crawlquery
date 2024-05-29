@@ -24,7 +24,7 @@ import (
 func TestCreate(t *testing.T) {
 	t.Run("can create a node", func(t *testing.T) {
 
-		accountID := util.UUID()
+		accountID := util.UUIDString()
 		accSvc, _ := factory.AccountServiceWithAccount(&domain.Account{
 			ID: accountID,
 		})
@@ -83,7 +83,7 @@ func TestCreate(t *testing.T) {
 	})
 
 	t.Run("can't create a node that already exists", func(t *testing.T) {
-		accountID := util.UUID()
+		accountID := util.UUIDString()
 		accSvc, _ := factory.AccountServiceWithAccount(&domain.Account{
 			ID: accountID,
 		})
@@ -91,7 +91,7 @@ func TestCreate(t *testing.T) {
 		svc, nodeRepo := factory.NodeService(accSvc)
 
 		err := nodeRepo.Create(&domain.Node{
-			ID:        util.UUID(),
+			ID:        util.UUIDString(),
 			AccountID: accountID,
 			Hostname:  "hostname",
 			Port:      8080,
@@ -117,7 +117,7 @@ func TestCreate(t *testing.T) {
 	})
 
 	t.Run("can't create a node with AccountID that doesn't exist", func(t *testing.T) {
-		accountID := util.UUID()
+		accountID := util.UUIDString()
 		accSvc, _ := factory.AccountServiceWithAccount(nil)
 
 		svc, _ := factory.NodeService(accSvc)
@@ -135,7 +135,7 @@ func TestCreate(t *testing.T) {
 
 	t.Run("can't create a node with invalid hostname", func(t *testing.T) {
 
-		accountID := util.UUID()
+		accountID := util.UUIDString()
 		accSvc, _ := factory.AccountServiceWithAccount(&domain.Account{
 			ID: accountID,
 		})
@@ -155,7 +155,7 @@ func TestCreate(t *testing.T) {
 
 	t.Run("handles error creating node", func(t *testing.T) {
 
-		accountID := util.UUID()
+		accountID := util.UUIDString()
 		accSvc, _ := factory.AccountServiceWithAccount(&domain.Account{
 			ID: accountID,
 		})
@@ -170,7 +170,7 @@ func TestCreate(t *testing.T) {
 		nodeRepo.ForceCreateError(errors.New("db locked"))
 
 		node := &domain.Node{
-			ID:        util.UUID(),
+			ID:        util.UUIDString(),
 			AccountID: accountID,
 			Hostname:  "testnode",
 		}
@@ -192,7 +192,7 @@ func TestCreate(t *testing.T) {
 func TestList(t *testing.T) {
 	t.Run("can list nodes", func(t *testing.T) {
 
-		accountID := util.UUID()
+		accountID := util.UUIDString()
 		accSvc, _ := factory.AccountServiceWithAccount(&domain.Account{
 			ID: accountID,
 		})
@@ -200,14 +200,14 @@ func TestList(t *testing.T) {
 		svc, nodeRepo := factory.NodeService(accSvc)
 
 		node := &domain.Node{
-			ID:        util.UUID(),
+			ID:        util.UUIDString(),
 			AccountID: accountID,
 			Hostname:  "testnode",
 			Port:      8080,
 		}
 
 		node2 := &domain.Node{
-			ID:        util.UUID(),
+			ID:        util.UUIDString(),
 			AccountID: accountID,
 			Hostname:  "testnode2",
 			Port:      8081,
@@ -241,7 +241,7 @@ func TestList(t *testing.T) {
 func TestRandomizedList(t *testing.T) {
 	t.Run("can list nodes in random order", func(t *testing.T) {
 
-		accountID := util.UUID()
+		accountID := util.UUIDString()
 		accSvc, _ := factory.AccountServiceWithAccount(&domain.Account{
 			ID: accountID,
 		})
@@ -249,19 +249,19 @@ func TestRandomizedList(t *testing.T) {
 		svc, repo := factory.NodeService(accSvc)
 
 		node := &domain.Node{
-			ID:        util.UUID(),
+			ID:        util.UUIDString(),
 			AccountID: accountID,
 			Hostname:  "testnode",
 		}
 
 		node2 := &domain.Node{
-			ID:        util.UUID(),
+			ID:        util.UUIDString(),
 			AccountID: accountID,
 			Hostname:  "testnode2",
 		}
 
 		node3 := &domain.Node{
-			ID:        util.UUID(),
+			ID:        util.UUIDString(),
 			AccountID: accountID,
 			Hostname:  "testnode3",
 		}
@@ -297,7 +297,7 @@ func TestRandomizedList(t *testing.T) {
 
 	t.Run("handles error listing nodes", func(t *testing.T) {
 
-		accountID := util.UUID()
+		accountID := util.UUIDString()
 		accSvc, _ := factory.AccountServiceWithAccount(&domain.Account{
 			ID: accountID,
 		})
@@ -589,7 +589,7 @@ func TestListGroupByShard(t *testing.T) {
 func TestListByAccountID(t *testing.T) {
 	t.Run("can list nodes by account ID", func(t *testing.T) {
 
-		accountID := util.UUID()
+		accountID := util.UUIDString()
 		accSvc, _ := factory.AccountServiceWithAccount(&domain.Account{
 			ID: accountID,
 		})
@@ -597,14 +597,14 @@ func TestListByAccountID(t *testing.T) {
 		svc, nodeRepo := factory.NodeService(accSvc)
 
 		node := &domain.Node{
-			ID:        util.UUID(),
+			ID:        util.UUIDString(),
 			AccountID: accountID,
 			Hostname:  "testnode",
 			Port:      8080,
 		}
 
 		node2 := &domain.Node{
-			ID:        util.UUID(),
+			ID:        util.UUIDString(),
 			AccountID: accountID,
 			Hostname:  "testnode2",
 			Port:      8081,
@@ -636,7 +636,7 @@ func TestListByAccountID(t *testing.T) {
 
 	t.Run("can list nodes by account ID when no nodes exist", func(t *testing.T) {
 
-		accountID := util.UUID()
+		accountID := util.UUIDString()
 		accSvc, _ := factory.AccountServiceWithAccount(&domain.Account{
 			ID: accountID,
 		})

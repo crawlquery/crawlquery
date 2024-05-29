@@ -1,7 +1,6 @@
 package dto
 
 import (
-	"crawlquery/api/domain"
 	"encoding/json"
 	"time"
 )
@@ -22,14 +21,4 @@ type CrawlJob struct {
 
 type CreateCrawlJobResponse struct {
 	CrawlJob CrawlJob `json:"crawl_job"`
-}
-
-func NewCreateCrawlJobResponse(j *domain.CrawlJob) *CreateCrawlJobResponse {
-	res := &CreateCrawlJobResponse{}
-
-	res.CrawlJob.ID = j.ID
-	res.CrawlJob.URL = j.URL
-	res.CrawlJob.CreatedAt = j.CreatedAt
-
-	return res
 }

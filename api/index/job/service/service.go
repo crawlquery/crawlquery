@@ -38,7 +38,7 @@ func (s *Service) Create(pageID string) (*domain.IndexJob, error) {
 	}
 
 	job := &domain.IndexJob{
-		ID:        util.UUID(),
+		ID:        util.UUIDString(),
 		PageID:    pageID,
 		CreatedAt: time.Now(),
 	}

@@ -21,9 +21,9 @@ func TestCreate(t *testing.T) {
 
 		repo := mysql.NewRepository(db)
 		node := &domain.Node{
-			ID:        util.UUID(),
-			Key:       util.UUID(),
-			AccountID: util.UUID(),
+			ID:        util.UUIDString(),
+			Key:       util.UUIDString(),
+			AccountID: util.UUIDString(),
 			Hostname:  "testnode",
 		}
 		defer db.Exec("DELETE FROM nodes WHERE id = ?", node.ID)
@@ -85,7 +85,7 @@ func TestCreate(t *testing.T) {
 
 		repo := mysql.NewRepository(db)
 		node := &domain.Node{
-			ID:       util.UUID(),
+			ID:       util.UUIDString(),
 			Hostname: "testnode",
 			Port:     8080,
 		}
@@ -114,18 +114,18 @@ func TestList(t *testing.T) {
 
 		repo := mysql.NewRepository(db)
 		node := &domain.Node{
-			ID:        util.UUID(),
-			AccountID: util.UUID(),
-			Key:       util.UUID(),
+			ID:        util.UUIDString(),
+			AccountID: util.UUIDString(),
+			Key:       util.UUIDString(),
 			Hostname:  "testnode",
 			Port:      8080,
 			ShardID:   1,
 		}
 
 		node2 := &domain.Node{
-			ID:        util.UUID(),
-			AccountID: util.UUID(),
-			Key:       util.UUID(),
+			ID:        util.UUIDString(),
+			AccountID: util.UUIDString(),
+			Key:       util.UUIDString(),
 			Hostname:  "testnode2",
 			Port:      8081,
 			ShardID:   2,
@@ -172,19 +172,19 @@ func TestListByAccounID(t *testing.T) {
 
 		repo := mysql.NewRepository(db)
 		node := &domain.Node{
-			ID:        util.UUID(),
+			ID:        util.UUIDString(),
 			AccountID: "account1",
 			Hostname:  "testnode",
-			Key:       util.UUID(),
+			Key:       util.UUIDString(),
 			Port:      8080,
 			ShardID:   1,
 		}
 
 		node2 := &domain.Node{
-			ID:        util.UUID(),
+			ID:        util.UUIDString(),
 			AccountID: "account2",
 			Hostname:  "testnode2",
-			Key:       util.UUID(),
+			Key:       util.UUIDString(),
 			Port:      8081,
 			ShardID:   2,
 		}
@@ -232,7 +232,7 @@ func TestGetNodeByKey(t *testing.T) {
 
 		repo := mysql.NewRepository(db)
 		node := &domain.Node{
-			ID:        util.UUID(),
+			ID:        util.UUIDString(),
 			AccountID: "account1",
 			Hostname:  "testnode",
 			Port:      8080,

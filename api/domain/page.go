@@ -25,6 +25,6 @@ type PageRepository interface {
 }
 
 type PageService interface {
-	Get(id string) (*Page, error)
-	Create(url string) (*Page, error)
+	Get(id PageID) (*Page, error)
+	Create(url URL) (*Page, error)
 }

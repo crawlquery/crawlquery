@@ -18,7 +18,7 @@ func TestLogin(t *testing.T) {
 		}
 
 		account := &domain.Account{
-			ID:       util.UUID(),
+			ID:       util.UUIDString(),
 			Email:    "test@example.com",
 			Password: hashedPassword,
 		}
@@ -63,7 +63,7 @@ func TestLogin(t *testing.T) {
 		}
 
 		account := &domain.Account{
-			ID:       util.UUID(),
+			ID:       util.UUIDString(),
 			Email:    "test@example.com",
 			Password: hashedPassword,
 		}

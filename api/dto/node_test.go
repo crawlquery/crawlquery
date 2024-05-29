@@ -30,9 +30,9 @@ func TestCreateNodeRequestToJSON(t *testing.T) {
 func TestNewCreateNodeResponse(t *testing.T) {
 	t.Run("should return correct CreateNodeResponse from Node", func(t *testing.T) {
 		node := &domain.Node{
-			ID:        util.UUID(),
-			Key:       util.UUID(),
-			AccountID: util.UUID(),
+			ID:        util.UUIDString(),
+			Key:       util.UUIDString(),
+			AccountID: util.UUIDString(),
 			Hostname:  "localhost",
 			Port:      8080,
 			ShardID:   1,
@@ -71,17 +71,17 @@ func TestNewListNodesResponse(t *testing.T) {
 	t.Run("should return correct ListNodesResponse from Nodes", func(t *testing.T) {
 		nodes := []*domain.Node{
 			{
-				ID:        util.UUID(),
-				Key:       util.UUID(),
-				AccountID: util.UUID(),
+				ID:        util.UUIDString(),
+				Key:       util.UUIDString(),
+				AccountID: util.UUIDString(),
 				Hostname:  "localhost",
 				Port:      8080,
 				ShardID:   1,
 			},
 			{
-				ID:        util.UUID(),
-				Key:       util.UUID(),
-				AccountID: util.UUID(),
+				ID:        util.UUIDString(),
+				Key:       util.UUIDString(),
+				AccountID: util.UUIDString(),
 				Hostname:  "localhost",
 				Port:      8080,
 				ShardID:   1,
@@ -124,7 +124,7 @@ func TestNewListNodesResponse(t *testing.T) {
 
 func TestNewAuthenticateNodeRequest(t *testing.T) {
 	t.Run("should return correct AuthenticateNodeRequest", func(t *testing.T) {
-		key := util.UUID()
+		key := util.UUIDString()
 		req := dto.NewAuthenticateNodeRequest(key)
 
 		if req.Key != key {
@@ -136,9 +136,9 @@ func TestNewAuthenticateNodeRequest(t *testing.T) {
 func TestNewAuthenticateNodeResponse(t *testing.T) {
 	t.Run("should return correct AuthenticateNodeResponse from Node", func(t *testing.T) {
 		node := &domain.Node{
-			ID:        util.UUID(),
-			Key:       util.UUID(),
-			AccountID: util.UUID(),
+			ID:        util.UUIDString(),
+			Key:       util.UUIDString(),
+			AccountID: util.UUIDString(),
 			Hostname:  "localhost",
 			Port:      8080,
 			ShardID:   1,
@@ -176,17 +176,17 @@ func TestListNodesByShardResponse(t *testing.T) {
 	t.Run("should return correct ListNodesByShardResponse from Nodes", func(t *testing.T) {
 		nodes := []*domain.Node{
 			{
-				ID:        util.UUID(),
-				Key:       util.UUID(),
-				AccountID: util.UUID(),
+				ID:        util.UUIDString(),
+				Key:       util.UUIDString(),
+				AccountID: util.UUIDString(),
 				Hostname:  "localhost",
 				Port:      8080,
 				ShardID:   1,
 			},
 			{
-				ID:        util.UUID(),
-				Key:       util.UUID(),
-				AccountID: util.UUID(),
+				ID:        util.UUIDString(),
+				Key:       util.UUIDString(),
+				AccountID: util.UUIDString(),
 				Hostname:  "localhost",
 				Port:      8080,
 				ShardID:   1,

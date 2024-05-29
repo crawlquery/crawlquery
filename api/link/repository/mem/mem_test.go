@@ -11,8 +11,8 @@ func TestCreate(t *testing.T) {
 		// Arrange
 		repo := NewRepository()
 		link := &domain.Link{
-			SrcID: util.UUID(),
-			DstID: util.UUID(),
+			SrcID: util.UUIDString(),
+			DstID: util.UUIDString(),
 		}
 
 		// Act
@@ -28,8 +28,8 @@ func TestCreate(t *testing.T) {
 		// Arrange
 		repo := NewRepository()
 		link := &domain.Link{
-			SrcID: util.UUID(),
-			DstID: util.UUID(),
+			SrcID: util.UUIDString(),
+			DstID: util.UUIDString(),
 		}
 
 		// Act
@@ -51,16 +51,16 @@ func TestGetAll(t *testing.T) {
 		// Arrange
 		repo := NewRepository()
 		link1 := &domain.Link{
-			SrcID: util.UUID(),
-			DstID: util.UUID(),
+			SrcID: util.UUIDString(),
+			DstID: util.UUIDString(),
 		}
 		link2 := &domain.Link{
-			SrcID: util.UUID(),
-			DstID: util.UUID(),
+			SrcID: util.UUIDString(),
+			DstID: util.UUIDString(),
 		}
 		link3 := &domain.Link{
-			SrcID: util.UUID(),
-			DstID: util.UUID(),
+			SrcID: util.UUIDString(),
+			DstID: util.UUIDString(),
 		}
 		repo.Create(link1)
 		repo.Create(link2)

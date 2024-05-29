@@ -30,6 +30,12 @@ func WithPageRepo(pageRepo domain.PageRepository) func(*Service) {
 	}
 }
 
+func WithCrawlService(crawlService domain.CrawlService) func(*Service) {
+	return func(s *Service) {
+		s.crawlService = crawlService
+	}
+}
+
 func WithLogger(logger *zap.SugaredLogger) func(*Service) {
 	return func(s *Service) {
 		s.logger = logger
@@ -81,6 +87,11 @@ func (s *Service) Create(url domain.URL) (*domain.Page, error) {
 
 	if err := s.pageRepo.Create(page); err != nil {
 		s.logger.Errorw("Error creating page", "error", err, "pageID", pageID)
+		return nil, err
+	}
+
+	if err := s.crawlService.CreateJob(pageID); err != nil {
+		s.logger.Errorw("Error creating crawl job", "error", err, "pageID", pageID)
 		return nil, err
 	}
 

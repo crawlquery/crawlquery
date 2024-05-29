@@ -40,7 +40,7 @@ func (s *Service) Create(email, password string) (*domain.Account, error) {
 	}
 
 	a := &domain.Account{
-		ID:        util.UUID(),
+		ID:        util.UUIDString(),
 		Email:     email,
 		Password:  hashedPassword,
 		CreatedAt: time.Now(),
