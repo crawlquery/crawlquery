@@ -60,7 +60,7 @@ func TestNewCreateNodeResponse(t *testing.T) {
 			t.Errorf("expected: %d, got: %d", node.Port, resp.Node.Port)
 		}
 
-		if resp.Node.ShardID != node.ShardID {
+		if resp.Node.ShardID != uint16(node.ShardID) {
 			t.Errorf("expected: %d, got: %d", node.ShardID, resp.Node.ShardID)
 		}
 
@@ -115,7 +115,7 @@ func TestNewListNodesResponse(t *testing.T) {
 				t.Errorf("expected: %d, got: %d", n.Port, resp.Nodes[i].Port)
 			}
 
-			if resp.Nodes[i].ShardID != n.ShardID {
+			if resp.Nodes[i].ShardID != uint16(n.ShardID) {
 				t.Errorf("expected: %d, got: %d", n.ShardID, resp.Nodes[i].ShardID)
 			}
 		}
@@ -166,7 +166,7 @@ func TestNewAuthenticateNodeResponse(t *testing.T) {
 			t.Errorf("expected: %d, got: %d", node.Port, resp.Node.Port)
 		}
 
-		if resp.Node.ShardID != node.ShardID {
+		if resp.Node.ShardID != uint16(node.ShardID) {
 			t.Errorf("expected: %d, got: %d", node.ShardID, resp.Node.ShardID)
 		}
 	})
@@ -213,7 +213,7 @@ func TestListNodesByShardResponse(t *testing.T) {
 				t.Errorf("expected: %d, got: %d", n.Port, resp.Nodes[i].Port)
 			}
 
-			if resp.Nodes[i].ShardID != n.ShardID {
+			if resp.Nodes[i].ShardID != uint16(n.ShardID) {
 				t.Errorf("expected: %d, got: %d", n.ShardID, resp.Nodes[i].ShardID)
 			}
 		}

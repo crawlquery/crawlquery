@@ -93,6 +93,7 @@ func main() {
 		pageService.WithShardService(shardService),
 		pageService.WithLogger(sugar),
 	)
+	pageHandler := pageHandler.NewHandler(pageService)
 
 	indexJobRepo := indexJobMySQLRepo.NewRepository(db)
 	indexJobService := indexJobService.NewService(indexJobRepo, pageService, nodeService, sugar)
@@ -128,7 +129,7 @@ func main() {
 		accountService,
 		authHandler,
 		accountHandler,
-		crawlJobHandler,
+		pageHandler,
 		nodeHandler,
 		searchHandler,
 		linkHandler,

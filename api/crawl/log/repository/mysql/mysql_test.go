@@ -23,7 +23,7 @@ func TestSave(t *testing.T) {
 		log := &domain.CrawlLog{
 			ID:        domain.CrawlLogID(util.UUIDString()),
 			PageID:    util.PageID("http://example.com"),
-			Status:    domain.CrawlStatusSuccess,
+			Status:    domain.CrawlStatusCompleted,
 			CreatedAt: time.Now(),
 		}
 

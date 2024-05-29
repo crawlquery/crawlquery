@@ -11,12 +11,19 @@ import (
 )
 
 type Service struct {
-	linkRepo    domain.LinkRepository
-	pageService domain.PageService
-	logger      *zap.SugaredLogger
+	eventService domain.EventService
+	linkRepo     domain.LinkRepository
+	pageService  domain.PageService
+	logger       *zap.SugaredLogger
 }
 
 type Option func(*Service)
+
+func WithEventService(eventService domain.EventService) Option {
+	return func(s *Service) {
+		s.eventService = eventService
+	}
+}
 
 func WithLinkRepo(linkRepo domain.LinkRepository) Option {
 	return func(s *Service) {
@@ -85,10 +92,7 @@ func (s *Service) Create(src domain.PageID, dst domain.URL) (*domain.Link, error
 		return nil, err
 	}
 
-	_, err = s.pageService.Create(normalizedDst)
-	if err != nil {
-		return nil, err
-	}
+	s.eventService.Publish(&domain.LinkCreated{Link: link})
 
 	return link, nil
 }

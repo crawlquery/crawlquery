@@ -2,58 +2,26 @@ package service_test
 
 import (
 	"crawlquery/api/domain"
-	linkRepo "crawlquery/api/link/repository/mem"
-	linkService "crawlquery/api/link/service"
+	"crawlquery/api/testfactory"
 
-	crawlJobRepo "crawlquery/api/crawl/job/repository/mem"
-	crawlLogRepo "crawlquery/api/crawl/log/repository/mem"
-	crawlService "crawlquery/api/crawl/service"
-
-	shardRepo "crawlquery/api/shard/repository/mem"
-	shardService "crawlquery/api/shard/service"
-
-	pageRepo "crawlquery/api/page/repository/mem"
-	pageService "crawlquery/api/page/service"
-
-	"crawlquery/pkg/testutil"
 	"crawlquery/pkg/util"
 	"testing"
 )
 
 func TestCreate(t *testing.T) {
 	t.Run("creates a link with page", func(t *testing.T) {
-		// Arrange
-		linkRepo := linkRepo.NewRepository()
-		crawlLogRepo := crawlLogRepo.NewRepository()
-
-		crawlService := crawlService.NewService(
-			crawlService.WithLogger(testutil.NewTestLogger()),
-			crawlService.WithCrawlJobRepo(crawlJobRepo.NewRepository()),
-			crawlService.WithCrawlLogRepo(crawlLogRepo),
+		sf := testfactory.NewServiceFactory(
+			testfactory.WithShard(&domain.Shard{ID: 0}),
 		)
 
-		shardRepo := shardRepo.NewRepository()
-		shardService := shardService.NewService(
-			shardService.WithLogger(testutil.NewTestLogger()),
-			shardService.WithRepo(shardRepo),
-		)
-		shardRepo.Create(&domain.Shard{
-			ID: 0,
+		linkService := sf.LinkService
+		linkRepo := sf.LinkRepo
+		eventService := sf.EventService
+
+		var publishedEvent bool
+		eventService.Subscribe("link.created", func(e domain.Event) {
+			publishedEvent = true
 		})
-
-		pageRepo := pageRepo.NewRepository()
-		pageService := pageService.NewService(
-			pageService.WithLogger(testutil.NewTestLogger()),
-			pageService.WithPageRepo(pageRepo),
-			pageService.WithCrawlService(crawlService),
-			pageService.WithShardService(shardService),
-		)
-
-		linkService := linkService.NewService(
-			linkService.WithPageService(pageService),
-			linkService.WithLinkRepo(linkRepo),
-			linkService.WithLogger(testutil.NewTestLogger()),
-		)
 
 		src := util.PageID("https://cancreatealink.com")
 		dst := domain.URL("https://cancreatealink.com/about")
@@ -84,14 +52,8 @@ func TestCreate(t *testing.T) {
 			t.Errorf("Expected 1 link, got %d", len(repoCheck))
 		}
 
-		page, err := pageRepo.Get(util.PageID("https://cancreatealink.com/about"))
-
-		if err != nil {
-			t.Errorf("Error getting page: %v", err)
-		}
-
-		if page.URL != "https://cancreatealink.com/about" {
-			t.Errorf("Expected page URL to be https://cancreatealink.com/about, got %s", page.URL)
+		if !publishedEvent {
+			t.Errorf("Expected event to be published")
 		}
 	})
 }

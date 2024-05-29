@@ -13,6 +13,7 @@ import (
 )
 
 type Service struct {
+	eventService domain.EventService
 	crawlJobRepo domain.CrawlJobRepository
 	crawlLogRepo domain.CrawlLogRepository
 	crawlQueue   domain.CrawlQueue
@@ -27,6 +28,12 @@ type Service struct {
 }
 
 type Option func(*Service)
+
+func WithEventService(eventService domain.EventService) func(*Service) {
+	return func(s *Service) {
+		s.eventService = eventService
+	}
+}
 
 func WithCrawlJobRepo(crawlJobRepo domain.CrawlJobRepository) func(*Service) {
 	return func(s *Service) {
@@ -291,6 +298,11 @@ func (s *Service) ProcessQueueItem(ctx context.Context, job *domain.CrawlJob) er
 			s.logger.Errorw("Error saving crawl job", "error", err)
 			return err
 		}
+
+		s.eventService.Publish(&domain.CrawlCompleted{
+			PageID: job.PageID,
+			Links:  res.Links,
+		})
 	}
 
 	cl.Status = domain.CrawlStatusCompleted

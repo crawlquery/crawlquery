@@ -72,3 +72,12 @@ type CrawlRateLimiter interface {
 type CrawlService interface {
 	CreateJob(page *Page) error
 }
+
+type CrawlCompleted struct {
+	PageID PageID
+	Links  []string
+}
+
+func (c CrawlCompleted) Key() EventKey {
+	return "crawl.completed"
+}

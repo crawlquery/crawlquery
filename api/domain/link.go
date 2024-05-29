@@ -28,3 +28,11 @@ type LinkService interface {
 type LinkHandler interface {
 	Create(c *gin.Context)
 }
+
+type LinkCreated struct {
+	Link *Link
+}
+
+func (l LinkCreated) Key() EventKey {
+	return "link.created"
+}

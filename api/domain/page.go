@@ -33,3 +33,11 @@ type PageService interface {
 type PageHandler interface {
 	Create(c *gin.Context)
 }
+
+type PageCreated struct {
+	Page *Page
+}
+
+func (p PageCreated) Key() EventKey {
+	return "page.created"
+}

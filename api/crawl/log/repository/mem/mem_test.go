@@ -43,7 +43,7 @@ func TestListByPageID(t *testing.T) {
 		cl2 := &domain.CrawlLog{
 			ID:     domain.CrawlLogID(util.UUIDString()),
 			PageID: domain.PageID("http://example.com/2"),
-			Status: domain.CrawlStatusSuccess,
+			Status: domain.CrawlStatusCompleted,
 		}
 
 		repo.logs[cl1.ID] = cl1

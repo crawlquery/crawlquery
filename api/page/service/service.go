@@ -11,6 +11,7 @@ import (
 
 type Service struct {
 	pageRepo     domain.PageRepository
+	eventService domain.EventService
 	shardService domain.ShardService
 	crawlService domain.CrawlService
 	logger       *zap.SugaredLogger
@@ -39,6 +40,12 @@ func WithCrawlService(crawlService domain.CrawlService) func(*Service) {
 func WithLogger(logger *zap.SugaredLogger) func(*Service) {
 	return func(s *Service) {
 		s.logger = logger
+	}
+}
+
+func WithEventService(eventService domain.EventService) func(*Service) {
+	return func(s *Service) {
+		s.eventService = eventService
 	}
 }
 
@@ -90,10 +97,9 @@ func (s *Service) Create(url domain.URL) (*domain.Page, error) {
 		return nil, err
 	}
 
-	if err := s.crawlService.CreateJob(page); err != nil {
-		s.logger.Errorw("Error creating crawl job", "error", err, "page", page)
-		return nil, err
-	}
+	s.eventService.Publish(&domain.PageCreated{
+		Page: page,
+	})
 
 	return page, nil
 }
