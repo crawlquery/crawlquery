@@ -8,19 +8,23 @@ import (
 var ErrPageNotFound = errors.New("page not found")
 var ErrPageAlreadyExists = errors.New("page already exists")
 
+type PageID string
+type URL string
+type ShardID uint16
+
 type Page struct {
-	ID        string
-	ShardID   uint
-	Hash      string
+	ID        PageID
+	URL       URL
+	ShardID   ShardID
 	CreatedAt time.Time
 }
 
 type PageRepository interface {
-	Get(id string) (*Page, error)
+	Get(id PageID) (*Page, error)
 	Create(p *Page) error
 }
 
 type PageService interface {
 	Get(id string) (*Page, error)
-	Create(pageID string, shardID uint, hash string) (*Page, error)
+	Create(url string) (*Page, error)
 }

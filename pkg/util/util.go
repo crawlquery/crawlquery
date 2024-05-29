@@ -1,6 +1,7 @@
 package util
 
 import (
+	"crawlquery/api/domain"
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
@@ -66,7 +67,7 @@ func Sha256Hex32(b []byte) string {
 }
 
 // PageID generates a unique 32-character hash for a given URL.
-func PageID(url string) string {
+func PageID(url domain.URL) domain.PageID {
 	// Create a new SHA-256 hash.
 	hash := sha256.New()
 	// Write the URL to the hash.
@@ -76,5 +77,5 @@ func PageID(url string) string {
 	// Encode the hash bytes as a Base64 string.
 	hashString := hex.EncodeToString(hashBytes)
 	// Return the first 32 characters of the hexadecimal string.
-	return hashString[:32]
+	return domain.PageID(hashString[:32])
 }

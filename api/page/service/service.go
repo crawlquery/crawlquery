@@ -2,24 +2,51 @@ package service
 
 import (
 	"crawlquery/api/domain"
+	"crawlquery/pkg/util"
+
 	"time"
 
 	"go.uber.org/zap"
 )
 
 type Service struct {
-	pageRepo domain.PageRepository
-	logger   *zap.SugaredLogger
+	pageRepo     domain.PageRepository
+	shardService domain.ShardService
+	crawlService domain.CrawlService
+	logger       *zap.SugaredLogger
 }
 
-func NewService(pageRepo, nil domain.PageRepository, logger *zap.SugaredLogger) *Service {
-	return &Service{
-		pageRepo: pageRepo,
-		logger:   logger,
+type Option func(*Service)
+
+func WithShardService(shardService domain.ShardService) func(*Service) {
+	return func(s *Service) {
+		s.shardService = shardService
 	}
 }
 
-func (s *Service) Get(pageID string) (*domain.Page, error) {
+func WithPageRepo(pageRepo domain.PageRepository) func(*Service) {
+	return func(s *Service) {
+		s.pageRepo = pageRepo
+	}
+}
+
+func WithLogger(logger *zap.SugaredLogger) func(*Service) {
+	return func(s *Service) {
+		s.logger = logger
+	}
+}
+
+func NewService(opts ...Option) *Service {
+	s := &Service{}
+
+	for _, opt := range opts {
+		opt(s)
+	}
+
+	return s
+}
+
+func (s *Service) Get(pageID domain.PageID) (*domain.Page, error) {
 	page, err := s.pageRepo.Get(pageID)
 	if err != nil {
 		s.logger.Errorw("Error getting page", "error", err, "pageID", pageID)
@@ -28,7 +55,9 @@ func (s *Service) Get(pageID string) (*domain.Page, error) {
 	return page, nil
 }
 
-func (s *Service) Create(pageID string, shardID uint, hash string) (*domain.Page, error) {
+func (s *Service) Create(url domain.URL) (*domain.Page, error) {
+
+	pageID := util.PageID(url)
 
 	if _, err := s.pageRepo.Get(pageID); err == nil {
 		s.logger.Errorw("Page already exists", "pageID", pageID)
@@ -37,10 +66,18 @@ func (s *Service) Create(pageID string, shardID uint, hash string) (*domain.Page
 
 	page := &domain.Page{
 		ID:        pageID,
-		ShardID:   shardID,
-		Hash:      hash,
+		URL:       url,
 		CreatedAt: time.Now(),
 	}
+
+	shardID, err := s.shardService.GetURLShardID(url)
+
+	if err != nil {
+		s.logger.Errorw("Error getting shard ID", "error", err, "pageID", pageID)
+		return nil, err
+	}
+
+	page.ShardID = shardID
 
 	if err := s.pageRepo.Create(page); err != nil {
 		s.logger.Errorw("Error creating page", "error", err, "pageID", pageID)

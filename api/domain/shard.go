@@ -14,14 +14,9 @@ type Shard struct {
 }
 
 type ShardRepository interface {
-	Create(*Shard) error
-	List() ([]*Shard, error)
 	Count() (int, error)
 }
 
 type ShardService interface {
-	Create(*Shard) error
-	List() ([]*Shard, error)
-	GetURLShardID(url string) (uint, error)
-	First() (*Shard, error)
+	GetURLShardID(url URL) (ShardID, error)
 }

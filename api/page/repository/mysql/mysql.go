@@ -18,7 +18,7 @@ func NewRepository(db *sql.DB) *Repository {
 func (r *Repository) Get(id string) (*domain.Page, error) {
 	var page domain.Page
 
-	err := r.db.QueryRow("SELECT id, shard_id, hash, created_at FROM pages WHERE id = ?", id).Scan(&page.ID, &page.ShardID, &page.Hash, &page.CreatedAt)
+	err := r.db.QueryRow("SELECT id, url, shard_id, created_at FROM pages WHERE id = ?", id).Scan(&page.ID, &page.URL, &page.ShardID, &page.CreatedAt)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -31,7 +31,7 @@ func (r *Repository) Get(id string) (*domain.Page, error) {
 }
 
 func (r *Repository) Create(p *domain.Page) error {
-	_, err := r.db.Exec("INSERT INTO pages (id, shard_id, hash, created_at) VALUES (?, ?, ?, ?)", p.ID, p.ShardID, p.Hash, p.CreatedAt)
+	_, err := r.db.Exec("INSERT INTO pages (id, url, shard_id, created_at) VALUES (?, ?, ?, ?)", p.ID, p.URL, p.ShardID, p.CreatedAt)
 	if err != nil {
 		return err
 	}

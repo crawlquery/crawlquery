@@ -13,18 +13,22 @@ func TestGet(t *testing.T) {
 	t.Run("should return a page", func(t *testing.T) {
 		db := testutil.CreateTestMysqlDB()
 		defer db.Close()
-		migration.Up(db)
+		err := migration.Up(db)
+
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
 
 		repo := mysql.NewRepository(db)
 
 		page := &domain.Page{
 			ID:        "123",
 			ShardID:   1,
-			Hash:      "abc123",
+			URL:       "http://example.com",
 			CreatedAt: time.Now(),
 		}
 
-		_, err := db.Exec("INSERT INTO pages (id, shard_id, hash, created_at) VALUES (?, ?, ?, ?)", page.ID, page.ShardID, page.Hash, page.CreatedAt)
+		_, err = db.Exec("INSERT INTO pages (id, url, shard_id, created_at) VALUES (?, ?, ?, ?)", page.ID, page.URL, page.ShardID, page.CreatedAt)
 
 		defer db.Exec("DELETE FROM pages WHERE id = ?", page.ID)
 		if err != nil {
@@ -45,8 +49,8 @@ func TestGet(t *testing.T) {
 			t.Errorf("expected page ShardID to be 1, got %d", res.ShardID)
 		}
 
-		if res.Hash != "abc123" {
-			t.Errorf("expected page Hash to be abc123, got %s", res.Hash)
+		if res.URL != "http://example.com" {
+			t.Errorf("expected page URL to be http://example.com, got %s", res.URL)
 		}
 
 		if res.CreatedAt.UTC().Round(time.Second) != page.CreatedAt.UTC().Round(time.Second) {
@@ -79,8 +83,8 @@ func TestCreate(t *testing.T) {
 
 		page := &domain.Page{
 			ID:        "123",
+			URL:       "http://example.com",
 			ShardID:   1,
-			Hash:      "abc123",
 			CreatedAt: time.Now(),
 		}
 
@@ -91,12 +95,12 @@ func TestCreate(t *testing.T) {
 			t.Errorf("unexpected error: %v", err)
 		}
 
-		var id string
-		var shardID int
-		var hash string
+		var id domain.PageID
+		var url domain.URL
+		var shardID domain.ShardID
 		var createdAt time.Time
 
-		err = db.QueryRow("SELECT id, shard_id, hash, created_at FROM pages WHERE id = ?", page.ID).Scan(&id, &shardID, &hash, &createdAt)
+		err = db.QueryRow("SELECT id, url, shard_id, created_at FROM pages WHERE id = ?", page.ID).Scan(&id, &url, &shardID, &createdAt)
 
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
@@ -106,12 +110,12 @@ func TestCreate(t *testing.T) {
 			t.Errorf("expected page ID to be 123, got %s", id)
 		}
 
-		if shardID != 1 {
-			t.Errorf("expected page ShardID to be 1, got %d", shardID)
+		if url != "http://example.com" {
+			t.Errorf("expected page URL to be http://example.com, got %s", url)
 		}
 
-		if hash != "abc123" {
-			t.Errorf("expected page Hash to be abc123, got %s", hash)
+		if shardID != 1 {
+			t.Errorf("expected page ShardID to be 1, got %d", shardID)
 		}
 
 		if createdAt.UTC().Round(time.Second) != page.CreatedAt.UTC().Round(time.Second) {

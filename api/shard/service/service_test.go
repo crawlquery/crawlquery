@@ -8,39 +8,12 @@ import (
 	"testing"
 )
 
-func TestCreate(t *testing.T) {
-	t.Run("can create a shard", func(t *testing.T) {
-		repo := mem.NewRepository()
-		service := service.NewService(repo, testutil.NewTestLogger())
-
-		shard := &domain.Shard{
-			ID: 3,
-		}
-
-		err := service.Create(shard)
-
-		if err != nil {
-			t.Fatalf("Error creating shard: %v", err)
-		}
-
-		check, err := repo.Get(shard.ID)
-
-		if err != nil {
-			t.Fatalf("Error getting shard: %v", err)
-		}
-
-		if check.ID != shard.ID {
-			t.Errorf("Expected ID to be %d, got %d", shard.ID, check.ID)
-		}
-	})
-}
-
 func TestGetURLShardID(t *testing.T) {
 	// Define test cases with URLs and the expected shard for a given number of shards
 	tests := []struct {
-		url        string
+		url        domain.URL
 		numShards  int
-		expectedID uint
+		expectedID domain.ShardID
 	}{
 		{"https://www.amazon.com", 5000, 4786},
 		{"https://www.google.com", 10, 5},
@@ -53,9 +26,12 @@ func TestGetURLShardID(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.url, func(t *testing.T) {
+		t.Run(string(tc.url), func(t *testing.T) {
 			repo := mem.NewRepository()
-			service := service.NewService(repo, testutil.NewTestLogger())
+			service := service.NewService(
+				service.WithRepo(repo),
+				service.WithLogger(testutil.NewTestLogger()),
+			)
 
 			for i := 0; i < tc.numShards; i++ {
 				repo.Create(&domain.Shard{ID: uint(i)})

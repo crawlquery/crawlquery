@@ -12,40 +12,37 @@ type Service struct {
 	logger *zap.SugaredLogger
 }
 
-func NewService(
-	repo domain.ShardRepository,
-	logger *zap.SugaredLogger,
-) *Service {
-	return &Service{repo, logger}
+type Option func(*Service)
+
+func WithRepo(repo domain.ShardRepository) func(*Service) {
+	return func(s *Service) {
+		s.repo = repo
+	}
 }
 
-func hash(s string) uint32 {
+func WithLogger(logger *zap.SugaredLogger) func(*Service) {
+	return func(s *Service) {
+		s.logger = logger
+	}
+}
+
+func NewService(opts ...Option) *Service {
+	s := &Service{}
+
+	for _, opt := range opts {
+		opt(s)
+	}
+
+	return s
+}
+
+func hashURL(s domain.URL) uint32 {
 	h := fnv.New32a()
 	h.Write([]byte(s))
 	return h.Sum32()
 }
 
-func (ss *Service) Create(s *domain.Shard) error {
-	return ss.repo.Create(s)
-}
-
-func (ss *Service) First() (*domain.Shard, error) {
-	shards, err := ss.repo.List()
-
-	if err != nil {
-		ss.logger.Errorf("Shard.Service.First: error listing shards: %v", err)
-		return nil, err
-	}
-
-	if len(shards) == 0 {
-		ss.logger.Errorf("Shard.Service.First: no shards")
-		return nil, domain.ErrNoShards
-	}
-
-	return shards[0], nil
-}
-
-func (ss *Service) GetURLShardID(url string) (uint, error) {
+func (ss *Service) GetURLShardID(url domain.URL) (domain.ShardID, error) {
 
 	count, err := ss.repo.Count()
 
@@ -59,9 +56,5 @@ func (ss *Service) GetURLShardID(url string) (uint, error) {
 		return 0, domain.ErrNoShards
 	}
 
-	return uint(hash(url) % uint32(count)), nil
-}
-
-func (ss *Service) List() ([]*domain.Shard, error) {
-	return ss.repo.List()
+	return domain.ShardID(uint(hashURL(url) % uint32(count))), nil
 }

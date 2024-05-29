@@ -56,7 +56,7 @@ func main() {
 	defer logger.Sync()
 	sugar := logger.Sugar()
 
-	db, err := sql.Open("mysql", "root:cqdb@tcp(localhost:3306)/cqdb?parseTime=true")
+	db, err := sql.Open("mysql", "root:cqdb@tcp(localhost:3306)/cqdb_v2?parseTime=true")
 	if err != nil {
 		fmt.Println("Error connecting to database: ", err)
 		return

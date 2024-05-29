@@ -11,8 +11,8 @@ func TestCreate(t *testing.T) {
 
 		page := &domain.Page{
 			ID:      "123",
-			ShardID: 1,
-			Hash:    "hash",
+			URL:     domain.URL("http://example.com"),
+			ShardID: domain.ShardID(1),
 		}
 
 		err := repo.Create(page)
@@ -29,12 +29,12 @@ func TestCreate(t *testing.T) {
 			t.Errorf("expected page ID to be 123, got %s", repo.pages["123"].ID)
 		}
 
-		if repo.pages["123"].ShardID != 1 {
-			t.Errorf("expected page ShardID to be 1, got %d", repo.pages["123"].ShardID)
+		if repo.pages["123"].URL != "http://example.com" {
+			t.Errorf("expected page URL to be http://example.com, got %s", repo.pages["123"].URL)
 		}
 
-		if repo.pages["123"].Hash != "hash" {
-			t.Errorf("expected page Hash to be hash, got %s", repo.pages["123"].Hash)
+		if repo.pages["123"].ShardID != 1 {
+			t.Errorf("expected page ShardID to be 1, got %d", repo.pages["123"].ShardID)
 		}
 	})
 }

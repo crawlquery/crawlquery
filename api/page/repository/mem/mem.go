@@ -3,16 +3,16 @@ package mem
 import "crawlquery/api/domain"
 
 type Repository struct {
-	pages map[string]*domain.Page
+	pages map[domain.PageID]*domain.Page
 }
 
 func NewRepository() *Repository {
 	return &Repository{
-		pages: make(map[string]*domain.Page),
+		pages: make(map[domain.PageID]*domain.Page),
 	}
 }
 
-func (r *Repository) Get(id string) (*domain.Page, error) {
+func (r *Repository) Get(id domain.PageID) (*domain.Page, error) {
 	page, ok := r.pages[id]
 	if !ok {
 		return nil, domain.ErrPageNotFound

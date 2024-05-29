@@ -36,27 +36,66 @@ var migrations = []Migration{
 		SQL:  `CREATE UNIQUE INDEX nodes_account_id_hostname_port ON nodes (account_id, hostname, port)`,
 	},
 	{
+		Name: "create_pages_table",
+		SQL: `CREATE TABLE pages (
+			id VARCHAR(32) PRIMARY KEY,
+			url VARCHAR(2083) NOT NULL,
+			shard_id SMALLINT UNSIGNED NOT NULL,
+			created_at TIMESTAMP NOT NULL,
+			INDEX (shard_id));`,
+	},
+	{
 		Name: "create_crawl_jobs_table",
 		SQL: `CREATE TABLE crawl_jobs (
-		id VARCHAR(36) PRIMARY KEY,
-		url TEXT NOT NULL,
-		page_id VARCHAR(32) NOT NULL UNIQUE,
-		backoff_until TIMESTAMP,
-		last_crawled_at TIMESTAMP,
-		failed_reason TEXT,
-		created_at TIMESTAMP NOT NULL)`,
+			page_id VARCHAR(32) PRIMARY KEY,
+			status TINYINT UNSIGNED NOT NULL,
+			created_at TIMESTAMP NOT NULL,
+			updated_at TIMESTAMP NOT NULL,
+			INDEX (status))`,
+	},
+	{
+		Name: "create_crawl_logs_table",
+		SQL: `CREATE TABLE crawl_logs (
+			id BIGINT AUTO_INCREMENT PRIMARY KEY,
+			page_id VARCHAR(32) NOT NULL,
+			status TINYINT UNSIGNED NOT NULL,
+			info TEXT,
+			created_at TIMESTAMP NOT NULL,
+			INDEX (status))`,
+	},
+	{
+		Name: "created_index_jobs_table",
+		SQL: `CREATE TABLE index_jobs (
+			page_id VARCHAR(32) PRIMARY KEY,
+			status TINYINT UNSIGNED NOT NULL,
+			created_at TIMESTAMP NOT NULL,
+			updated_at TIMESTAMP NOT NULL,
+			INDEX (status))`,
+	},
+	{
+		Name: "create_index_logs_table",
+		SQL: `CREATE TABLE index_logs (
+			id BIGINT AUTO_INCREMENT PRIMARY KEY,
+			page_id VARCHAR(32) NOT NULL,
+			status TINYINT UNSIGNED NOT NULL,
+			info TEXT,
+			created_at TIMESTAMP NOT NULL,
+			INDEX (status))`,
+	},
+
+	{
+		Name: "create_page_versions_table",
+		SQL: `CREATE TABLE page_versions (
+			page_id VARCHAR(32) NOT NULL,
+			hash VARCHAR(32) NOT NULL,
+			created_at TIMESTAMP NOT NULL,
+			PRIMARY KEY (page_id, hash))`,
 	},
 	{
 		Name: "create_shards_table",
 		SQL: `CREATE TABLE shards (
-		id INT PRIMARY KEY,
+		id SMALLINT UNSIGNED PRIMARY KEY,
 		created_at TIMESTAMP NOT NULL)`,
-	},
-	{
-		Name: "create_crawl_restrictions_table",
-		SQL: `CREATE TABLE crawl_restrictions (
-		domain VARCHAR(255) NOT NULL PRIMARY KEY,
-		until TIMESTAMP)`,
 	},
 	{
 		Name: "create_links_table",
@@ -65,24 +104,6 @@ var migrations = []Migration{
 			dst_id VARCHAR(32) NOT NULL,
 			created_at TIMESTAMP NOT NULL,
 			PRIMARY KEY (src_id, dst_id))`,
-	},
-	{
-		Name: "create_pages_table",
-		SQL: `CREATE TABLE pages (
-			id VARCHAR(32) PRIMARY KEY,
-			shard_id INT NOT NULL,
-			hash VARCHAR(32) NOT NULL,
-			created_at TIMESTAMP NOT NULL)`,
-	},
-	{
-		Name: "create_index_jobs_table",
-		SQL: `CREATE TABLE index_jobs (
-			id VARCHAR(36) PRIMARY KEY,
-			page_id VARCHAR(32) NOT NULL UNIQUE,
-			backoff_until TIMESTAMP,
-			last_indexed_at TIMESTAMP,
-			failed_reason TEXT,
-			created_at TIMESTAMP NOT NULL)`,
 	},
 	{
 		Name: "create_page_ranks_table",
