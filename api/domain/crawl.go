@@ -73,11 +73,13 @@ type CrawlService interface {
 	CreateJob(page *Page) error
 }
 
+const CrawlCompletedKey = "crawl.completed"
+
 type CrawlCompleted struct {
 	PageID PageID
-	Links  []string
+	Links  []URL
 }
 
 func (c CrawlCompleted) Key() EventKey {
-	return "crawl.completed"
+	return CrawlCompletedKey
 }

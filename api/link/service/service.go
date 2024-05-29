@@ -50,7 +50,20 @@ func NewService(opts ...Option) *Service {
 		opt(s)
 	}
 
+	s.registerEventListeners()
+
 	return s
+}
+
+func WithEventListeners(s *Service) {
+	s.registerEventListeners()
+}
+
+func (s *Service) registerEventListeners() {
+	if s.eventService == nil {
+		s.logger.Fatal("EventService is required")
+	}
+	s.eventService.Subscribe(domain.CrawlCompletedKey, s.handleCrawlCompleted)
 }
 
 var trackingParams = []string{
@@ -73,6 +86,16 @@ func normalizeURL(rawURL domain.URL) (domain.URL, error) {
 	parsedURL.Scheme = strings.ToLower(parsedURL.Scheme)
 
 	return domain.URL(parsedURL.String()), nil
+}
+
+func (s *Service) handleCrawlCompleted(e domain.Event) {
+	crawlCompletedEvent := e.(*domain.CrawlCompleted)
+	for _, link := range crawlCompletedEvent.Links {
+		_, err := s.Create(crawlCompletedEvent.PageID, link)
+		if err != nil {
+			s.logger.Errorw("Error creating link", "error", err)
+		}
+	}
 }
 
 func (s *Service) Create(src domain.PageID, dst domain.URL) (*domain.Link, error) {

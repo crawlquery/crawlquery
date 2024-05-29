@@ -85,6 +85,7 @@ func NewServiceFactory(options ...ServiceFactoryOption) *ServiceFactory {
 	crawlRepo := crawlJobRepo.NewRepository()
 	crawlLogRepo := crawlLogRepo.NewRepository()
 	crawlService := crawlService.NewService(
+		crawlService.WithEventService(eventService),
 		crawlService.WithCrawlJobRepo(crawlRepo),
 		crawlService.WithNodeService(nodeService),
 		crawlService.WithLinkService(linkService),

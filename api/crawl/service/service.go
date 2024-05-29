@@ -299,9 +299,14 @@ func (s *Service) ProcessQueueItem(ctx context.Context, job *domain.CrawlJob) er
 			return err
 		}
 
+		var links []domain.URL
+		for _, link := range res.Links {
+			links = append(links, domain.URL(link))
+		}
+
 		s.eventService.Publish(&domain.CrawlCompleted{
 			PageID: job.PageID,
-			Links:  res.Links,
+			Links:  links,
 		})
 	}
 
