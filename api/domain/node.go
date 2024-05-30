@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"context"
 	"crawlquery/node/dto"
 	"errors"
 	"time"
@@ -41,7 +42,7 @@ type NodeService interface {
 	ListByAccountID(accountID string) ([]*Node, error)
 	ListByShardID(shardID ShardID) ([]*Node, error)
 	Randomize(nodes []*Node) []*Node
-	SendCrawlJob(node *Node, crawlJob *CrawlJob) (*dto.CrawlResponse, error)
+	SendCrawlJob(ctx context.Context, node *Node, crawlJob *CrawlJob) (*dto.CrawlResponse, error)
 	SendIndexJob(node *Node, indexJob *IndexJob) error
 	Auth(key string) (*Node, error)
 }

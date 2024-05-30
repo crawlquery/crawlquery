@@ -4,8 +4,6 @@ import (
 	"context"
 	"crawlquery/api/domain"
 	"errors"
-	"log"
-	"math/rand"
 	"sync"
 	"time"
 
@@ -135,35 +133,13 @@ func (s *Service) FillQueue() error {
 	return nil
 }
 
-func (s *Service) CacheNodes() error {
+func (s *Service) cacheNodes() error {
 	var err error
-	s.nodesCache, err = s.nodeService.RandomizedListGroupByShard()
+
 	if err != nil {
 		return err
 	}
 	return nil
-}
-
-func (s *Service) GetRandomNodeFromCache(shardID domain.ShardID) *domain.Node {
-	nodes, ok := s.nodesCache[shardID]
-	if !ok {
-		return nil
-	}
-
-	if len(nodes) == 0 {
-		return nil
-	}
-
-	var list []*domain.Node
-	for _, node := range nodes {
-		list = append(list, node)
-	}
-
-	rand.Shuffle(len(list), func(i, j int) {
-		list[i], list[j] = list[j], list[i]
-	})
-
-	return list[0]
 }
 
 func (s *Service) Crawl(ctx context.Context) error {
@@ -173,12 +149,7 @@ func (s *Service) Crawl(ctx context.Context) error {
 			return ctx.Err()
 		default:
 
-			err := s.CacheNodes()
-			if err != nil {
-				return err
-			}
-
-			err = s.FillQueue()
+			err := s.FillQueue()
 			if err != nil {
 				return err
 			}
@@ -219,19 +190,53 @@ func (s *Service) ProcessQueue() error {
 }
 
 func (s *Service) worker(jobs <-chan *domain.CrawlJob, wg *sync.WaitGroup) {
+	nodes, err := s.nodeService.RandomizedListGroupByShard()
+
+	if err != nil {
+		s.logger.Error("worker failed to get nodes: %v", err)
+		return
+	}
+
 	defer wg.Done()
 	for job := range jobs {
 		ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 		defer cancel()
 
-		err := s.ProcessQueueItem(ctx, job)
-		if err != nil {
-			log.Printf("Failed to process job %s: %v", job.PageID, err)
+		var maxAttempts = 3
+		var attempts = 0
+		for _, node := range nodes[job.ShardID] {
+			attempts++
+			err := s.ProcessQueueItem(ctx, job, node)
+
+			if err == nil {
+				break
+			}
+
+			if attempts >= maxAttempts {
+				s.logger.Errorw("Failed to process job after max attempts", "job", job, "error", err)
+				break
+			}
 		}
 	}
 }
 
-func (s *Service) ProcessQueueItem(ctx context.Context, job *domain.CrawlJob) error {
+func (s *Service) updateJob(job *domain.CrawlJob, status domain.CrawlStatus) error {
+	job.Status = status
+	job.UpdatedAt = time.Now()
+	return s.crawlJobRepo.Save(job)
+}
+
+func (s *Service) updateLog(job *domain.CrawlJob, status domain.CrawlStatus, info string) error {
+	cl := &domain.CrawlLog{
+		PageID:    job.PageID,
+		Status:    status,
+		Info:      info,
+		CreatedAt: time.Now(),
+	}
+	return s.crawlLogRepo.Save(cl)
+}
+
+func (s *Service) ProcessQueueItem(ctx context.Context, job *domain.CrawlJob, assignedNode *domain.Node) error {
 	cl := &domain.CrawlLog{
 		PageID:    job.PageID,
 		Status:    domain.CrawlStatusInProgress,
@@ -244,73 +249,35 @@ func (s *Service) ProcessQueueItem(ctx context.Context, job *domain.CrawlJob) er
 		return err
 	}
 
-	// Simulate processing time
-	select {
-	case <-ctx.Done():
+	res, err := s.nodeService.SendCrawlJob(
+		ctx,
+		assignedNode,
+		job,
+	)
 
-		cl.Status = domain.CrawlStatusFailed
-		cl.Info = "Crawl timed out"
-		err := s.crawlLogRepo.Save(cl)
-
-		if err != nil {
-			s.logger.Errorw("Error saving crawl log", "error", err)
+	if err != nil {
+		if err := s.updateJob(job, domain.CrawlStatusFailed); err != nil {
 			return err
 		}
-
-		return ctx.Err()
-	default:
-		randomNode := s.GetRandomNodeFromCache(job.ShardID)
-		if randomNode == nil {
-			cl.Status = domain.CrawlStatusFailed
-			cl.Info = "No nodes available"
-			err := s.crawlLogRepo.Save(cl)
-			if err != nil {
-				s.logger.Errorw("Error saving crawl log", "error", err)
-				return err
-			}
-			return nil
-		}
-
-		res, err := s.nodeService.SendCrawlJob(randomNode, job)
-
-		if err != nil {
-			cl.Status = domain.CrawlStatusFailed
-			cl.Info = err.Error()
-			err := s.crawlLogRepo.Save(cl)
-			if err != nil {
-				s.logger.Errorw("Error saving crawl log", "error", err)
-				return err
-			}
-			return nil
-		}
-
-		for _, link := range res.Links {
-			_, err := s.linkService.Create(job.PageID, domain.URL(link))
-			if err != nil {
-				s.logger.Errorw("Error creating crawl job", "error", err)
-				return err
-			}
-		}
-
-		job.Status = domain.CrawlStatusCompleted
-		err = s.crawlJobRepo.Save(job)
-		if err != nil {
-			s.logger.Errorw("Error saving crawl job", "error", err)
-			return err
-		}
-
-		var links []domain.URL
-		for _, link := range res.Links {
-			links = append(links, domain.URL(link))
-		}
-
-		s.eventService.Publish(&domain.CrawlCompleted{
-			PageID: job.PageID,
-			Links:  links,
-		})
+		s.updateLog(job, domain.CrawlStatusFailed, err.Error())
+		return err
 	}
 
-	cl.Status = domain.CrawlStatusCompleted
-	cl.CreatedAt = time.Now()
-	return s.crawlLogRepo.Save(cl)
+	if err := s.updateJob(job, domain.CrawlStatusCompleted); err != nil {
+		return err
+	}
+
+	var links []domain.URL
+	for _, link := range res.Links {
+		links = append(links, domain.URL(link))
+	}
+
+	s.eventService.Publish(&domain.CrawlCompleted{
+		PageID: job.PageID,
+		Links:  links,
+	})
+
+	s.updateLog(job, domain.CrawlStatusCompleted, "")
+
+	return nil
 }

@@ -15,10 +15,9 @@ func TestCrawl(t *testing.T) {
 		defer gock.Off()
 
 		expectedRes := &dto.CrawlResponse{
-			Page: &dto.Page{
-				ID:   "page1",
-				URL:  "http://example.com",
-				Hash: "hash",
+			Hash: "hash",
+			Links: []string{
+				"http://example.com",
 			},
 		}
 
@@ -27,7 +26,10 @@ func TestCrawl(t *testing.T) {
 			Reply(200).
 			JSON(expectedRes)
 
-		node := node.NewClient("http://node.com")
+		node := node.NewClient(
+			node.WithHostname("node.com"),
+			node.WithPort(80),
+		)
 
 		res, err := node.Crawl("page1", "http://example.com")
 
@@ -35,8 +37,12 @@ func TestCrawl(t *testing.T) {
 			t.Fatalf("Expected no error, got %v", err)
 		}
 
-		if res.Hash != expectedRes.Page.Hash {
-			t.Fatalf("Expected %s, got %s", expectedRes.Page.Hash, res)
+		if res.Hash != expectedRes.Hash {
+			t.Fatalf("Expected %s, got %s", expectedRes.Hash, res)
+		}
+
+		if res.Links[0] != expectedRes.Links[0] {
+			t.Fatalf("Expected %s, got %s", expectedRes.Links[0], res.Links[0])
 		}
 
 		if !gock.IsDone() {
@@ -58,7 +64,10 @@ func TestIndex(t *testing.T) {
 			Reply(200).
 			JSON(expectedRes)
 
-		node := node.NewClient("http://node.com")
+		node := node.NewClient(
+			node.WithHostname("node.com"),
+			node.WithPort(80),
+		)
 
 		err := node.Index("page1")
 
@@ -93,7 +102,10 @@ func TestGetIndexMetas(t *testing.T) {
 			Reply(200).
 			JSON(expectedRes)
 
-		node := node.NewClient("http://node.com")
+		node := node.NewClient(
+			node.WithHostname("node.com"),
+			node.WithPort(80),
+		)
 
 		indexMetas, err := node.GetIndexMetas([]string{"page1"})
 
@@ -129,7 +141,10 @@ func TestGetAllIndexMetas(t *testing.T) {
 			Reply(200).
 			JSON(expectedRes)
 
-		node := node.NewClient("http://node.com")
+		node := node.NewClient(
+			node.WithHostname("node.com"),
+			node.WithPort(80),
+		)
 
 		indexMetas, err := node.GetAllIndexMetas()
 
@@ -180,7 +195,10 @@ func TestGetPageDumps(t *testing.T) {
 			Reply(200).
 			JSON(expectedRes)
 
-		node := node.NewClient("http://node.com")
+		node := node.NewClient(
+			node.WithHostname("node.com"),
+			node.WithPort(80),
+		)
 
 		res, err := node.GetPageDumps([]string{"page1"})
 

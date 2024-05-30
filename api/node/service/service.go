@@ -1,11 +1,11 @@
 package service
 
 import (
+	"context"
 	"crawlquery/api/domain"
 	"crawlquery/node/dto"
 	"crawlquery/pkg/client/node"
 	"crawlquery/pkg/util"
-	"fmt"
 	"math/rand"
 	"time"
 
@@ -229,15 +229,22 @@ func (s *Service) ListByShardID(shardID domain.ShardID) ([]*domain.Node, error) 
 	return filtered, nil
 }
 
-func (s *Service) SendCrawlJob(n *domain.Node, job *domain.CrawlJob) (*dto.CrawlResponse, error) {
+func (s *Service) SendCrawlJob(ctx context.Context, n *domain.Node, job *domain.CrawlJob) (*dto.CrawlResponse, error) {
 
-	c := node.NewClient(fmt.Sprintf("http://%s:%d", n.Hostname, n.Port))
+	c := node.NewClient(
+		node.WithHostname(n.Hostname),
+		node.WithPort(n.Port),
+		node.WithContext(ctx),
+	)
 
 	return c.Crawl(string(job.PageID), string(job.URL))
 }
 
 func (s *Service) SendIndexJob(n *domain.Node, job *domain.IndexJob) error {
-	c := node.NewClient(fmt.Sprintf("http://%s:%d", n.Hostname, n.Port))
+	c := node.NewClient(
+		node.WithHostname(n.Hostname),
+		node.WithPort(n.Port),
+	)
 
 	return c.Index(job.PageID)
 }

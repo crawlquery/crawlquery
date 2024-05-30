@@ -2,6 +2,7 @@ package node
 
 import (
 	"bytes"
+	"context"
 	"crawlquery/node/dto"
 	"encoding/json"
 	"errors"
@@ -10,13 +11,60 @@ import (
 )
 
 type Client struct {
-	BaseURL string
+	hostname string
+	port     uint
+	context  context.Context
 }
 
-func NewClient(baseURL string) *Client {
-	return &Client{
-		BaseURL: baseURL,
+type Option func(*Client)
+
+func WithHostname(hostname string) Option {
+	return func(c *Client) {
+		c.hostname = hostname
 	}
+}
+
+func WithPort(port uint) Option {
+	return func(c *Client) {
+		c.port = port
+	}
+}
+
+func WithContext(ctx context.Context) Option {
+	return func(c *Client) {
+		c.context = ctx
+	}
+}
+
+func NewClient(opts ...Option) *Client {
+	c := &Client{}
+
+	for _, opt := range opts {
+		opt(c)
+	}
+
+	if c.context == nil {
+		c.context = context.Background()
+	}
+
+	return c
+}
+
+func (c *Client) buildUrl(path string) string {
+	return fmt.Sprintf("http://%s:%d%s", c.hostname, c.port, path)
+}
+
+func (c *Client) SendRequest(method, path string, body []byte) (*http.Response, error) {
+
+	req, err := http.NewRequestWithContext(c.context, method, c.buildUrl(path), bytes.NewBuffer(body))
+
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+
+	return http.DefaultClient.Do(req)
 }
 
 func (c *Client) Crawl(pageID, url string) (*dto.CrawlResponse, error) {
@@ -31,17 +79,16 @@ func (c *Client) Crawl(pageID, url string) (*dto.CrawlResponse, error) {
 		return nil, err
 	}
 
-	res, err := http.Post(
-		c.BaseURL+"/crawl",
-		"application/json",
-		bytes.NewBuffer(jsonBody),
-	)
+	res, err := c.SendRequest("POST", "/crawl", jsonBody)
 
 	if err != nil {
+		fmt.Printf("error: %v\n", err)
 		return nil, err
 	}
 
-	if res.StatusCode == http.StatusBadRequest {
+	defer res.Body.Close()
+
+	if res.StatusCode != http.StatusOK {
 
 		var errRes dto.ErrorResponse
 
@@ -56,10 +103,6 @@ func (c *Client) Crawl(pageID, url string) (*dto.CrawlResponse, error) {
 		return nil, fmt.Errorf("unexpected status code: %d (%s)", res.StatusCode, errRes.Error)
 	}
 
-	if res.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("unexpected status code: %d", res.StatusCode)
-	}
-
 	var crawlRes dto.CrawlResponse
 	err = json.NewDecoder(res.Body).Decode(&crawlRes)
 
@@ -67,19 +110,12 @@ func (c *Client) Crawl(pageID, url string) (*dto.CrawlResponse, error) {
 		return nil, err
 	}
 
-	defer res.Body.Close()
-
 	return &crawlRes, nil
 }
 
 func (c *Client) Index(pageID string) error {
 
-	endpoint := fmt.Sprintf("%s/pages/%s/index", c.BaseURL, pageID)
-	res, err := http.Post(
-		endpoint,
-		"application/json",
-		nil,
-	)
+	res, err := c.SendRequest("POST", "/index", nil)
 
 	if err != nil {
 		return err
@@ -122,13 +158,11 @@ func (c *Client) GetIndexMetas(pageIDs []string) ([]dto.IndexMeta, error) {
 		return nil, err
 	}
 
-	res, err := http.Post(fmt.Sprintf("%s/repair/get-index-metas", c.BaseURL), "application/json", bytes.NewBuffer(jsonBody))
+	res, err := c.SendRequest("POST", "/repair/get-index-metas", jsonBody)
 
 	if err != nil {
 		return nil, err
 	}
-
-	defer res.Body.Close()
 
 	if res.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("unexpected status code: %d", res.StatusCode)
@@ -145,7 +179,7 @@ func (c *Client) GetIndexMetas(pageIDs []string) ([]dto.IndexMeta, error) {
 
 func (c *Client) GetAllIndexMetas() ([]dto.IndexMeta, error) {
 
-	res, err := http.Get(fmt.Sprintf("%s/repair/get-all-index-metas", c.BaseURL))
+	res, err := c.SendRequest("GET", "/repair/get-all-index-metas", nil)
 
 	if err != nil {
 		return nil, err
@@ -178,7 +212,7 @@ func (c *Client) GetPageDumps(pageIDs []string) ([]dto.PageDump, error) {
 		return nil, err
 	}
 
-	res, err := http.Post(fmt.Sprintf("%s/repair/get-page-dumps", c.BaseURL), "application/json", bytes.NewBuffer(jsonBody))
+	res, err := c.SendRequest("POST", "/repair/get-page-dumps", jsonBody)
 
 	if err != nil {
 		return nil, err

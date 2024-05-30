@@ -1,6 +1,7 @@
 package service_test
 
 import (
+	"context"
 	"crawlquery/api/domain"
 	"crawlquery/api/factory"
 	"crawlquery/node/dto"
@@ -788,10 +789,9 @@ func TestSendCrawlJob(t *testing.T) {
 		responseJson := fmt.Sprintf(`{"page_id":"%s","url":"%s"}`, crawlJob.PageID, crawlJob.URL)
 
 		crawlResponse := &dto.CrawlResponse{
-			Page: &dto.Page{
-				ID:   "1",
-				URL:  "http://google.com",
-				Hash: "hash",
+			Hash: "hash",
+			Links: []string{
+				"http://example.com",
 			},
 		}
 
@@ -805,14 +805,14 @@ func TestSendCrawlJob(t *testing.T) {
 			service.WithLogger(testutil.NewTestLogger()),
 		)
 
-		crawledPage, err := nodeService.SendCrawlJob(node, crawlJob)
+		crawledPage, err := nodeService.SendCrawlJob(context.Background(), node, crawlJob)
 
 		if err != nil {
 			t.Fatalf("Error sending crawl job: %v", err)
 		}
 
-		if crawledPage.Hash != crawlResponse.Page.Hash {
-			t.Errorf("Expected page hash to be %s, got %s", crawlResponse.Page.Hash, crawledPage.Hash)
+		if crawledPage.Hash != crawlResponse.Hash {
+			t.Errorf("Expected page hash to be %s, got %s", crawlResponse.Hash, crawledPage.Hash)
 		}
 	})
 
@@ -839,7 +839,7 @@ func TestSendCrawlJob(t *testing.T) {
 			service.WithLogger(testutil.NewTestLogger()),
 		)
 
-		_, err := nodeService.SendCrawlJob(node, crawlJob)
+		_, err := nodeService.SendCrawlJob(context.Background(), node, crawlJob)
 
 		if err == nil {
 			t.Fatalf("Expected error sending crawl job")

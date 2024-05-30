@@ -3,6 +3,7 @@ package testfactory
 import (
 	crawlJobRepo "crawlquery/api/crawl/job/repository/mem"
 	crawlLogRepo "crawlquery/api/crawl/log/repository/mem"
+	crawlQueue "crawlquery/api/crawl/queue/mem"
 	crawlService "crawlquery/api/crawl/service"
 	"crawlquery/api/domain"
 
@@ -35,6 +36,7 @@ type ServiceFactory struct {
 	NodeService  *nodeService.Service
 	CrawlJobRepo *crawlJobRepo.Repository
 	CrawlLogRepo *crawlLogRepo.Repository
+	CrawlQueue   *crawlQueue.Queue
 	CrawlService *crawlService.Service
 }
 
@@ -84,8 +86,10 @@ func NewServiceFactory(options ...ServiceFactoryOption) *ServiceFactory {
 
 	crawlRepo := crawlJobRepo.NewRepository()
 	crawlLogRepo := crawlLogRepo.NewRepository()
+	crawlQueue := crawlQueue.NewQueue()
 	crawlService := crawlService.NewService(
 		crawlService.WithEventService(eventService),
+		crawlService.WithCrawlQueue(crawlQueue),
 		crawlService.WithCrawlJobRepo(crawlRepo),
 		crawlService.WithNodeService(nodeService),
 		crawlService.WithLinkService(linkService),
@@ -113,6 +117,7 @@ func NewServiceFactory(options ...ServiceFactoryOption) *ServiceFactory {
 		LinkService:  linkService,
 		NodeRepo:     nodeRepo,
 		NodeService:  nodeService,
+		CrawlQueue:   crawlQueue,
 		CrawlJobRepo: crawlRepo,
 		CrawlLogRepo: crawlLogRepo,
 		CrawlService: crawlService,

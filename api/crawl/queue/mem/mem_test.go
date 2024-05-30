@@ -37,7 +37,7 @@ func TestMemQueue(t *testing.T) {
 	}
 
 	// setup
-	repo := mem.NewRepository()
+	repo := mem.NewQueue()
 	for _, test := range tests {
 		repo.Push(test.crawlJob)
 	}
@@ -48,5 +48,16 @@ func TestMemQueue(t *testing.T) {
 		if job.PageID != test.expectedPageID {
 			t.Errorf("Expected %v, got %v", test.expectedPageID, job.PageID)
 		}
+	}
+
+	// test empty queue
+	job, err := repo.Pop()
+
+	if err != domain.ErrCrawlQueueEmpty {
+		t.Errorf("Expected error, got %v", err)
+	}
+
+	if job != nil {
+		t.Errorf("Expected job to be nil, got %v", job)
 	}
 }
