@@ -21,6 +21,20 @@ func TestCreate(t *testing.T) {
 		var publishedEvent bool
 		eventService.Subscribe("link.created", func(e domain.Event) {
 			publishedEvent = true
+
+			linkCreated := e.(*domain.LinkCreated)
+
+			if linkCreated.DstURL != "https://cancreatealink.com/about" {
+				t.Errorf("Expected DstURL to be 'https://cancreatealink.com/about', got '%s'", linkCreated.DstURL)
+			}
+
+			if linkCreated.Link.SrcID != util.PageID("https://cancreatealink.com") {
+				t.Errorf("Expected SrcID to be 'https://cancreatealink.com', got '%s'", linkCreated.Link.SrcID)
+			}
+
+			if linkCreated.Link.DstID != util.PageID("https://cancreatealink.com/about") {
+				t.Errorf("Expected DstID to be 'https://cancreatealink.com/about', got '%s'", linkCreated.Link.DstID)
+			}
 		})
 
 		src := util.PageID("https://cancreatealink.com")

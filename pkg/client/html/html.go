@@ -15,8 +15,8 @@ func NewClient(baseURL string) *Client {
 	return &Client{BaseURL: baseURL}
 }
 
-func (c Client) GetPage(pageID string) ([]byte, error) {
-	resp, err := http.Get(c.BaseURL + "/pages/" + pageID)
+func (c Client) GetPage(hash string) ([]byte, error) {
+	resp, err := http.Get(c.BaseURL + "/pages/" + hash)
 
 	if err != nil {
 		return nil, err
@@ -33,11 +33,11 @@ func (c Client) GetPage(pageID string) ([]byte, error) {
 	return getPageResponse.HTML, nil
 }
 
-func (c Client) StorePage(pageID string, html []byte) error {
+func (c Client) StorePage(hash string, html []byte) error {
 
 	storePageRequest := dto.StorePageRequest{
-		PageID: pageID,
-		HTML:   html,
+		Hash: hash,
+		HTML: html,
 	}
 
 	body, err := json.Marshal(storePageRequest)

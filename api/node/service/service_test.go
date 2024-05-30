@@ -789,7 +789,7 @@ func TestSendCrawlJob(t *testing.T) {
 		responseJson := fmt.Sprintf(`{"page_id":"%s","url":"%s"}`, crawlJob.PageID, crawlJob.URL)
 
 		crawlResponse := &dto.CrawlResponse{
-			Hash: "hash",
+			ContentHash: "hash",
 			Links: []string{
 				"http://example.com",
 			},
@@ -811,8 +811,8 @@ func TestSendCrawlJob(t *testing.T) {
 			t.Fatalf("Error sending crawl job: %v", err)
 		}
 
-		if crawledPage.Hash != crawlResponse.Hash {
-			t.Errorf("Expected page hash to be %s, got %s", crawlResponse.Hash, crawledPage.Hash)
+		if crawledPage.ContentHash != crawlResponse.ContentHash {
+			t.Errorf("Expected page hash to be %s, got %s", crawlResponse.ContentHash, crawledPage.ContentHash)
 		}
 	})
 

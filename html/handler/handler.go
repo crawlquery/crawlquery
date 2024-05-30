@@ -45,12 +45,12 @@ func (h Handler) StorePage(c *gin.Context) {
 		return
 	}
 
-	if !util.ValidatePageID(req.PageID) {
+	if !util.ValidateHash(req.Hash) {
 		c.JSON(400, dto.ErrorResponse{Error: "invalid page ID"})
 		return
 	}
 
-	if err := os.WriteFile(h.storagePath+"/"+req.PageID, req.HTML, 0644); err != nil {
+	if err := os.WriteFile(h.storagePath+"/"+req.Hash, req.HTML, 0644); err != nil {
 		c.JSON(500, dto.ErrorResponse{Error: "failed to store page"})
 		return
 	}

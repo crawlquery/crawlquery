@@ -42,8 +42,8 @@ func TestStorePage(t *testing.T) {
 		defer gock.Off()
 
 		expectedReq := dto.StorePageRequest{
-			PageID: "page1",
-			HTML:   []byte("<html><body><h1>Hello, World!</h1></body></html>"),
+			Hash: "page1",
+			HTML: []byte("<html><body><h1>Hello, World!</h1></body></html>"),
 		}
 
 		gock.New("http://storage:8080").

@@ -52,6 +52,13 @@ func ValidatePageID(pageID string) bool {
 	return check.MatchString(pageID)
 }
 
+func ValidateHash(hash string) bool {
+	// regex for only alphanumeric characters
+	check := regexp.MustCompile(`^[a-zA-Z0-9]*$`)
+
+	return check.MatchString(hash)
+}
+
 func UUIDString() string {
 	return uuid.New().String()
 }

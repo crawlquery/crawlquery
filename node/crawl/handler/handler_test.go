@@ -47,7 +47,7 @@ func TestCrawl(t *testing.T) {
 		defer gock.Off()
 		crawlSvc, htmlRepo, pageRepo := setupServices()
 
-		expectedData := "<html><head><title>Example</title></head><body><h1>Hello, World!</h1><p>Website description</p></body></html>"
+		expectedData := `<html><head><title>Example</title></head><body><h1>Hello, World!</h1><p>Website description</p><a href="http://google.com"></body></html>`
 		expectedPageHash := util.Sha256Hex32([]byte(expectedData))
 
 		gock.New("http://storage:8080").
@@ -90,8 +90,16 @@ func TestCrawl(t *testing.T) {
 			t.Fatalf("Error decoding response: %v", err)
 		}
 
-		if resp.Page.Hash != expectedPageHash {
-			t.Fatalf("Expected page hash to be '%s', got '%s'", expectedPageHash, resp.Page.Hash)
+		if resp.ContentHash != expectedPageHash {
+			t.Fatalf("Expected page hash to be '%s', got '%s'", expectedPageHash, resp.ContentHash)
+		}
+
+		if len(resp.Links) != 1 {
+			t.Fatalf("Expected 1 link, got %d", len(resp.Links))
+		}
+
+		if resp.Links[0] != "http://google.com" {
+			t.Fatalf("Expected link to be 'http://google.com', got '%s'", resp.Links[0])
 		}
 
 		data, err := htmlRepo.Get("test1")

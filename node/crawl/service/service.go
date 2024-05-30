@@ -36,7 +36,7 @@ func NewService(
 	}
 }
 
-func (cs *CrawlService) Crawl(pageID, url string) (pageHash string, links []string, failedErr error) {
+func (cs *CrawlService) Crawl(pageID, url string) (contentHash string, links []string, failedErr error) {
 
 	// Instantiate default collector
 	c := colly.NewCollector()
@@ -53,38 +53,28 @@ func (cs *CrawlService) Crawl(pageID, url string) (pageHash string, links []stri
 	c.OnResponse(func(r *colly.Response) {
 
 		if !strings.Contains(r.Headers.Get("Content-Type"), "text/html") {
-			cs.logger.Errorw("Error fetching page", "error", "Content-Type is not text/html", "pageID", pageID)
+			cs.logger.Errorw("Error fetching page", "error", "Content-Type is not text/html", "pageID", pageID, "url", url)
 			failedErr = domain.ErrCrawlFailedToFetchHtml
 			return
 		}
 
 		if r.StatusCode != 200 {
-			cs.logger.Errorw("Error fetching page", "status", r.StatusCode, "pageID", pageID)
+			cs.logger.Errorw("Error fetching page", "status", r.StatusCode, "pageID", pageID, "url", url)
 
 			failedErr = domain.ErrCrawlFailedToFetchHtml
 			return
 		}
 
-		pageHash = util.Sha256Hex32(r.Body)
+		contentHash = util.Sha256Hex32(r.Body)
 
-		err := cs.htmlService.Save(pageID, r.Body)
+		err := cs.htmlService.Save(contentHash, r.Body)
 		if err != nil {
-			cs.logger.Errorw("Error saving page", "error", err, "pageID", pageID)
+			cs.logger.Errorw("Error saving page", "error", err, "pageID", pageID, "url", url)
 			failedErr = domain.ErrCrawlFailedToStoreHtml
 			return
 		}
-		page, err := cs.pageService.Get(pageID)
-		if err != nil && page != nil && page.ID != pageID {
-			cs.logger.Info("Existing page found", "pageID", pageID)
-		} else {
-			page, err = cs.pageService.Create(pageID, url, pageHash)
-			if err != nil {
-				cs.logger.Errorw("Error creating page", "error", err, "pageID", pageID)
-				failedErr = err
-			}
-		}
 
-		cs.logger.Infow("Page created", "pageID", page.ID, "url", page.URL)
+		cs.logger.Infow("Page crawled", "pageID", pageID, "url", url)
 	})
 
 	c.OnHTML("a[href]", func(e *colly.HTMLElement) {

@@ -15,7 +15,7 @@ func TestCrawl(t *testing.T) {
 		defer gock.Off()
 
 		expectedRes := &dto.CrawlResponse{
-			Hash: "hash",
+			ContentHash: "hash",
 			Links: []string{
 				"http://example.com",
 			},
@@ -37,8 +37,8 @@ func TestCrawl(t *testing.T) {
 			t.Fatalf("Expected no error, got %v", err)
 		}
 
-		if res.Hash != expectedRes.Hash {
-			t.Fatalf("Expected %s, got %s", expectedRes.Hash, res)
+		if res.ContentHash != expectedRes.ContentHash {
+			t.Fatalf("Expected %s, got %s", expectedRes.ContentHash, res)
 		}
 
 		if res.Links[0] != expectedRes.Links[0] {
@@ -60,7 +60,7 @@ func TestIndex(t *testing.T) {
 		}
 
 		gock.New("http://node.com").
-			Post("/index").
+			Post("/pages/page1/index").
 			Reply(200).
 			JSON(expectedRes)
 

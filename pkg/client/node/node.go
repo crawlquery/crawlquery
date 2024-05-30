@@ -115,7 +115,7 @@ func (c *Client) Crawl(pageID, url string) (*dto.CrawlResponse, error) {
 
 func (c *Client) Index(pageID string) error {
 
-	res, err := c.SendRequest("POST", "/index", nil)
+	res, err := c.SendRequest("POST", fmt.Sprintf("/pages/%s/index", pageID), nil)
 
 	if err != nil {
 		return err

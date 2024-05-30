@@ -44,6 +44,15 @@ var migrations = []Migration{
 			created_at TIMESTAMP NOT NULL,
 			INDEX (shard_id));`,
 	},
+
+	{
+		Name: "create_page_versions_table",
+		SQL: `CREATE TABLE page_versions (
+			id VARCHAR(36) PRIMARY KEY,
+			page_id VARCHAR(32) NOT NULL,
+			content_hash VARCHAR(32) NOT NULL,
+			created_at TIMESTAMP NOT NULL)`,
+	},
 	{
 		Name: "create_crawl_jobs_table",
 		SQL: `CREATE TABLE crawl_jobs (
@@ -85,14 +94,6 @@ var migrations = []Migration{
 			INDEX (status))`,
 	},
 
-	{
-		Name: "create_page_versions_table",
-		SQL: `CREATE TABLE page_versions (
-			page_id VARCHAR(32) NOT NULL,
-			hash VARCHAR(32) NOT NULL,
-			created_at TIMESTAMP NOT NULL,
-			PRIMARY KEY (page_id, hash))`,
-	},
 	{
 		Name: "create_shards_table",
 		SQL: `CREATE TABLE shards (

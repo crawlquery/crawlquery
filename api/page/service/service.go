@@ -15,6 +15,8 @@ type Service struct {
 	shardService domain.ShardService
 	crawlService domain.CrawlService
 	logger       *zap.SugaredLogger
+
+	withoutEventListener bool
 }
 
 type Option func(*Service)
@@ -49,6 +51,12 @@ func WithEventService(eventService domain.EventService) func(*Service) {
 	}
 }
 
+func WithoutEventListener() func(*Service) {
+	return func(s *Service) {
+		s.eventService = nil
+	}
+}
+
 func NewService(opts ...Option) *Service {
 	s := &Service{}
 
@@ -56,7 +64,32 @@ func NewService(opts ...Option) *Service {
 		opt(s)
 	}
 
+	if !s.withoutEventListener {
+		s.registerEventListeners()
+	}
+
 	return s
+}
+
+func (s *Service) registerEventListeners() {
+	if s.eventService == nil {
+		s.logger.Fatal("EventService is required")
+	}
+
+	s.eventService.Subscribe(domain.LinkCreatedKey, s.handleLinkCreated)
+}
+
+func (s *Service) handleLinkCreated(event domain.Event) {
+	linkCreated := event.(*domain.LinkCreated)
+
+	_, err := s.pageRepo.Get(util.PageID(linkCreated.DstURL))
+	if err == domain.ErrPageNotFound {
+		_, err = s.Create(linkCreated.DstURL)
+		if err != nil {
+			s.logger.Errorw("Error creating page", "error", err, "url", linkCreated.DstURL)
+			return
+		}
+	}
 }
 
 func (s *Service) Get(pageID domain.PageID) (*domain.Page, error) {

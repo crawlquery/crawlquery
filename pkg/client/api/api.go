@@ -23,7 +23,7 @@ func NewClient(baseURL string, logger *zap.SugaredLogger) *Client {
 	}
 }
 
-func (c *Client) ListNodesByShardID(shardID uint) ([]*dto.PublicNode, error) {
+func (c *Client) ListNodesByShardID(shardID uint16) ([]*dto.PublicNode, error) {
 
 	endpoint := fmt.Sprintf("%s/shards/%d/nodes", c.BaseURL, shardID)
 	req, err := http.NewRequest("GET", endpoint, nil)

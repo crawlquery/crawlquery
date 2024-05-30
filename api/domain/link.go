@@ -29,10 +29,13 @@ type LinkHandler interface {
 	Create(c *gin.Context)
 }
 
+const LinkCreatedKey = "link.created"
+
 type LinkCreated struct {
-	Link *Link
+	Link   *Link
+	DstURL URL
 }
 
 func (l LinkCreated) Key() EventKey {
-	return "link.created"
+	return LinkCreatedKey
 }

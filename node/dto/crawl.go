@@ -10,6 +10,6 @@ type CrawlRequest struct {
 }
 
 type CrawlResponse struct {
-	Hash  string   `json:"hash"`
-	Links []string `json:"links"`
+	ContentHash string   `json:"content_hash"`
+	Links       []string `json:"links"`
 }

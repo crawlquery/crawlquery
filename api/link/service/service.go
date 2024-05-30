@@ -55,10 +55,6 @@ func NewService(opts ...Option) *Service {
 	return s
 }
 
-func WithEventListeners(s *Service) {
-	s.registerEventListeners()
-}
-
 func (s *Service) registerEventListeners() {
 	if s.eventService == nil {
 		s.logger.Fatal("EventService is required")
@@ -115,7 +111,7 @@ func (s *Service) Create(src domain.PageID, dst domain.URL) (*domain.Link, error
 		return nil, err
 	}
 
-	s.eventService.Publish(&domain.LinkCreated{Link: link})
+	s.eventService.Publish(&domain.LinkCreated{Link: link, DstURL: normalizedDst})
 
 	return link, nil
 }

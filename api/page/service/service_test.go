@@ -70,6 +70,30 @@ func TestGet(t *testing.T) {
 	})
 }
 
+func TestHandleLinkCreatedEvent(t *testing.T) {
+	t.Run("creates page", func(t *testing.T) {
+		sf := testfactory.NewServiceFactory(
+			testfactory.WithShard(&domain.Shard{ID: 0}),
+		)
+
+		linkCreated := &domain.LinkCreated{
+			DstURL: "http://example.com",
+		}
+
+		sf.EventService.Publish(linkCreated)
+
+		repoCheck, err := sf.PageRepo.Get(util.PageID(linkCreated.DstURL))
+
+		if err != nil {
+			t.Fatalf("error getting page: %v", err)
+		}
+
+		if repoCheck.URL != linkCreated.DstURL {
+			t.Fatalf("expected page to not exist, got %v", repoCheck)
+		}
+	})
+}
+
 func TestCreate(t *testing.T) {
 	t.Run("creates page", func(t *testing.T) {
 

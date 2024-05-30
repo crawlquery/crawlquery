@@ -80,8 +80,9 @@ type CrawlThrottleService interface {
 const CrawlCompletedKey = "crawl.completed"
 
 type CrawlCompleted struct {
-	PageID PageID
-	Links  []URL
+	PageID      PageID
+	ContentHash ContentHash
+	Links       []URL
 }
 
 func (c CrawlCompleted) Key() EventKey {

@@ -131,8 +131,8 @@ func TestGetPage(t *testing.T) {
 		}
 
 		storeReq := dto.StorePageRequest{
-			PageID: util.PageID("http://google.com"),
-			HTML:   body,
+			Hash: string(util.Sha256Hex32([]byte("http://google.com"))),
+			HTML: body,
 		}
 
 		reqBody, err := json.Marshal(storeReq)
@@ -177,8 +177,8 @@ func TestStorePage(t *testing.T) {
 		ctx, _ := gin.CreateTestContext(w)
 
 		body := dto.StorePageRequest{
-			PageID: util.PageID("http://google.com"),
-			HTML:   html,
+			Hash: string(util.PageID("http://google.com")),
+			HTML: html,
 		}
 
 		reqBody, err := json.Marshal(body)
@@ -195,7 +195,7 @@ func TestStorePage(t *testing.T) {
 			t.Fatalf("Test failed: Expected status 200, got %v", w.Code)
 		}
 
-		data, err := os.ReadFile("/tmp/cq-html-test/" + body.PageID)
+		data, err := os.ReadFile("/tmp/cq-html-test/" + body.Hash)
 
 		if err != nil {
 			t.Fatalf("Test failed: %v", err)
@@ -213,8 +213,8 @@ func TestStorePage(t *testing.T) {
 		ctx, _ := gin.CreateTestContext(w)
 
 		body := dto.StorePageRequest{
-			PageID: "!!!",
-			HTML:   html,
+			Hash: "!!!",
+			HTML: html,
 		}
 
 		reqBody, err := json.Marshal(body)

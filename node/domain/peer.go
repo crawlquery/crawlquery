@@ -10,7 +10,7 @@ type Peer struct {
 	ID       string `json:"id"`
 	Hostname string `json:"hostname"`
 	Port     uint   `json:"port"`
-	ShardID  uint   `json:"shard_id"`
+	ShardID  uint16 `json:"shard_id"`
 }
 
 type PageMetadata struct {
