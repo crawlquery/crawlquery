@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"crawlquery/api/domain"
-	"errors"
 	"sync"
 	"time"
 
@@ -11,18 +10,17 @@ import (
 )
 
 type Service struct {
-	eventService domain.EventService
-	crawlJobRepo domain.CrawlJobRepository
-	crawlLogRepo domain.CrawlLogRepository
-	crawlQueue   domain.CrawlQueue
-	linkService  domain.LinkService
+	eventService         domain.EventService
+	crawlJobRepo         domain.CrawlJobRepository
+	crawlLogRepo         domain.CrawlLogRepository
+	crawlThrottleService domain.CrawlThrottleService
 
 	nodeService domain.NodeService
-	nodesCache  map[domain.ShardID][]*domain.Node
 
 	logger *zap.SugaredLogger
 
-	workers int
+	workers      int
+	maxQueueSize int
 }
 
 type Option func(*Service)
@@ -30,6 +28,12 @@ type Option func(*Service)
 func WithEventService(eventService domain.EventService) func(*Service) {
 	return func(s *Service) {
 		s.eventService = eventService
+	}
+}
+
+func WithCrawlThrottleService(crawlThrottleService domain.CrawlThrottleService) func(*Service) {
+	return func(s *Service) {
+		s.crawlThrottleService = crawlThrottleService
 	}
 }
 
@@ -51,18 +55,6 @@ func WithLogger(logger *zap.SugaredLogger) func(*Service) {
 	}
 }
 
-func WithCrawlQueue(crawlQueue domain.CrawlQueue) func(*Service) {
-	return func(s *Service) {
-		s.crawlQueue = crawlQueue
-	}
-}
-
-func WithLinkService(linkService domain.LinkService) func(*Service) {
-	return func(s *Service) {
-		s.linkService = linkService
-	}
-}
-
 func WithNodeService(nodeService domain.NodeService) func(*Service) {
 	return func(s *Service) {
 		s.nodeService = nodeService
@@ -72,6 +64,12 @@ func WithNodeService(nodeService domain.NodeService) func(*Service) {
 func WithWorkers(workers int) func(*Service) {
 	return func(s *Service) {
 		s.workers = workers
+	}
+}
+
+func WithMaxQueueSize(maxQueueSize int) func(*Service) {
+	return func(s *Service) {
+		s.maxQueueSize = maxQueueSize
 	}
 }
 
@@ -117,44 +115,22 @@ func (s *Service) CreateJob(page *domain.Page) error {
 	return nil
 }
 
-func (s *Service) FillQueue() error {
+func (s *Service) jobsToProcess() ([]*domain.CrawlJob, error) {
 	jobs, err := s.crawlJobRepo.ListByStatus(10000, domain.CrawlStatusPending)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	for _, job := range jobs {
-		err := s.crawlQueue.Push(job)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
+	return jobs, nil
 }
 
-func (s *Service) cacheNodes() error {
-	var err error
-
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (s *Service) Crawl(ctx context.Context) error {
+func (s *Service) RunCrawlProcess(ctx context.Context) error {
 	for {
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
 		default:
-
-			err := s.FillQueue()
-			if err != nil {
-				return err
-			}
-
-			err = s.ProcessQueue()
+			err := s.processJobsWithWorkers(ctx)
 			if err != nil {
 				return err
 			}
@@ -162,44 +138,60 @@ func (s *Service) Crawl(ctx context.Context) error {
 	}
 }
 
-// ProcessQueue processes jobs in the queue using a worker pool
-func (s *Service) ProcessQueue() error {
+// processJobsWithWorkers processes jobs in the queue using a worker pool
+func (s *Service) processJobsWithWorkers(ctx context.Context) error {
 	jobs := make(chan *domain.CrawlJob)
 	var wg sync.WaitGroup
 
 	// Start worker pool
 	for i := 0; i < s.workers; i++ {
 		wg.Add(1)
-		go s.worker(jobs, &wg)
+		go s.processJob(ctx, jobs, &wg)
 	}
 
-	// Fetch jobs from the queue and send to workers
-	for {
-		job, err := s.crawlQueue.Pop()
+	jobsToProcess, err := s.jobsToProcess()
+
+	if err != nil {
+		return err
+	}
+
+	for _, job := range jobsToProcess {
+
+		canCrawl, err := s.crawlThrottleService.CheckAndThrottle(job.URL)
+
 		if err != nil {
-			if errors.Is(err, domain.ErrCrawlQueueEmpty) {
-				break // Exit loop if queue is empty
-			}
+			s.logger.Errorw("Throttle returned an error", "error", err)
+			continue
+		}
+
+		if !canCrawl {
+			s.logger.Infow("Throttling", "url", job.URL)
+			continue
+		}
+
+		err = s.updateJob(job, domain.CrawlStatusInProgress)
+		if err != nil {
 			return err
 		}
 		jobs <- job
 	}
+
 	close(jobs)
 	wg.Wait()
 	return nil
 }
 
-func (s *Service) worker(jobs <-chan *domain.CrawlJob, wg *sync.WaitGroup) {
+func (s *Service) processJob(ctx context.Context, jobs <-chan *domain.CrawlJob, wg *sync.WaitGroup) {
 	nodes, err := s.nodeService.RandomizedListGroupByShard()
 
 	if err != nil {
-		s.logger.Error("worker failed to get nodes: %v", err)
+		s.logger.Error("processJob failed to get nodes: %v", err)
 		return
 	}
 
 	defer wg.Done()
 	for job := range jobs {
-		ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+		ctx, cancel := context.WithTimeout(ctx, 20*time.Second)
 		defer cancel()
 
 		var maxAttempts = 3

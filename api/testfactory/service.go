@@ -3,9 +3,10 @@ package testfactory
 import (
 	crawlJobRepo "crawlquery/api/crawl/job/repository/mem"
 	crawlLogRepo "crawlquery/api/crawl/log/repository/mem"
-	crawlQueue "crawlquery/api/crawl/queue/mem"
 	crawlService "crawlquery/api/crawl/service"
+	crawlThrottleService "crawlquery/api/crawl/throttle/service"
 	"crawlquery/api/domain"
+	"time"
 
 	nodeRepo "crawlquery/api/node/repository/mem"
 	nodeService "crawlquery/api/node/service"
@@ -25,19 +26,19 @@ import (
 )
 
 type ServiceFactory struct {
-	EventService *eventService.Service
-	ShardRepo    *shardRepo.Repository
-	ShardService *shardService.Service
-	PageRepo     *pageRepo.Repository
-	PageService  *pageService.Service
-	LinkRepo     *linkRepo.Repository
-	LinkService  *linkService.Service
-	NodeRepo     *nodeRepo.Repository
-	NodeService  *nodeService.Service
-	CrawlJobRepo *crawlJobRepo.Repository
-	CrawlLogRepo *crawlLogRepo.Repository
-	CrawlQueue   *crawlQueue.Queue
-	CrawlService *crawlService.Service
+	EventService         *eventService.Service
+	ShardRepo            *shardRepo.Repository
+	ShardService         *shardService.Service
+	PageRepo             *pageRepo.Repository
+	PageService          *pageService.Service
+	LinkRepo             *linkRepo.Repository
+	LinkService          *linkService.Service
+	NodeRepo             *nodeRepo.Repository
+	NodeService          *nodeService.Service
+	CrawlJobRepo         *crawlJobRepo.Repository
+	CrawlLogRepo         *crawlLogRepo.Repository
+	CrawlThrottleService *crawlThrottleService.Service
+	CrawlService         *crawlService.Service
 }
 
 type ServiceFactoryOption func(*ServiceFactory)
@@ -86,17 +87,20 @@ func NewServiceFactory(options ...ServiceFactoryOption) *ServiceFactory {
 
 	crawlRepo := crawlJobRepo.NewRepository()
 	crawlLogRepo := crawlLogRepo.NewRepository()
-	crawlQueue := crawlQueue.NewQueue()
+	crawlThrottleService := crawlThrottleService.NewService(
+		crawlThrottleService.WithRateLimit(time.Second * 20),
+	)
 	crawlService := crawlService.NewService(
 		crawlService.WithEventService(eventService),
-		crawlService.WithCrawlQueue(crawlQueue),
+		crawlService.WithCrawlThrottleService(crawlThrottleService),
 		crawlService.WithCrawlJobRepo(crawlRepo),
 		crawlService.WithNodeService(nodeService),
-		crawlService.WithLinkService(linkService),
 		crawlService.WithCrawlLogRepo(
 			crawlLogRepo,
 		),
 		crawlService.WithLogger(testutil.NewTestLogger()),
+		crawlService.WithWorkers(10),
+		crawlService.WithMaxQueueSize(100),
 	)
 
 	pageRepo := pageRepo.NewRepository()
@@ -108,19 +112,19 @@ func NewServiceFactory(options ...ServiceFactoryOption) *ServiceFactory {
 	)
 
 	factory := &ServiceFactory{
-		EventService: eventService,
-		ShardRepo:    shardRepo,
-		ShardService: shardService,
-		PageRepo:     pageRepo,
-		PageService:  pageService,
-		LinkRepo:     linkRepo,
-		LinkService:  linkService,
-		NodeRepo:     nodeRepo,
-		NodeService:  nodeService,
-		CrawlQueue:   crawlQueue,
-		CrawlJobRepo: crawlRepo,
-		CrawlLogRepo: crawlLogRepo,
-		CrawlService: crawlService,
+		EventService:         eventService,
+		ShardRepo:            shardRepo,
+		ShardService:         shardService,
+		PageRepo:             pageRepo,
+		PageService:          pageService,
+		LinkRepo:             linkRepo,
+		LinkService:          linkService,
+		NodeRepo:             nodeRepo,
+		NodeService:          nodeService,
+		CrawlJobRepo:         crawlRepo,
+		CrawlLogRepo:         crawlLogRepo,
+		CrawlThrottleService: crawlThrottleService,
+		CrawlService:         crawlService,
 	}
 	for _, option := range options {
 		option(factory)

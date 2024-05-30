@@ -4,16 +4,45 @@ import (
 	"context"
 	"crawlquery/api/testfactory"
 	"crawlquery/node/dto"
+	"fmt"
 	"strings"
 	"time"
 
 	"crawlquery/api/domain"
 
+	"crawlquery/pkg/testutil"
 	"crawlquery/pkg/util"
 	"testing"
 
 	"github.com/h2non/gock"
+
+	crawlService "crawlquery/api/crawl/service"
+	crawlThrottleService "crawlquery/api/crawl/throttle/service"
 )
+
+func setupCrawlTests() (*testfactory.ServiceFactory, *domain.CrawlJob, *domain.Node) {
+	job := &domain.CrawlJob{
+		PageID:  util.PageID("http://example.com"),
+		URL:     "http://example.com",
+		ShardID: 0,
+		Status:  domain.CrawlStatusPending,
+	}
+
+	node := &domain.Node{
+		ID:        "node1",
+		ShardID:   0,
+		Hostname:  "node1.cluster.com",
+		Port:      8080,
+		CreatedAt: time.Now(),
+	}
+
+	sf := testfactory.NewServiceFactory(
+		testfactory.WithShard(&domain.Shard{ID: 0}),
+		testfactory.WithCrawlJob(job),
+	)
+
+	return sf, job, node
+}
 
 func TestCreateJob(t *testing.T) {
 	t.Run("should create a job", func(t *testing.T) {
@@ -64,86 +93,9 @@ func TestCreateJob(t *testing.T) {
 	})
 }
 
-func TestFillQueue(t *testing.T) {
-	t.Run("should fill queue with pending jobs", func(t *testing.T) {
-		sf := testfactory.NewServiceFactory(
-			testfactory.WithCrawlJob(&domain.CrawlJob{
-				PageID: util.PageID("http://example.com"),
-				URL:    "http://example.com",
-				Status: domain.CrawlStatusPending,
-			}),
-			testfactory.WithCrawlJob(&domain.CrawlJob{
-				PageID: util.PageID("http://example.net"),
-				URL:    "http://example.net",
-				Status: domain.CrawlStatusPending,
-			}),
-			testfactory.WithCrawlJob(&domain.CrawlJob{
-				PageID: util.PageID("http://example.org"),
-				URL:    "http://example.org",
-				Status: domain.CrawlStatusCompleted,
-			}),
-		)
-
-		err := sf.CrawlService.FillQueue()
-
-		if err != nil {
-			t.Errorf("expected no error, got %v", err)
-		}
-
-		job, err := sf.CrawlQueue.Pop()
-
-		if err != nil {
-			t.Errorf("expected no error, got %v", err)
-		}
-
-		if job.PageID != util.PageID("http://example.com") {
-			t.Errorf("expected job to have pageID http://example.com, got %v", job.PageID)
-		}
-
-		job, err = sf.CrawlQueue.Pop()
-
-		if err != nil {
-			t.Errorf("expected no error, got %v", err)
-		}
-
-		if job.PageID != util.PageID("http://example.net") {
-			t.Errorf("expected job to have pageID http://example.net, got %v", job.PageID)
-		}
-
-		job, err = sf.CrawlQueue.Pop()
-
-		if err == nil {
-			t.Errorf("expected error, got nil")
-		}
-
-		if job != nil {
-			t.Errorf("expected job to be nil, got %v", job)
-		}
-	})
-}
-
 func TestProcessQueueItem(t *testing.T) {
 	t.Run("should send crawl request to node", func(t *testing.T) {
-
-		job := &domain.CrawlJob{
-			PageID:  util.PageID("http://example.com"),
-			URL:     "http://example.com",
-			ShardID: 0,
-			Status:  domain.CrawlStatusPending,
-		}
-
-		node := &domain.Node{
-			ID:        "node1",
-			ShardID:   0,
-			Hostname:  "node1.cluster.com",
-			Port:      8080,
-			CreatedAt: time.Now(),
-		}
-
-		sf := testfactory.NewServiceFactory(
-			testfactory.WithShard(&domain.Shard{ID: 0}),
-			testfactory.WithCrawlJob(job),
-		)
+		sf, job, node := setupCrawlTests()
 
 		defer gock.Off()
 
@@ -170,31 +122,7 @@ func TestProcessQueueItem(t *testing.T) {
 	})
 
 	t.Run("should update job status to completed", func(t *testing.T) {
-		job := &domain.CrawlJob{
-			PageID:  util.PageID("http://example.com"),
-			URL:     "http://example.com",
-			ShardID: 0,
-			Status:  domain.CrawlStatusPending,
-		}
-
-		node := &domain.Node{
-			ID:        "node1",
-			ShardID:   0,
-			Hostname:  "node1.cluster.com",
-			Port:      8080,
-			CreatedAt: time.Now(),
-		}
-
-		sf := testfactory.NewServiceFactory(
-			testfactory.WithNode(&domain.Node{
-				ID:        "node1",
-				ShardID:   0,
-				Hostname:  "node1.cluster.com",
-				Port:      8080,
-				CreatedAt: time.Now(),
-			}),
-			testfactory.WithCrawlJob(job),
-		)
+		sf, job, node := setupCrawlTests()
 
 		defer gock.Off()
 
@@ -227,32 +155,7 @@ func TestProcessQueueItem(t *testing.T) {
 	})
 
 	t.Run("handles 400 error from node", func(t *testing.T) {
-
-		job := &domain.CrawlJob{
-			PageID:  util.PageID("http://example.com"),
-			URL:     "http://example.com",
-			ShardID: 0,
-			Status:  domain.CrawlStatusPending,
-		}
-
-		node := &domain.Node{
-			ID:        "node1",
-			ShardID:   0,
-			Hostname:  "node1.cluster.com",
-			Port:      8080,
-			CreatedAt: time.Now(),
-		}
-
-		sf := testfactory.NewServiceFactory(
-			testfactory.WithNode(&domain.Node{
-				ID:        "node1",
-				ShardID:   0,
-				Hostname:  "node1.cluster.com",
-				Port:      8080,
-				CreatedAt: time.Now(),
-			}),
-			testfactory.WithCrawlJob(job),
-		)
+		sf, job, node := setupCrawlTests()
 
 		defer gock.Off()
 
@@ -304,32 +207,7 @@ func TestProcessQueueItem(t *testing.T) {
 	})
 
 	t.Run("handles 500 error from node", func(t *testing.T) {
-
-		job := &domain.CrawlJob{
-			PageID:  util.PageID("http://example.com"),
-			URL:     "http://example.com",
-			ShardID: 0,
-			Status:  domain.CrawlStatusPending,
-		}
-
-		node := &domain.Node{
-			ID:        "node1",
-			ShardID:   0,
-			Hostname:  "node1.cluster.com",
-			Port:      8080,
-			CreatedAt: time.Now(),
-		}
-
-		sf := testfactory.NewServiceFactory(
-			testfactory.WithNode(&domain.Node{
-				ID:        "node1",
-				ShardID:   0,
-				Hostname:  "node1.cluster.com",
-				Port:      8080,
-				CreatedAt: time.Now(),
-			}),
-			testfactory.WithCrawlJob(job),
-		)
+		sf, job, node := setupCrawlTests()
 
 		defer gock.Off()
 
@@ -356,31 +234,7 @@ func TestProcessQueueItem(t *testing.T) {
 	})
 
 	t.Run("should timeout after deadline", func(t *testing.T) {
-		job := &domain.CrawlJob{
-			PageID:  util.PageID("http://example.com"),
-			URL:     "http://example.com",
-			ShardID: 0,
-			Status:  domain.CrawlStatusPending,
-		}
-
-		node := &domain.Node{
-			ID:        "node1",
-			ShardID:   0,
-			Hostname:  "node1.cluster.com",
-			Port:      8080,
-			CreatedAt: time.Now(),
-		}
-
-		sf := testfactory.NewServiceFactory(
-			testfactory.WithNode(&domain.Node{
-				ID:        "node1",
-				ShardID:   0,
-				Hostname:  "node1.cluster.com",
-				Port:      8080,
-				CreatedAt: time.Now(),
-			}),
-			testfactory.WithCrawlJob(job),
-		)
+		sf, job, node := setupCrawlTests()
 
 		defer gock.Off()
 
@@ -395,7 +249,7 @@ func TestProcessQueueItem(t *testing.T) {
 			}).
 			Delay(time.Second * 20)
 
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*100)
 		defer cancel()
 
 		err := sf.CrawlService.ProcessQueueItem(ctx, job, node)
@@ -405,6 +259,128 @@ func TestProcessQueueItem(t *testing.T) {
 
 		if !strings.Contains(err.Error(), context.DeadlineExceeded.Error()) {
 			t.Errorf("expected error to be context.DeadlineExceeded, got %v", err)
+		}
+	})
+}
+
+func TestRunCrawlProcess(t *testing.T) {
+	t.Run("should process crawl jobs with 10 workers and 100 crawl jobs", func(t *testing.T) {
+		sf := testfactory.NewServiceFactory()
+
+		crawlThrottleService := crawlThrottleService.NewService(
+			crawlThrottleService.WithRateLimit(time.Second * 20),
+		)
+		crawlService := crawlService.NewService(
+			crawlService.WithEventService(sf.EventService),
+			crawlService.WithCrawlJobRepo(sf.CrawlJobRepo),
+			crawlService.WithNodeService(sf.NodeService),
+			crawlService.WithCrawlThrottleService(
+				crawlThrottleService,
+			),
+			crawlService.WithCrawlLogRepo(
+				sf.CrawlLogRepo,
+			),
+			crawlService.WithLogger(testutil.NewTestLogger()),
+			crawlService.WithWorkers(10),
+			crawlService.WithMaxQueueSize(100),
+		)
+
+		sf.ShardRepo.Create(&domain.Shard{ID: 0})
+		sf.ShardRepo.Create(&domain.Shard{ID: 1})
+
+		sf.NodeRepo.Create(&domain.Node{
+			ID:        "node1",
+			ShardID:   0,
+			Hostname:  "shard0.cluster.com",
+			Port:      8080,
+			CreatedAt: time.Now(),
+		})
+
+		sf.NodeRepo.Create(&domain.Node{
+			ID:        "node2",
+			ShardID:   1,
+			Hostname:  "shard1.cluster.com",
+			Port:      8080,
+			CreatedAt: time.Now(),
+		})
+
+		shardJobs := make(map[domain.ShardID][]*domain.CrawlJob)
+
+		defer gock.Off()
+
+		for i := 0; i < 100; i++ {
+			url := domain.URL(fmt.Sprintf("http://example%d.com/about", i))
+			shardID, err := sf.ShardService.GetURLShardID(url)
+			if err != nil {
+				t.Errorf("expected no error, got %v", err)
+			}
+			job := &domain.CrawlJob{
+				PageID:  util.PageID(url),
+				URL:     url,
+				ShardID: shardID,
+				Status:  domain.CrawlStatusPending,
+			}
+
+			err = sf.CrawlJobRepo.Save(job)
+
+			if err != nil {
+				t.Errorf("expected no error, got %v", err)
+			}
+
+			shardJobs[shardID] = append(shardJobs[shardID], job)
+
+			hostname := fmt.Sprintf("shard%d.cluster.com", shardID)
+
+			status := 200
+
+			if i == 50 {
+				status = 500
+			}
+			gock.New(hostname).
+				Post("/crawl").
+				JSON(dto.CrawlRequest{
+					PageID: string(job.PageID),
+					URL:    string(job.URL),
+				}).
+				Reply(status).
+				JSON(dto.CrawlResponse{
+					Links: []string{
+						"http://example.com/1",
+						"http://example.com/2",
+					},
+				})
+		}
+
+		ctx, _ := context.WithTimeout(context.Background(), time.Second)
+
+		err := crawlService.RunCrawlProcess(ctx)
+
+		if err != context.DeadlineExceeded {
+			t.Errorf("expected got context deadline exceeded %v", err)
+		}
+
+		for _, jobs := range shardJobs {
+			for _, job := range jobs {
+				updatedJob, err := sf.CrawlJobRepo.Get(job.PageID)
+
+				if err != nil {
+					t.Errorf("expected no error, got %v", err)
+				}
+
+				if job.URL == "http://example50.com/about" {
+					if updatedJob.Status != domain.CrawlStatusFailed {
+						t.Errorf("expected job status to be failed, got %v", updatedJob.Status)
+					}
+				} else {
+					if updatedJob.Status != domain.CrawlStatusCompleted {
+						t.Errorf("expected job status to be completed, got %v", updatedJob.Status)
+					}
+				}
+			}
+		}
+
+		if !gock.IsDone() {
+			t.Errorf("expected all mocks to be called")
 		}
 	})
 }

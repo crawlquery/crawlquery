@@ -73,6 +73,10 @@ type CrawlService interface {
 	CreateJob(page *Page) error
 }
 
+type CrawlThrottleService interface {
+	CheckAndThrottle(url URL) (bool, error)
+}
+
 const CrawlCompletedKey = "crawl.completed"
 
 type CrawlCompleted struct {
