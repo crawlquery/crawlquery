@@ -161,15 +161,23 @@ func (s *Service) processJobsWithWorkers(ctx context.Context) error {
 
 		if err != nil {
 			s.logger.Errorw("Throttle returned an error", "error", err)
+			err = s.updateJob(job, domain.CrawlStatusFailed, err)
+			if err != nil {
+				return err
+			}
 			continue
 		}
 
 		if !canCrawl {
 			s.logger.Infow("Throttling", "url", job.URL)
+			err = s.updateJob(job, domain.CrawlStatusPending, err)
+			if err != nil {
+				return err
+			}
 			continue
 		}
 
-		err = s.updateJob(job, domain.CrawlStatusInProgress)
+		err = s.updateJob(job, domain.CrawlStatusInProgress, err)
 		if err != nil {
 			return err
 		}
@@ -212,10 +220,19 @@ func (s *Service) processJob(ctx context.Context, jobs <-chan *domain.CrawlJob, 
 	}
 }
 
-func (s *Service) updateJob(job *domain.CrawlJob, status domain.CrawlStatus) error {
+func (s *Service) updateJob(job *domain.CrawlJob, status domain.CrawlStatus, withErr error) error {
 	job.Status = status
 	job.UpdatedAt = time.Now()
-	return s.crawlJobRepo.Save(job)
+	err := s.crawlJobRepo.Save(job)
+	if err != nil {
+		return err
+	}
+
+	if withErr == nil {
+		return s.updateLog(job, status, "")
+	}
+
+	return s.updateLog(job, status, withErr.Error())
 }
 
 func (s *Service) updateLog(job *domain.CrawlJob, status domain.CrawlStatus, info string) error {
@@ -248,16 +265,10 @@ func (s *Service) ProcessQueueItem(ctx context.Context, job *domain.CrawlJob, as
 	)
 
 	if err != nil {
-		if err := s.updateJob(job, domain.CrawlStatusFailed); err != nil {
-			return err
-		}
-		s.updateLog(job, domain.CrawlStatusFailed, err.Error())
-		return err
+		return s.updateJob(job, domain.CrawlStatusFailed, err)
 	}
 
-	if err := s.updateJob(job, domain.CrawlStatusCompleted); err != nil {
-		return err
-	}
+	s.updateJob(job, domain.CrawlStatusCompleted, nil)
 
 	var links []domain.URL
 	for _, link := range res.Links {
@@ -268,8 +279,6 @@ func (s *Service) ProcessQueueItem(ctx context.Context, job *domain.CrawlJob, as
 		PageID: job.PageID,
 		Links:  links,
 	})
-
-	s.updateLog(job, domain.CrawlStatusCompleted, "")
 
 	return nil
 }

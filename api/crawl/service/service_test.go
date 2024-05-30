@@ -383,4 +383,177 @@ func TestRunCrawlProcess(t *testing.T) {
 			t.Errorf("expected all mocks to be called")
 		}
 	})
+
+	t.Run("should throttle urls of the same domain", func(t *testing.T) {
+		sf := testfactory.NewServiceFactory()
+
+		crawlThrottleService := crawlThrottleService.NewService(
+			crawlThrottleService.WithRateLimit(time.Second * 20),
+		)
+		crawlService := crawlService.NewService(
+			crawlService.WithEventService(sf.EventService),
+			crawlService.WithCrawlJobRepo(sf.CrawlJobRepo),
+			crawlService.WithNodeService(sf.NodeService),
+			crawlService.WithCrawlThrottleService(
+				crawlThrottleService,
+			),
+			crawlService.WithCrawlLogRepo(
+				sf.CrawlLogRepo,
+			),
+			crawlService.WithLogger(testutil.NewTestLogger()),
+			crawlService.WithWorkers(10),
+			crawlService.WithMaxQueueSize(100),
+		)
+
+		sf.ShardRepo.Create(&domain.Shard{ID: 0})
+		sf.ShardRepo.Create(&domain.Shard{ID: 1})
+
+		sf.NodeRepo.Create(&domain.Node{
+			ID:        "node1",
+			ShardID:   0,
+			Hostname:  "shard0.cluster.com",
+			Port:      8080,
+			CreatedAt: time.Now(),
+		})
+
+		sf.NodeRepo.Create(&domain.Node{
+			ID:        "node2",
+			ShardID:   1,
+			Hostname:  "shard1.cluster.com",
+			Port:      8080,
+			CreatedAt: time.Now(),
+		})
+
+		defer gock.Off()
+
+		for i := 0; i < 5; i++ {
+			url := domain.URL(fmt.Sprintf("http://example.com/about%d", i))
+			shardID, err := sf.ShardService.GetURLShardID(url)
+			if err != nil {
+				t.Errorf("expected no error, got %v", err)
+			}
+			job := &domain.CrawlJob{
+				PageID:  util.PageID(url),
+				URL:     url,
+				ShardID: shardID,
+				Status:  domain.CrawlStatusPending,
+			}
+
+			err = sf.CrawlJobRepo.Save(job)
+
+			if err != nil {
+				t.Errorf("expected no error, got %v", err)
+			}
+		}
+
+		for i := 0; i < 5; i++ {
+			url := domain.URL(fmt.Sprintf("http://example.net/about%d", i))
+			shardID, err := sf.ShardService.GetURLShardID(url)
+			if err != nil {
+				t.Errorf("expected no error, got %v", err)
+			}
+			job := &domain.CrawlJob{
+				PageID:  util.PageID(url),
+				URL:     url,
+				ShardID: shardID,
+				Status:  domain.CrawlStatusPending,
+			}
+
+			err = sf.CrawlJobRepo.Save(job)
+
+			if err != nil {
+				t.Errorf("expected no error, got %v", err)
+			}
+		}
+
+		gock.New("http://shard0.cluster.com:8080").
+			Post("/crawl").
+			Times(1).
+			Reply(200).
+			JSON(dto.CrawlResponse{
+				Links: []string{
+					"http://example.com/1",
+					"http://example.com/2",
+				},
+			})
+
+		gock.New("http://shard1.cluster.com:8080").
+			Post("/crawl").
+			Times(1).
+			Reply(200).
+			JSON(dto.CrawlResponse{
+				Links: []string{
+					"http://example.net/1",
+					"http://example.net/2",
+				},
+			})
+
+		ctx, _ := context.WithTimeout(context.Background(), time.Second)
+
+		err := crawlService.RunCrawlProcess(ctx)
+
+		if err != context.DeadlineExceeded {
+			t.Errorf("expected got context deadline exceeded %v", err)
+		}
+
+		var pendingCount int
+		var completedCount int
+
+		for i := 0; i < 5; i++ {
+			url := domain.URL(fmt.Sprintf("http://example.com/about%d", i))
+			job, err := sf.CrawlJobRepo.Get(util.PageID(url))
+
+			if err != nil {
+				t.Errorf("expected no error, got %v", err)
+			}
+
+			if job.Status == domain.CrawlStatusPending {
+				pendingCount++
+			}
+
+			if job.Status == domain.CrawlStatusCompleted {
+				completedCount++
+			}
+		}
+
+		if pendingCount != 4 {
+			t.Errorf("expected 4 pending jobs, got %v", pendingCount)
+		}
+
+		if completedCount != 1 {
+			t.Errorf("expected 1 completed job, got %v", completedCount)
+		}
+
+		pendingCount = 0
+		completedCount = 0
+
+		for i := 0; i < 5; i++ {
+			url := domain.URL(fmt.Sprintf("http://example.net/about%d", i))
+			job, err := sf.CrawlJobRepo.Get(util.PageID(url))
+
+			if err != nil {
+				t.Errorf("expected no error, got %v", err)
+			}
+
+			if job.Status == domain.CrawlStatusPending {
+				pendingCount++
+			}
+
+			if job.Status == domain.CrawlStatusCompleted {
+				completedCount++
+			}
+		}
+
+		if pendingCount != 4 {
+			t.Errorf("expected 4 pending jobs, got %v", pendingCount)
+		}
+
+		if completedCount != 1 {
+			t.Errorf("expected 1 completed job, got %v", completedCount)
+		}
+
+		if !gock.IsDone() {
+			t.Errorf("expected all mocks to be called")
+		}
+	})
 }
