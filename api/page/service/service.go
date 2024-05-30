@@ -15,8 +15,6 @@ type Service struct {
 	shardService domain.ShardService
 	crawlService domain.CrawlService
 	logger       *zap.SugaredLogger
-
-	withoutEventListener bool
 }
 
 type Option func(*Service)
@@ -51,9 +49,9 @@ func WithEventService(eventService domain.EventService) func(*Service) {
 	}
 }
 
-func WithoutEventListener() func(*Service) {
+func WithEventListeners() func(*Service) {
 	return func(s *Service) {
-		s.eventService = nil
+		s.registerEventListeners()
 	}
 }
 
@@ -62,10 +60,6 @@ func NewService(opts ...Option) *Service {
 
 	for _, opt := range opts {
 		opt(s)
-	}
-
-	if !s.withoutEventListener {
-		s.registerEventListeners()
 	}
 
 	return s

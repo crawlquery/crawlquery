@@ -3,18 +3,17 @@ package mem
 import (
 	"crawlquery/api/domain"
 	"testing"
-	"time"
 )
 
-func TestCreate(t *testing.T) {
-	t.Run("can create index job", func(t *testing.T) {
+func TestSave(t *testing.T) {
+	t.Run("can save index job", func(t *testing.T) {
 		repo := NewRepository()
 
 		job := &domain.IndexJob{
-			ID: "job1",
+			PageID: "job1",
 		}
 
-		_, err := repo.Create(job)
+		err := repo.Save(job)
 
 		if err != nil {
 			t.Errorf("Error creating index job: %v", err)
@@ -31,135 +30,54 @@ func TestGet(t *testing.T) {
 		repo := NewRepository()
 
 		job := &domain.IndexJob{
-			ID: "job1",
+			PageID: "job1",
 		}
 
-		repo.jobs[job.ID] = job
+		repo.jobs[job.PageID] = job
 
-		result, err := repo.Get(job.ID)
+		result, err := repo.Get(job.PageID)
 
 		if err != nil {
 			t.Errorf("Error getting index job: %v", err)
 		}
 
-		if result.ID != job.ID {
-			t.Errorf("Expected job ID to be %s, got %s", job.ID, result.ID)
+		if result.PageID != job.PageID {
+			t.Errorf("Expected job ID to be %s, got %s", job.PageID, result.PageID)
 		}
 	})
 }
 
-func TestGetByPageID(t *testing.T) {
-	t.Run("can get index job by page ID", func(t *testing.T) {
+func TestListByStatus(t *testing.T) {
+	t.Run("can list index jobs by status", func(t *testing.T) {
 		repo := NewRepository()
 
-		job := &domain.IndexJob{
-			ID:     "job1",
-			PageID: "page1",
+		job1 := &domain.IndexJob{
+			PageID: "job1",
+			Status: domain.IndexStatusPending,
 		}
 
-		repo.jobs[job.ID] = job
+		job2 := &domain.IndexJob{
+			PageID: "job2",
+			Status: domain.IndexStatusPending,
+		}
 
-		result, err := repo.GetByPageID(job.PageID)
+		job3 := &domain.IndexJob{
+			PageID: "job3",
+			Status: domain.IndexStatusCompleted,
+		}
+
+		repo.jobs[job1.PageID] = job1
+		repo.jobs[job2.PageID] = job2
+		repo.jobs[job3.PageID] = job3
+
+		jobs, err := repo.ListByStatus(10, domain.IndexStatusPending)
 
 		if err != nil {
-			t.Errorf("Error getting index job: %v", err)
+			t.Errorf("Error listing index jobs: %v", err)
 		}
 
-		if result.ID != job.ID {
-			t.Errorf("Expected job ID to be %s, got %s", job.ID, result.ID)
-		}
-	})
-}
-
-func TestNext(t *testing.T) {
-	t.Run("can get next index job", func(t *testing.T) {
-		repo := NewRepository()
-
-		job := &domain.IndexJob{
-			ID: "job1",
-		}
-
-		repo.jobs[job.ID] = job
-
-		result, err := repo.Next()
-
-		if err != nil {
-			t.Fatalf("Error getting next index job: %v", err)
-		}
-
-		if result.ID != job.ID {
-			t.Errorf("Expected job ID to be %s, got %s", job.ID, result.ID)
-		}
-	})
-
-	t.Run("does not return job if backoff is not expired", func(t *testing.T) {
-		repo := NewRepository()
-
-		job := &domain.IndexJob{
-			ID: "job1",
-		}
-
-		job.BackoffUntil.Valid = true
-		job.BackoffUntil.Time = job.BackoffUntil.Time.Add(1 * time.Hour)
-
-		repo.jobs[job.ID] = job
-
-		result, err := repo.Next()
-
-		if err != domain.ErrIndexJobNotFound {
-			t.Errorf("Expected ErrIndexJobNotFound, got %v", err)
-		}
-
-		if result != nil {
-			t.Errorf("Expected nil result, got %v", result)
-		}
-	})
-
-	t.Run("does not return job if last indexed is set", func(t *testing.T) {
-		repo := NewRepository()
-
-		job := &domain.IndexJob{
-			ID: "job1",
-		}
-
-		job.LastIndexedAt.Time = time.Now()
-		job.LastIndexedAt.Valid = true
-
-		repo.jobs[job.ID] = job
-
-		result, err := repo.Next()
-
-		if err != domain.ErrIndexJobNotFound {
-			t.Errorf("Expected ErrIndexJobNotFound, got %v", err)
-		}
-
-		if result != nil {
-			t.Errorf("Expected nil result, got %v", result)
-		}
-	})
-}
-
-func TestUpdate(t *testing.T) {
-	t.Run("can update index job", func(t *testing.T) {
-		repo := NewRepository()
-
-		job := &domain.IndexJob{
-			ID: "job1",
-		}
-
-		repo.jobs[job.ID] = job
-
-		job.LastIndexedAt.Time = time.Now()
-		job.LastIndexedAt.Valid = true
-
-		err := repo.Update(job)
-
-		if err != nil {
-			t.Errorf("Error updating index job: %v", err)
-		}
-
-		if !repo.jobs[job.ID].LastIndexedAt.Valid {
-			t.Errorf("Expected LastIndexedAt to be valid")
+		if len(jobs) != 2 {
+			t.Errorf("Expected 2 jobs, got %v", len(jobs))
 		}
 	})
 }

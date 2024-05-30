@@ -16,7 +16,6 @@ func NewRouter(
 	pageHandler domain.PageHandler,
 	nodeHandler domain.NodeHandler,
 	searchHandler domain.SearchHandler,
-	linkHandler domain.LinkHandler,
 ) *gin.Engine {
 	router := gin.Default()
 	router.Use(cors.New(cors.Config{
@@ -39,8 +38,6 @@ func NewRouter(
 	router.POST("/pages", pageHandler.Create)
 
 	router.GET("/search", searchHandler.Search)
-
-	router.POST("/links", linkHandler.Create)
 
 	return router
 }

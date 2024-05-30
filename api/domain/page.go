@@ -51,10 +51,12 @@ type PageHandler interface {
 	Create(c *gin.Context)
 }
 
+const PageCreatedKey = "page.created"
+
 type PageCreated struct {
 	Page *Page
 }
 
 func (p PageCreated) Key() EventKey {
-	return "page.created"
+	return PageCreatedKey
 }

@@ -577,3 +577,49 @@ func TestRunCrawlProcess(t *testing.T) {
 		}
 	})
 }
+
+func TestHandlesPageCreatedEvent(t *testing.T) {
+	t.Run("creates a job with the page", func(t *testing.T) {
+		sf := testfactory.NewServiceFactory(
+			testfactory.WithShard(&domain.Shard{ID: 0}),
+		)
+
+		crawlService.NewService(
+			crawlService.WithEventService(sf.EventService),
+			crawlService.WithCrawlJobRepo(sf.CrawlJobRepo),
+			crawlService.WithCrawlLogRepo(sf.CrawlLogRepo),
+			crawlService.WithEventListeners(),
+		)
+
+		pageCreated := &domain.PageCreated{
+			Page: &domain.Page{
+				ID:  util.PageID("http://example.com"),
+				URL: "http://example.com",
+			},
+		}
+
+		err := sf.EventService.Publish(pageCreated)
+
+		if err != nil {
+			t.Errorf("expected no error, got %v", err)
+		}
+
+		job, err := sf.CrawlJobRepo.Get(pageCreated.Page.ID)
+
+		if err != nil {
+			t.Errorf("expected no error, got %v", err)
+		}
+
+		if job.PageID != pageCreated.Page.ID {
+			t.Errorf("expected pageID to be %v, got %v", pageCreated.Page.ID, job.PageID)
+		}
+
+		if job.URL != pageCreated.Page.URL {
+			t.Errorf("expected URL to be %v, got %v", pageCreated.Page.URL, job.URL)
+		}
+
+		if job.Status != domain.CrawlStatusPending {
+			t.Errorf("expected status to be pending, got %v", job.Status)
+		}
+	})
+}

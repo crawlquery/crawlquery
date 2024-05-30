@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"context"
 	"errors"
 	"time"
 )
@@ -71,6 +72,7 @@ type CrawlRateLimiter interface {
 
 type CrawlService interface {
 	CreateJob(page *Page) error
+	RunCrawlProcess(ctx context.Context) error
 }
 
 type CrawlThrottleService interface {

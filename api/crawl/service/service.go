@@ -73,6 +73,12 @@ func WithMaxQueueSize(maxQueueSize int) func(*Service) {
 	}
 }
 
+func WithEventListeners() func(*Service) {
+	return func(s *Service) {
+		s.registerEventListeners()
+	}
+}
+
 func NewService(opts ...Option) *Service {
 	s := &Service{}
 
@@ -81,6 +87,24 @@ func NewService(opts ...Option) *Service {
 	}
 
 	return s
+}
+
+func (s *Service) registerEventListeners() {
+	if s.eventService == nil {
+		s.logger.Fatal("EventService is required")
+	}
+	s.eventService.Subscribe(domain.PageCreatedKey, s.handlePageCreated)
+}
+
+func (s *Service) handlePageCreated(e domain.Event) {
+	page := e.(*domain.PageCreated).Page
+
+	err := s.CreateJob(page)
+
+	if err != nil {
+		s.logger.Errorw("Error creating job", "error", err)
+	}
+
 }
 
 func (s *Service) CreateJob(page *domain.Page) error {

@@ -1,12 +1,15 @@
 package main
 
 import (
+	"context"
 	"crawlquery/api/migration"
 	"crawlquery/api/router"
 	"database/sql"
 	"fmt"
 	"os"
 	"time"
+
+	eventService "crawlquery/api/event/service"
 
 	authHandler "crawlquery/api/auth/handler"
 	authService "crawlquery/api/auth/service"
@@ -18,6 +21,7 @@ import (
 	crawlJobMysqlRepo "crawlquery/api/crawl/job/repository/mysql"
 	crawlLogMysqlRepo "crawlquery/api/crawl/log/repository/mysql"
 	crawlService "crawlquery/api/crawl/service"
+	crawlThrottleService "crawlquery/api/crawl/throttle/service"
 
 	nodeHandler "crawlquery/api/node/handler"
 	nodeMysqlRepo "crawlquery/api/node/repository/mysql"
@@ -29,7 +33,6 @@ import (
 	searchHandler "crawlquery/api/search/handler"
 	searchService "crawlquery/api/search/service"
 
-	linkHandler "crawlquery/api/link/handler"
 	linkMySQLRepo "crawlquery/api/link/repository/mysql"
 	linkService "crawlquery/api/link/service"
 
@@ -71,6 +74,8 @@ func main() {
 		}
 	}
 
+	eventService := eventService.NewService()
+
 	accountRepo := accountMysqlRepo.NewRepository(db)
 	accountService := accountService.NewService(accountRepo, sugar)
 	accountHandler := accountHandler.NewHandler(accountService)
@@ -98,22 +103,33 @@ func main() {
 		pageService.WithPageRepo(pageRepo),
 		pageService.WithShardService(shardService),
 		pageService.WithLogger(sugar),
+		pageService.WithEventService(eventService),
 	)
 	pageHandler := pageHandler.NewHandler(pageService)
 
 	indexJobRepo := indexJobMySQLRepo.NewRepository(db)
 	indexJobService := indexJobService.NewService(indexJobRepo, pageService, nodeService, sugar)
 
+	crawlThrottleService := crawlThrottleService.NewService(
+		crawlThrottleService.WithRateLimit(time.Second * 20),
+	)
 	crawlJobRepo := crawlJobMysqlRepo.NewRepository(db)
 	crawlJobService := crawlService.NewService(
+		crawlService.WithEventService(eventService),
+		crawlService.WithEventListeners(),
+		crawlService.WithCrawlThrottleService(crawlThrottleService),
 		crawlService.WithCrawlJobRepo(crawlJobRepo),
 		crawlService.WithCrawlLogRepo(crawlLogMysqlRepo.NewRepository(db)),
 		crawlService.WithLogger(sugar),
 	)
 
 	linkRepo := linkMySQLRepo.NewRepository(db)
-	linkService := linkService.NewService(linkRepo, crawlJobService, sugar)
-	linkHandler := linkHandler.NewHandler(linkService, sugar)
+	linkService := linkService.NewService(
+		linkService.WithLinkRepo(linkRepo),
+		linkService.WithLogger(sugar),
+		linkService.WithEventService(eventService),
+		linkService.WithEventListeners(),
+	)
 
 	// pageRankRepo := pageRankMysqlRepo.NewRepository(db)
 	pageRankRepo := pageRankMemRepo.NewRepository()
@@ -122,7 +138,7 @@ func main() {
 	searchService := searchService.NewService(nodeService, pageRankService, sugar)
 	searchHandler := searchHandler.NewHandler(searchService)
 
-	go crawlJobService.ProcessCrawlJobs()
+	go crawlJobService.RunCrawlProcess(context.Background())
 
 	go pageRankService.UpdatePageRanksEvery(time.Minute)
 
