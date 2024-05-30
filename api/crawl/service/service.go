@@ -265,7 +265,11 @@ func (s *Service) ProcessQueueItem(ctx context.Context, job *domain.CrawlJob, as
 	)
 
 	if err != nil {
-		return s.updateJob(job, domain.CrawlStatusFailed, err)
+		if err := s.updateJob(job, domain.CrawlStatusFailed, err); err != nil {
+			return err
+		}
+
+		return err
 	}
 
 	s.updateJob(job, domain.CrawlStatusCompleted, nil)

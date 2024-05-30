@@ -152,6 +152,10 @@ func TestProcessQueueItem(t *testing.T) {
 		if updatedJob.Status != domain.CrawlStatusCompleted {
 			t.Errorf("expected job status to be completed, got %v", updatedJob.Status)
 		}
+
+		if !gock.IsDone() {
+			t.Errorf("expected all mocks to be called")
+		}
 	})
 
 	t.Run("handles 400 error from node", func(t *testing.T) {
@@ -168,6 +172,10 @@ func TestProcessQueueItem(t *testing.T) {
 
 		ctx := context.Background()
 		err := sf.CrawlService.ProcessQueueItem(ctx, job, node)
+
+		if err == nil {
+			t.Errorf("expected error, got nil")
+		}
 
 		if !strings.Contains(err.Error(), "unexpected status code: 400 (request timeout error") {
 			t.Errorf("expected error, got %v", err)
@@ -204,6 +212,10 @@ func TestProcessQueueItem(t *testing.T) {
 		if logs[0].Info != "unexpected status code: 400 (request timeout error)" {
 			t.Errorf("expected log info to be 'request timeout error', got %v", logs[0].Info)
 		}
+
+		if !gock.IsDone() {
+			t.Errorf("expected all mocks to be called")
+		}
 	})
 
 	t.Run("handles 500 error from node", func(t *testing.T) {
@@ -230,6 +242,10 @@ func TestProcessQueueItem(t *testing.T) {
 
 		if updatedJob.Status != domain.CrawlStatusFailed {
 			t.Errorf("expected job status to be failed, got %v", updatedJob.Status)
+		}
+
+		if !gock.IsDone() {
+			t.Errorf("expected all mocks to be called")
 		}
 	})
 
@@ -259,6 +275,10 @@ func TestProcessQueueItem(t *testing.T) {
 
 		if !strings.Contains(err.Error(), context.DeadlineExceeded.Error()) {
 			t.Errorf("expected error to be context.DeadlineExceeded, got %v", err)
+		}
+
+		if !gock.IsDone() {
+			t.Errorf("expected all mocks to be called")
 		}
 	})
 }

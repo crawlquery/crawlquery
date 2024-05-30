@@ -13,7 +13,6 @@ import (
 type Service struct {
 	eventService domain.EventService
 	linkRepo     domain.LinkRepository
-	pageService  domain.PageService
 	logger       *zap.SugaredLogger
 }
 
@@ -31,15 +30,15 @@ func WithLinkRepo(linkRepo domain.LinkRepository) Option {
 	}
 }
 
-func WithPageService(pageService domain.PageService) Option {
-	return func(s *Service) {
-		s.pageService = pageService
-	}
-}
-
 func WithLogger(logger *zap.SugaredLogger) Option {
 	return func(s *Service) {
 		s.logger = logger
+	}
+}
+
+func WithEventListeners() Option {
+	return func(s *Service) {
+		s.registerEventListeners()
 	}
 }
 
@@ -49,8 +48,6 @@ func NewService(opts ...Option) *Service {
 	for _, opt := range opts {
 		opt(s)
 	}
-
-	s.registerEventListeners()
 
 	return s
 }

@@ -4,6 +4,9 @@ import (
 	"crawlquery/api/domain"
 	pageVersionRepo "crawlquery/api/page/version/repository/mem"
 	pageVersionService "crawlquery/api/page/version/service"
+	"crawlquery/pkg/testutil"
+
+	eventService "crawlquery/api/event/service"
 	"testing"
 	"time"
 )
@@ -134,6 +137,47 @@ func TestCreate(t *testing.T) {
 
 		if !got.CreatedAt.Round(time.Second).Equal(now.Round(time.Second)) {
 			t.Fatalf("Expected %v, got %v", now, got.CreatedAt)
+		}
+	})
+}
+
+func TestHandlesCrawlCompletedEvent(t *testing.T) {
+	t.Run("creates a page version", func(t *testing.T) {
+		eventService := eventService.NewService()
+		pageVersionRepo := pageVersionRepo.NewRepository()
+		pageVersionService := pageVersionService.NewService(
+			pageVersionService.WithVersionRepo(pageVersionRepo),
+			pageVersionService.WithEventService(eventService),
+			pageVersionService.WithLogger(testutil.NewTestLogger()),
+			pageVersionService.WithEventListeners(),
+		)
+
+		pageID := domain.PageID("page1")
+		contentHash := domain.ContentHash("hash")
+
+		event := &domain.CrawlCompleted{
+			PageID:      pageID,
+			ContentHash: contentHash,
+		}
+
+		eventService.Publish(event)
+
+		got, err := pageVersionService.ListByPageID(pageID)
+
+		if err != nil {
+			t.Fatalf("Expected no error, got %v", err)
+		}
+
+		if len(got) != 1 {
+			t.Fatalf("Expected 1 page version, got %d", len(got))
+		}
+
+		if got[0].PageID != pageID {
+			t.Fatalf("Expected %s, got %s", pageID, got[0].PageID)
+		}
+
+		if got[0].ContentHash != contentHash {
+			t.Fatalf("Expected %s, got %s", contentHash, got[0].ContentHash)
 		}
 	})
 }

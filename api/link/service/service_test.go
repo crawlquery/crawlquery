@@ -4,8 +4,11 @@ import (
 	"crawlquery/api/domain"
 	"crawlquery/api/testfactory"
 
+	"crawlquery/pkg/testutil"
 	"crawlquery/pkg/util"
 	"testing"
+
+	linkService "crawlquery/api/link/service"
 )
 
 func TestCreate(t *testing.T) {
@@ -68,6 +71,46 @@ func TestCreate(t *testing.T) {
 
 		if !publishedEvent {
 			t.Errorf("Expected event to be published")
+		}
+	})
+}
+
+func TestHandlesCrawlCompletedEvent(t *testing.T) {
+	t.Run("creates a link with page", func(t *testing.T) {
+		sf := testfactory.NewServiceFactory(
+			testfactory.WithShard(&domain.Shard{ID: 0}),
+		)
+
+		linkService.NewService(
+			linkService.WithLinkRepo(sf.LinkRepo),
+			linkService.WithEventService(sf.EventService),
+			linkService.WithLogger(testutil.NewTestLogger()),
+			linkService.WithEventListeners(),
+		)
+
+		linkRepo := sf.LinkRepo
+		eventService := sf.EventService
+
+		pageID := util.PageID("https://cancreatealink.com")
+		contentHash := domain.ContentHash("hash")
+
+		event := &domain.CrawlCompleted{
+			PageID:      pageID,
+			ContentHash: contentHash,
+			Links: []domain.URL{
+				"https://cancreatealink.com/about",
+				"https://cancreatealink.com/contact",
+			},
+		}
+
+		// Act
+		eventService.Publish(event)
+
+		// Assert
+		repoCheck, _ := linkRepo.GetAllBySrcID(pageID)
+
+		if len(repoCheck) != 2 {
+			t.Errorf("Expected 2 links, got %d", len(repoCheck))
 		}
 	})
 }

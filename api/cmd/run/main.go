@@ -37,6 +37,7 @@ import (
 	pageRankMemRepo "crawlquery/api/pagerank/repository/mem"
 	pageRankService "crawlquery/api/pagerank/service"
 
+	pageHandler "crawlquery/api/page/handler"
 	pageMysqlRepo "crawlquery/api/page/repository/mysql"
 	pageService "crawlquery/api/page/service"
 
@@ -84,7 +85,12 @@ func main() {
 	)
 
 	nodeRepo := nodeMysqlRepo.NewRepository(db)
-	nodeService := nodeService.NewService(nodeRepo, accountService, shardService, sugar)
+	nodeService := nodeService.NewService(
+		nodeService.WithAccountService(accountService),
+		nodeService.WithNodeRepo(nodeRepo),
+		nodeService.WithShardService(shardService),
+		nodeService.WithLogger(sugar),
+	)
 	nodeHandler := nodeHandler.NewHandler(nodeService)
 
 	pageRepo := pageMysqlRepo.NewRepository(db)
