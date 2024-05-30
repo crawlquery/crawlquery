@@ -84,7 +84,10 @@ func (s *Service) RemovePeer(id string) {
 
 func (s *Service) GetPageDumpsFromPeer(peer *domain.Peer, pageIDs []domain.PageID) ([]domain.PageDump, error) {
 
-	client := node.NewClient(fmt.Sprintf("http://%s:%d", peer.Hostname, peer.Port))
+	client := node.NewClient(
+		node.WithHostname(peer.Hostname),
+		node.WithPort(peer.Port),
+	)
 
 	var strPageIDs []string
 
@@ -189,7 +192,10 @@ func (s *Service) GetAllIndexMetas() ([]domain.IndexMeta, error) {
 }
 
 func (s *Service) GetIndexAllMetasFromPeer(peer *domain.Peer) ([]dto.IndexMeta, error) {
-	client := node.NewClient(fmt.Sprintf("http://%s:%d", peer.Hostname, peer.Port))
+	client := node.NewClient(
+		node.WithHostname(peer.Hostname),
+		node.WithPort(peer.Port),
+	)
 
 	metas, err := client.GetAllIndexMetas()
 
@@ -202,7 +208,10 @@ func (s *Service) GetIndexAllMetasFromPeer(peer *domain.Peer) ([]dto.IndexMeta, 
 }
 
 func (s *Service) GetIndexMetasFromPeer(peer *domain.Peer, pageIDs []string) ([]dto.IndexMeta, error) {
-	client := node.NewClient(fmt.Sprintf("http://%s:%d", peer.Hostname, peer.Port))
+	client := node.NewClient(
+		node.WithHostname(peer.Hostname),
+		node.WithPort(peer.Port),
+	)
 
 	metas, err := client.GetIndexMetas(pageIDs)
 

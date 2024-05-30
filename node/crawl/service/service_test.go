@@ -58,7 +58,7 @@ func TestCrawl(t *testing.T) {
 			Reply(200).
 			BodyString(expectedData).Header.Set("Content-Type", "text/html")
 
-		_, err := service.Crawl("test1", "http://example.com:9292")
+		_, _, err := service.Crawl("test1", "http://example.com:9292")
 
 		if err != nil {
 			t.Errorf("Error crawling page: %v", err)
@@ -117,25 +117,24 @@ func TestCrawl(t *testing.T) {
 			BodyString(expectedData).
 			SetHeader("Content-Type", "text/html")
 
-		gock.New("http://localhost:8080").
-			Post("/links").
-			JSON(`{"src":"http://example.com","dst":"http://example.com/about"}`).
-			Reply(200)
-
-		pageCrawled, err := service.Crawl("test1", "http://example.com")
+		hash, links, err := service.Crawl("test1", "http://example.com")
 
 		if err != nil {
 			t.Errorf("Error crawling page: %v", err)
 		}
 
-		if pageCrawled == nil {
-			t.Fatalf("Expected page to be crawled")
-		}
-
 		expectedHash := util.Sha256Hex32([]byte(expectedData))
 
-		if pageCrawled.Hash != expectedHash {
-			t.Fatalf("Expected page hash to be %s, got %s", expectedHash, pageCrawled.Hash)
+		if hash != expectedHash {
+			t.Fatalf("Expected page hash to be %s, got %s", expectedHash, hash)
+		}
+
+		if len(links) != 1 {
+			t.Fatalf("Expected 1 link, got %d", len(links))
+		}
+
+		if links[0] != "http://example.com/about" {
+			t.Fatalf("Expected link to be 'http://example.com/about', got '%s'", links[0])
 		}
 
 		data, err := htmlRepo.Get("test1")
@@ -191,25 +190,24 @@ func TestCrawl(t *testing.T) {
 			BodyString(expectedData).
 			SetHeader("Content-Type", "text/html")
 
-		gock.New("http://localhost:8080").
-			Post("/links").
-			JSON(`{"src":"http://example.com","dst":"http://example.com/about"}`).
-			Reply(200)
-
-		pageCrawled, err := service.Crawl("test1", "http://example.com")
+		hash, links, err := service.Crawl("test1", "http://example.com")
 
 		if err != nil {
 			t.Errorf("Error crawling page: %v", err)
 		}
 
-		if pageCrawled == nil {
-			t.Fatalf("Expected page to be crawled")
-		}
-
 		expectedHash := util.Sha256Hex32([]byte(expectedData))
 
-		if pageCrawled.Hash != expectedHash {
-			t.Fatalf("Expected page hash to be %s, got %s", expectedHash, pageCrawled.Hash)
+		if hash != expectedHash {
+			t.Fatalf("Expected page hash to be %s, got %s", expectedHash, hash)
+		}
+
+		if len(links) != 1 {
+			t.Fatalf("Expected 1 link, got %d", len(links))
+		}
+
+		if links[0] != "http://example.com/about" {
+			t.Fatalf("Expected link to be 'http://example.com/about', got '%s'", links[0])
 		}
 
 		data, err := htmlRepo.Get("test1")
@@ -254,7 +252,7 @@ func TestCrawl(t *testing.T) {
 			Get("/").
 			Reply(404)
 
-		_, err := service.Crawl("test1", "http://example.com")
+		_, _, err := service.Crawl("test1", "http://example.com")
 
 		if err == nil {
 			t.Errorf("Expected error, got nil")
@@ -274,14 +272,10 @@ func TestCrawl(t *testing.T) {
 			BodyString(expectedData).
 			SetHeader("Content-Type", "application/atom+xml")
 
-		pageCrawled, err := service.Crawl("test1", "http://example.com")
+		_, _, err := service.Crawl("test1", "http://example.com")
 
 		if err == nil {
 			t.Errorf("Expected error, got nil")
-		}
-
-		if pageCrawled != nil {
-			t.Fatalf("Expected page to be nil")
 		}
 
 		if !gock.IsDone() {
@@ -304,7 +298,7 @@ func TestCrawl(t *testing.T) {
 			BodyString("<html><head><title>Example</title></head><body><h1>Hello, World!</h1><p>Welcome to my example website.</p></body></html>").
 			SetHeader("Content-Type", "text/html")
 
-		_, err := service.Crawl("test1", "http://example.com")
+		_, _, err := service.Crawl("test1", "http://example.com")
 
 		if err != colly.ErrRobotsTxtBlocked {
 			t.Errorf("Expected error, got nil")
@@ -321,7 +315,7 @@ func TestCrawl(t *testing.T) {
 			Reply(301).
 			SetHeader("Location", "http://example.com/redirect")
 
-		_, err := service.Crawl("test1", "http://exampleredirect.com")
+		_, _, err := service.Crawl("test1", "http://exampleredirect.com")
 
 		if !strings.Contains(err.Error(), "301") {
 			t.Errorf("Expected error to contain '301', got '%s'", err.Error())

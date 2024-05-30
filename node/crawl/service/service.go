@@ -36,16 +36,12 @@ func NewService(
 	}
 }
 
-func (cs *CrawlService) Crawl(pageID, url string) (*domain.Page, error) {
+func (cs *CrawlService) Crawl(pageID, url string) (pageHash string, links []string, failedErr error) {
 
 	// Instantiate default collector
 	c := colly.NewCollector()
 
 	c.IgnoreRobotsTxt = false
-
-	var failedErr error
-	var pageHash string
-	var pageCrawled *domain.Page
 
 	extensions.RandomUserAgent(c)
 
@@ -89,7 +85,6 @@ func (cs *CrawlService) Crawl(pageID, url string) (*domain.Page, error) {
 		}
 
 		cs.logger.Infow("Page created", "pageID", page.ID, "url", page.URL)
-		pageCrawled = page
 	})
 
 	c.OnHTML("a[href]", func(e *colly.HTMLElement) {
@@ -103,9 +98,7 @@ func (cs *CrawlService) Crawl(pageID, url string) (*domain.Page, error) {
 			return
 		}
 
-		if err := cs.api.CreateLink(url, absoluteDst); err != nil {
-			cs.logger.Errorw("Error creating link", "error", err, "link", absoluteDst)
-		}
+		links = append(links, absoluteDst)
 	})
 
 	c.OnError(func(r *colly.Response, e error) {
@@ -117,8 +110,8 @@ func (cs *CrawlService) Crawl(pageID, url string) (*domain.Page, error) {
 
 	if err != nil {
 		cs.logger.Errorw("Error visiting page", "error", err, "pageID", pageID)
-		return nil, err
+		return "", nil, err
 	}
 
-	return pageCrawled, failedErr
+	return
 }
