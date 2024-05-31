@@ -84,6 +84,7 @@ const CrawlCompletedKey = "crawl.completed"
 type CrawlCompleted struct {
 	PageID      PageID
 	ShardID     ShardID
+	URL         URL
 	ContentHash ContentHash
 	Links       []URL
 }

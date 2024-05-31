@@ -21,15 +21,17 @@ func NewHandler(service domain.IndexService, logger *zap.SugaredLogger) *IndexHa
 }
 
 func (ih *IndexHandler) Index(c *gin.Context) {
-	pageID := c.Param("pageID")
-	if pageID == "" {
-		c.JSON(400, &dto.ErrorResponse{
-			Error: "missing pageID",
+
+	var req dto.IndexRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		ih.logger.Error(err)
+		c.JSON(400, gin.H{
+			"error": err.Error(),
 		})
 		return
 	}
 
-	if err := ih.service.Index(pageID); err != nil {
+	if err := ih.service.Index(req.PageID, req.URL, req.ContentHash); err != nil {
 		ih.logger.Error(err)
 		c.JSON(422, &dto.ErrorResponse{
 			Error: err.Error(),

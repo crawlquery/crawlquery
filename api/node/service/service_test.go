@@ -856,7 +856,9 @@ func TestSendIndexJob(t *testing.T) {
 		}
 
 		indexJob := &domain.IndexJob{
-			PageID: "1",
+			PageID:      "1",
+			URL:         "http://example.com",
+			ContentHash: "hash",
 		}
 
 		defer gock.Off()
@@ -866,7 +868,12 @@ func TestSendIndexJob(t *testing.T) {
 		}
 
 		gock.New("http://testnode:8080").
-			Post(fmt.Sprintf("/pages/%s/index", indexJob.PageID)).
+			Post("/index").
+			JSON(&dto.IndexRequest{
+				PageID:      string(indexJob.PageID),
+				URL:         "http://example.com",
+				ContentHash: "hash",
+			}).
 			Reply(200).
 			JSON(indexResponse)
 

@@ -78,6 +78,8 @@ var migrations = []Migration{
 		Name: "created_index_jobs_table",
 		SQL: `CREATE TABLE index_jobs (
 			page_id VARCHAR(32) PRIMARY KEY,
+			url VARCHAR(2083) NOT NULL,
+			content_hash VARCHAR(32) NOT NULL,
 			shard_id SMALLINT UNSIGNED NOT NULL,
 			status TINYINT UNSIGNED NOT NULL,
 			created_at TIMESTAMP NOT NULL,

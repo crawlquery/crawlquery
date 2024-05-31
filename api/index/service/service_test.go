@@ -29,7 +29,7 @@ func TestCreateJob(t *testing.T) {
 			indexService.WithLogger(testutil.NewTestLogger()),
 		)
 
-		err := indexService.CreateJob("page1", 0)
+		err := indexService.CreateJob("page1", "http://google.com", 0)
 
 		if err != nil {
 			t.Errorf("Error creating index job: %v", err)
@@ -67,7 +67,7 @@ func TestCreateJob(t *testing.T) {
 
 		indexJobRepo.Save(job)
 
-		err := indexService.CreateJob("job1", 0)
+		err := indexService.CreateJob("job1", "http://google.com", 0)
 
 		if err != domain.ErrIndexJobAlreadyExists {
 			t.Errorf("Expected ErrIndexJobAlreadyExists, got %v", err)

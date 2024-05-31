@@ -60,7 +60,12 @@ func TestIndex(t *testing.T) {
 		}
 
 		gock.New("http://node.com").
-			Post("/pages/page1/index").
+			Post("/index").
+			JSON(&dto.IndexRequest{
+				PageID:      "page1",
+				URL:         "http://example.com",
+				ContentHash: "hash",
+			}).
 			Reply(200).
 			JSON(expectedRes)
 
@@ -69,7 +74,7 @@ func TestIndex(t *testing.T) {
 			node.WithPort(80),
 		)
 
-		err := node.Index("page1")
+		err := node.Index("page1", "http://example.com", "hash")
 
 		if err != nil {
 			t.Fatalf("Expected no error, got %v", err)

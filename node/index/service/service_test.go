@@ -58,7 +58,7 @@ func TestIndex(t *testing.T) {
 			URL: "http://example.com",
 		})
 
-		htmlRepo.Save("page1", []byte(`
+		htmlRepo.Save("hash", []byte(`
 		<html>
 			<head>
 				<title>Test Page</title>
@@ -72,7 +72,7 @@ func TestIndex(t *testing.T) {
 		</html>
 	`))
 
-		err := s.Index("page1")
+		err := s.Index("page1", "http://example.com", "hash")
 
 		if err != nil {
 			t.Fatalf("Expected no error, got %v", err)
@@ -168,9 +168,9 @@ func TestIndex(t *testing.T) {
 		</html>
 	`)...)
 
-		htmlRepo.Save("page1", start)
+		htmlRepo.Save("hash", start)
 
-		err := s.Index("page1")
+		err := s.Index("page1", "http://example.com", "hash")
 
 		if err != nil {
 			t.Fatalf("Expected no error, got %v", err)
@@ -224,7 +224,7 @@ func TestIndex(t *testing.T) {
 			URL: "http://example.com",
 		})
 
-		htmlRepo.Save("page1", []byte(`
+		htmlRepo.Save("hash", []byte(`
 		<html>
 			<head>
 				<title>Test Page</title>
@@ -250,7 +250,7 @@ func TestIndex(t *testing.T) {
 			Post("/event").
 			Reply(200)
 
-		err := s.Index("page1")
+		err := s.Index("page1", "http://example.com", "hash")
 
 		time.Sleep(50 * time.Millisecond)
 		if err != nil {
@@ -275,7 +275,7 @@ func TestApplyPageUpdatedEvent(t *testing.T) {
 			URL: "http://example.com",
 		})
 
-		htmlRepo.Save("page1", []byte(`
+		htmlRepo.Save("hash", []byte(`
 		<html>
 			<head>
 				<title>Test Page</title>
@@ -289,7 +289,7 @@ func TestApplyPageUpdatedEvent(t *testing.T) {
 		</html>
 	`))
 
-		err := s.Index("page1")
+		err := s.Index("page1", "http://example.com", "hash")
 
 		if err != nil {
 			t.Fatalf("Expected no error, got %v", err)

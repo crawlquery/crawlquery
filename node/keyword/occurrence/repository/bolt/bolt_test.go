@@ -8,7 +8,6 @@ import (
 
 	"crawlquery/node/domain"
 	occRepo "crawlquery/node/keyword/occurrence/repository/bolt"
-	"crawlquery/pkg/util"
 
 	"github.com/boltdb/bolt"
 )
@@ -208,7 +207,7 @@ func TestCount(t *testing.T) {
 	for i, keyword := range keywords {
 		for j := 0; j < i+1; j++ {
 			occurrence := domain.KeywordOccurrence{
-				PageID:    util.PageID(fmt.Sprintf("page%d", i+1)),
+				PageID:    fmt.Sprintf("page%d", i+1),
 				Frequency: 1,
 				Positions: []int{1},
 			}

@@ -295,6 +295,7 @@ func TestProcessQueueItem(t *testing.T) {
 			}).
 			Reply(200).
 			JSON(dto.CrawlResponse{
+				ContentHash: "hash",
 				Links: []string{
 					"http://example.com/1",
 					"http://example.com/2",
@@ -313,6 +314,14 @@ func TestProcessQueueItem(t *testing.T) {
 
 			if crawlCompleted.ShardID != job.ShardID {
 				t.Errorf("expected shardID to be %v, got %v", job.ShardID, crawlCompleted.ShardID)
+			}
+
+			if crawlCompleted.URL != job.URL {
+				t.Errorf("expected URL to be %v, got %v", job.URL, crawlCompleted.URL)
+			}
+
+			if crawlCompleted.ContentHash != "hash" {
+				t.Errorf("expected content hash to be 'hash', got %v", crawlCompleted.ContentHash)
 			}
 		})
 
@@ -556,7 +565,7 @@ func TestRunCrawlProcess(t *testing.T) {
 			}
 		}
 
-		ctx, _ := context.WithTimeout(context.Background(), time.Second)
+		ctx, _ := context.WithTimeout(context.Background(), time.Second*2)
 
 		err := crawlService.RunCrawlProcess(ctx)
 

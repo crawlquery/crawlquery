@@ -18,11 +18,13 @@ func TestSave(t *testing.T) {
 		repo := mysql.NewRepository(db)
 
 		job := &domain.IndexJob{
-			PageID:    "page1",
-			ShardID:   0,
-			Status:    domain.IndexStatusPending,
-			CreatedAt: time.Now(),
-			UpdatedAt: time.Now(),
+			PageID:      "page1",
+			URL:         "http://example.com",
+			ContentHash: "hash",
+			ShardID:     0,
+			Status:      domain.IndexStatusPending,
+			CreatedAt:   time.Now(),
+			UpdatedAt:   time.Now(),
 		}
 
 		err := repo.Save(job)
@@ -34,13 +36,21 @@ func TestSave(t *testing.T) {
 
 		var checkJob domain.IndexJob
 
-		err = db.QueryRow("SELECT page_id, status, created_at, updated_at FROM index_jobs WHERE page_id = ?", job.PageID).Scan(&checkJob.PageID, &checkJob.Status, &checkJob.CreatedAt, &checkJob.UpdatedAt)
+		err = db.QueryRow("SELECT page_id, url, content_hash, status, created_at, updated_at FROM index_jobs WHERE page_id = ?", job.PageID).Scan(&checkJob.PageID, &checkJob.URL, &checkJob.ContentHash, &checkJob.Status, &checkJob.CreatedAt, &checkJob.UpdatedAt)
 
 		if err != nil {
 			t.Errorf("Error getting index job: %v", err)
 		}
 		if checkJob.PageID != job.PageID {
 			t.Errorf("Expected job PageID to be %s, got %s", job.PageID, checkJob.PageID)
+		}
+
+		if checkJob.URL != job.URL {
+			t.Errorf("Expected job URL to be %s, got %s", job.URL, checkJob.URL)
+		}
+
+		if checkJob.ContentHash != job.ContentHash {
+			t.Errorf("Expected job ContentHash to be %s, got %s", job.ContentHash, checkJob.ContentHash)
 		}
 
 		if checkJob.Status != job.Status {
@@ -64,11 +74,13 @@ func TestSave(t *testing.T) {
 		repo := mysql.NewRepository(db)
 
 		job := &domain.IndexJob{
-			PageID:    "page1",
-			ShardID:   0,
-			Status:    domain.IndexStatusPending,
-			CreatedAt: time.Now(),
-			UpdatedAt: time.Now(),
+			PageID:      "page1",
+			ShardID:     0,
+			URL:         "http://example.com",
+			ContentHash: "hash",
+			Status:      domain.IndexStatusPending,
+			CreatedAt:   time.Now(),
+			UpdatedAt:   time.Now(),
 		}
 
 		err := repo.Save(job)
@@ -89,13 +101,21 @@ func TestSave(t *testing.T) {
 
 		var checkJob domain.IndexJob
 
-		err = db.QueryRow("SELECT page_id, status, created_at, updated_at FROM index_jobs WHERE page_id = ?", job.PageID).Scan(&checkJob.PageID, &checkJob.Status, &checkJob.CreatedAt, &checkJob.UpdatedAt)
+		err = db.QueryRow("SELECT page_id, url, content_hash, status, created_at, updated_at FROM index_jobs WHERE page_id = ?", job.PageID).Scan(&checkJob.PageID, &checkJob.URL, &checkJob.ContentHash, &checkJob.Status, &checkJob.CreatedAt, &checkJob.UpdatedAt)
 
 		if err != nil {
 			t.Errorf("Error getting index job: %v", err)
 		}
 		if checkJob.PageID != job.PageID {
 			t.Errorf("Expected job PageID to be %s, got %s", job.PageID, checkJob.PageID)
+		}
+
+		if checkJob.URL != job.URL {
+			t.Errorf("Expected job URL to be %s, got %s", job.URL, checkJob.URL)
+		}
+
+		if checkJob.ContentHash != job.ContentHash {
+			t.Errorf("Expected job ContentHash to be %s, got %s", job.ContentHash, checkJob.ContentHash)
 		}
 
 		if checkJob.Status != job.Status {
@@ -156,24 +176,30 @@ func TestListByStatus(t *testing.T) {
 		repo := mysql.NewRepository(db)
 
 		job1 := &domain.IndexJob{
-			PageID:    "page1",
-			Status:    domain.IndexStatusPending,
-			CreatedAt: time.Now(),
-			UpdatedAt: time.Now(),
+			PageID:      "page1",
+			URL:         "http://example.com",
+			ContentHash: "hash",
+			Status:      domain.IndexStatusPending,
+			CreatedAt:   time.Now(),
+			UpdatedAt:   time.Now(),
 		}
 
 		job2 := &domain.IndexJob{
-			PageID:    "page2",
-			Status:    domain.IndexStatusPending,
-			CreatedAt: time.Now(),
-			UpdatedAt: time.Now(),
+			PageID:      "page2",
+			URL:         "http://example.com/about",
+			ContentHash: "hash",
+			Status:      domain.IndexStatusPending,
+			CreatedAt:   time.Now(),
+			UpdatedAt:   time.Now(),
 		}
 
 		job3 := &domain.IndexJob{
-			PageID:    "page3",
-			Status:    domain.IndexStatusCompleted,
-			CreatedAt: time.Now(),
-			UpdatedAt: time.Now(),
+			PageID:      "page3",
+			URL:         "http://example.com/contact",
+			ContentHash: "hash",
+			Status:      domain.IndexStatusCompleted,
+			CreatedAt:   time.Now(),
+			UpdatedAt:   time.Now(),
 		}
 
 		err := repo.Save(job1)
@@ -206,6 +232,14 @@ func TestListByStatus(t *testing.T) {
 
 		if jobs[0].PageID != job1.PageID {
 			t.Errorf("Expected first job PageID to be %s, got %s", job1.PageID, jobs[0].PageID)
+		}
+
+		if jobs[0].URL != job1.URL {
+			t.Errorf("Expected first job URL to be %s, got %s", job1.URL, jobs[0].URL)
+		}
+
+		if jobs[0].ContentHash != job1.ContentHash {
+			t.Errorf("Expected first job ContentHash to be %s, got %s", job1.ContentHash, jobs[0].ContentHash)
 		}
 
 		if jobs[1].PageID != job2.PageID {

@@ -113,9 +113,21 @@ func (c *Client) Crawl(pageID, url string) (*dto.CrawlResponse, error) {
 	return &crawlRes, nil
 }
 
-func (c *Client) Index(pageID string) error {
+func (c *Client) Index(pageID string, url string, contentHash string) error {
 
-	res, err := c.SendRequest("POST", fmt.Sprintf("/pages/%s/index", pageID), nil)
+	req := dto.IndexRequest{
+		PageID:      pageID,
+		URL:         url,
+		ContentHash: contentHash,
+	}
+
+	jsonBody, err := json.Marshal(req)
+
+	if err != nil {
+		return err
+	}
+
+	res, err := c.SendRequest("POST", "/index", jsonBody)
 
 	if err != nil {
 		return err

@@ -140,7 +140,7 @@ func (s *Service) CreateJob(page *domain.Page) error {
 }
 
 func (s *Service) jobsToProcess() ([]*domain.CrawlJob, error) {
-	jobs, err := s.crawlJobRepo.ListByStatus(10000, domain.CrawlStatusPending)
+	jobs, err := s.crawlJobRepo.ListByStatus(s.maxQueueSize, domain.CrawlStatusPending)
 	if err != nil {
 		return nil, err
 	}
@@ -306,6 +306,7 @@ func (s *Service) ProcessQueueItem(ctx context.Context, job *domain.CrawlJob, as
 	s.eventService.Publish(&domain.CrawlCompleted{
 		PageID:      job.PageID,
 		ShardID:     job.ShardID,
+		URL:         job.URL,
 		ContentHash: domain.ContentHash(res.ContentHash),
 		Links:       links,
 	})

@@ -126,13 +126,13 @@ func TestGetIndex(t *testing.T) {
 				t.Fatalf("error saving page: %v", err)
 			}
 
-			err = htmlRepo.Save(page.ID, []byte(dummy.HTML))
+			err = htmlRepo.Save(page.Hash, []byte(dummy.HTML))
 
 			if err != nil {
 				t.Fatalf("error saving html: %v", err)
 			}
 
-			err = indexService.Index(page.ID)
+			err = indexService.Index(page.ID, page.URL, page.Hash)
 
 			if err != nil {
 				t.Fatalf("error indexing page: %v", err)

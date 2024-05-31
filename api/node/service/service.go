@@ -247,7 +247,7 @@ func (s *Service) SendIndexJob(ctx context.Context, n *domain.Node, job *domain.
 		node.WithContext(ctx),
 	)
 
-	return c.Index(string(job.PageID))
+	return c.Index(string(job.PageID), string(job.URL), string(job.ContentHash))
 }
 
 func (s *Service) Auth(key string) (*domain.Node, error) {

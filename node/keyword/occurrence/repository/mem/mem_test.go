@@ -3,7 +3,6 @@ package mem_test
 import (
 	"crawlquery/node/domain"
 	"crawlquery/node/keyword/occurrence/repository/mem"
-	"crawlquery/pkg/util"
 	"fmt"
 	"reflect"
 	"testing"
@@ -176,7 +175,7 @@ func TestCount(t *testing.T) {
 	for i, keyword := range keywords {
 		for j := 0; j < i+1; j++ {
 			occurrence := domain.KeywordOccurrence{
-				PageID:    util.PageID(fmt.Sprintf("page%d", i+1)),
+				PageID:    fmt.Sprintf("page%d", i+1),
 				Frequency: 1,
 				Positions: []int{1},
 			}

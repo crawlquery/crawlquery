@@ -36,14 +36,17 @@ func NewService(
 	}
 }
 
-func (s *Service) Index(pageID string) error {
+func (s *Service) Index(pageID string, url string, contentHash string) error {
 	page, err := s.pageService.Get(pageID)
 	if err != nil {
-		s.logger.Errorw("Error getting page", "error", err, "pageID", page, "pageID", pageID)
-		return err
+		page, err = s.pageService.Create(pageID, url, contentHash)
+		if err != nil {
+			s.logger.Errorw("Error creating page", "error", err, "pageID", pageID)
+			return err
+		}
 	}
 
-	html, err := s.htmlService.Get(page.ID)
+	html, err := s.htmlService.Get(contentHash)
 
 	if err != nil {
 		s.logger.Errorw("Error getting html", "error", err, "pageID", pageID)

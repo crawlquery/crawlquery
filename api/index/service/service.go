@@ -91,7 +91,7 @@ func (s *Service) registerEventListeners() {
 func (s *Service) handleCrawlCompleted(event domain.Event) {
 	crawlCompleted := event.(*domain.CrawlCompleted)
 
-	err := s.CreateJob(crawlCompleted.PageID, crawlCompleted.ShardID)
+	err := s.CreateJob(crawlCompleted.PageID, crawlCompleted.URL, crawlCompleted.ShardID)
 
 	if err != nil {
 		s.logger.Errorf("Error creating index job: %v", err)
@@ -113,13 +113,14 @@ func (s *Service) createlogEntry(pageID domain.PageID, status domain.IndexStatus
 	return nil
 }
 
-func (s *Service) CreateJob(pageID domain.PageID, shardID domain.ShardID) error {
+func (s *Service) CreateJob(pageID domain.PageID, url domain.URL, shardID domain.ShardID) error {
 	if _, err := s.indexJobRepo.Get(pageID); err == nil {
 		return domain.ErrIndexJobAlreadyExists
 	}
 
 	job := &domain.IndexJob{
 		PageID:    pageID,
+		URL:       url,
 		Status:    domain.IndexStatusPending,
 		CreatedAt: time.Now(),
 	}

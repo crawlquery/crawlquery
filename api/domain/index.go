@@ -34,11 +34,13 @@ func (is IndexStatus) String() string {
 }
 
 type IndexJob struct {
-	PageID    PageID      `json:"page_id"`
-	ShardID   ShardID     `json:"shard_id"`
-	Status    IndexStatus `json:"status"`
-	CreatedAt time.Time   `json:"created_at"`
-	UpdatedAt time.Time   `json:"updated_at"`
+	PageID      PageID      `json:"page_id"`
+	URL         URL         `json:"url"`
+	ContentHash ContentHash `json:"content_hash"`
+	ShardID     ShardID     `json:"shard_id"`
+	Status      IndexStatus `json:"status"`
+	CreatedAt   time.Time   `json:"created_at"`
+	UpdatedAt   time.Time   `json:"updated_at"`
 }
 
 type IndexService interface {
