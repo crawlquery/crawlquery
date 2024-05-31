@@ -281,9 +281,60 @@ func TestProcessQueueItem(t *testing.T) {
 			t.Errorf("expected all mocks to be called")
 		}
 	})
+
+	t.Run("should publish crawl completed event", func(t *testing.T) {
+		sf, job, node := setupCrawlTests()
+
+		defer gock.Off()
+
+		gock.New("http://node1.cluster.com:8080").
+			Post("/crawl").
+			JSON(dto.CrawlRequest{
+				PageID: string(job.PageID),
+				URL:    string(job.URL),
+			}).
+			Reply(200).
+			JSON(dto.CrawlResponse{
+				Links: []string{
+					"http://example.com/1",
+					"http://example.com/2",
+				},
+			})
+
+		var eventPublished bool
+		sf.EventService.Subscribe(domain.CrawlCompletedKey, func(event domain.Event) {
+			eventPublished = true
+
+			crawlCompleted := event.(*domain.CrawlCompleted)
+
+			if crawlCompleted.PageID != job.PageID {
+				t.Errorf("expected pageID to be %v, got %v", job.PageID, crawlCompleted.PageID)
+			}
+
+			if crawlCompleted.ShardID != job.ShardID {
+				t.Errorf("expected shardID to be %v, got %v", job.ShardID, crawlCompleted.ShardID)
+			}
+		})
+
+		ctx := context.Background()
+		err := sf.CrawlService.ProcessQueueItem(ctx, job, node)
+
+		if err != nil {
+			t.Errorf("expected no error, got %v", err)
+		}
+
+		if !gock.IsDone() {
+			t.Errorf("expected all mocks to be called")
+		}
+
+		if !eventPublished {
+			t.Errorf("expected event to be published")
+		}
+	})
 }
 
 func TestRunCrawlProcess(t *testing.T) {
+	defer gock.Off()
 	t.Run("should process crawl jobs with 10 workers and 100 crawl jobs", func(t *testing.T) {
 		sf := testfactory.NewServiceFactory()
 
@@ -325,8 +376,6 @@ func TestRunCrawlProcess(t *testing.T) {
 		})
 
 		shardJobs := make(map[domain.ShardID][]*domain.CrawlJob)
-
-		defer gock.Off()
 
 		for i := 0; i < 100; i++ {
 			url := domain.URL(fmt.Sprintf("http://example%d.com/about", i))
@@ -405,6 +454,29 @@ func TestRunCrawlProcess(t *testing.T) {
 	})
 
 	t.Run("should throttle urls of the same domain", func(t *testing.T) {
+
+		gock.New("http://shard0.cluster.com:8080").
+			Post("/crawl").
+			Times(1).
+			Reply(200).
+			JSON(dto.CrawlResponse{
+				Links: []string{
+					"http://example.com/1",
+					"http://example.com/2",
+				},
+			})
+
+		gock.New("http://shard1.cluster.com:8080").
+			Post("/crawl").
+			Times(1).
+			Reply(200).
+			JSON(dto.CrawlResponse{
+				Links: []string{
+					"http://example.net/1",
+					"http://example.net/2",
+				},
+			})
+
 		sf := testfactory.NewServiceFactory()
 
 		crawlThrottleService := crawlThrottleService.NewService(
@@ -443,8 +515,6 @@ func TestRunCrawlProcess(t *testing.T) {
 			Port:      8080,
 			CreatedAt: time.Now(),
 		})
-
-		defer gock.Off()
 
 		for i := 0; i < 5; i++ {
 			url := domain.URL(fmt.Sprintf("http://example.com/about%d", i))
@@ -485,28 +555,6 @@ func TestRunCrawlProcess(t *testing.T) {
 				t.Errorf("expected no error, got %v", err)
 			}
 		}
-
-		gock.New("http://shard0.cluster.com:8080").
-			Post("/crawl").
-			Times(1).
-			Reply(200).
-			JSON(dto.CrawlResponse{
-				Links: []string{
-					"http://example.com/1",
-					"http://example.com/2",
-				},
-			})
-
-		gock.New("http://shard1.cluster.com:8080").
-			Post("/crawl").
-			Times(1).
-			Reply(200).
-			JSON(dto.CrawlResponse{
-				Links: []string{
-					"http://example.net/1",
-					"http://example.net/2",
-				},
-			})
 
 		ctx, _ := context.WithTimeout(context.Background(), time.Second)
 

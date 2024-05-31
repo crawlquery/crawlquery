@@ -856,7 +856,6 @@ func TestSendIndexJob(t *testing.T) {
 		}
 
 		indexJob := &domain.IndexJob{
-			ID:     "1",
 			PageID: "1",
 		}
 
@@ -874,7 +873,7 @@ func TestSendIndexJob(t *testing.T) {
 		nodeService := service.NewService(
 			service.WithLogger(testutil.NewTestLogger()),
 		)
-		err := nodeService.SendIndexJob(node, indexJob)
+		err := nodeService.SendIndexJob(context.Background(), node, indexJob)
 
 		if err != nil {
 			t.Fatalf("Error sending index job: %v", err)
@@ -889,7 +888,6 @@ func TestSendIndexJob(t *testing.T) {
 		}
 
 		indexJob := &domain.IndexJob{
-			ID:     "1",
 			PageID: "1",
 		}
 
@@ -902,7 +900,7 @@ func TestSendIndexJob(t *testing.T) {
 		nodeService := service.NewService(
 			service.WithLogger(testutil.NewTestLogger()),
 		)
-		err := nodeService.SendIndexJob(node, indexJob)
+		err := nodeService.SendIndexJob(context.Background(), node, indexJob)
 
 		if err == nil {
 			t.Fatalf("Expected error sending index job")

@@ -305,6 +305,7 @@ func (s *Service) ProcessQueueItem(ctx context.Context, job *domain.CrawlJob, as
 
 	s.eventService.Publish(&domain.CrawlCompleted{
 		PageID:      job.PageID,
+		ShardID:     job.ShardID,
 		ContentHash: domain.ContentHash(res.ContentHash),
 		Links:       links,
 	})

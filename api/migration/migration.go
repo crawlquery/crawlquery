@@ -87,7 +87,7 @@ var migrations = []Migration{
 	{
 		Name: "create_index_logs_table",
 		SQL: `CREATE TABLE index_logs (
-			id BIGINT AUTO_INCREMENT PRIMARY KEY,
+			id VARCHAR(36) PRIMARY KEY,	
 			page_id VARCHAR(32) NOT NULL,
 			status TINYINT UNSIGNED NOT NULL,
 			info TEXT,

@@ -3,46 +3,45 @@ package service_test
 import (
 	"crawlquery/api/domain"
 	indexJobRepo "crawlquery/api/index/job/repository/mem"
+	indexLogRepo "crawlquery/api/index/log/repository/mem"
 	indexService "crawlquery/api/index/service"
 
 	"crawlquery/pkg/testutil"
 	"testing"
 )
 
-func TestCreate(t *testing.T) {
+func TestCreateJob(t *testing.T) {
 	t.Run("can create index job", func(t *testing.T) {
 		indexJobRepo := indexJobRepo.NewRepository()
+		indexLogRepo := indexLogRepo.NewRepository()
 		indexService := indexService.NewService(
+			indexService.WithIndexLogRepo(indexLogRepo),
 			indexService.WithIndexJobRepo(indexJobRepo),
 			indexService.WithLogger(testutil.NewTestLogger()),
 		)
 
-		job, err := indexService.Create("job1")
+		err := indexService.CreateJob("page1", 0)
 
 		if err != nil {
 			t.Errorf("Error creating index job: %v", err)
 		}
 
-		if job.PageID != "job1" {
-			t.Errorf("Expected job ID to be job1, got %s", job.PageID)
-		}
-
-		if job.CreatedAt.IsZero() {
-			t.Errorf("Expected CreatedAt to be set")
-		}
-
-		checkJob, err := indexJobRepo.Get(job.PageID)
+		jobs, err := indexJobRepo.ListByStatus(10, domain.IndexStatusPending)
 
 		if err != nil {
-			t.Errorf("Error getting index job: %v", err)
+			t.Errorf("Error listing index jobs: %v", err)
 		}
 
-		if checkJob.PageID != job.PageID {
-			t.Errorf("Expected job ID to be %s, got %s", job.PageID, checkJob.PageID)
+		if len(jobs) != 1 {
+			t.Errorf("Expected 1 job, got %v", len(jobs))
 		}
 
-		if checkJob.CreatedAt != job.CreatedAt {
-			t.Errorf("Expected CreatedAt to be %v, got %v", job.CreatedAt, checkJob.CreatedAt)
+		if jobs[0].PageID != "page1" {
+			t.Errorf("Expected job ID to be page1, got %s", jobs[0].PageID)
+		}
+
+		if jobs[0].ShardID != 0 {
+			t.Errorf("Expected shard ID to be 0, got %d", jobs[0].ShardID)
 		}
 	})
 
@@ -59,7 +58,7 @@ func TestCreate(t *testing.T) {
 
 		indexJobRepo.Save(job)
 
-		_, err := indexService.Create("job1")
+		err := indexService.CreateJob("job1", 0)
 
 		if err != domain.ErrIndexJobAlreadyExists {
 			t.Errorf("Expected ErrIndexJobAlreadyExists, got %v", err)

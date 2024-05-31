@@ -240,13 +240,14 @@ func (s *Service) SendCrawlJob(ctx context.Context, n *domain.Node, job *domain.
 	return c.Crawl(string(job.PageID), string(job.URL))
 }
 
-func (s *Service) SendIndexJob(n *domain.Node, job *domain.IndexJob) error {
+func (s *Service) SendIndexJob(ctx context.Context, n *domain.Node, job *domain.IndexJob) error {
 	c := node.NewClient(
 		node.WithHostname(n.Hostname),
 		node.WithPort(n.Port),
+		node.WithContext(ctx),
 	)
 
-	return c.Index(job.PageID)
+	return c.Index(string(job.PageID))
 }
 
 func (s *Service) Auth(key string) (*domain.Node, error) {

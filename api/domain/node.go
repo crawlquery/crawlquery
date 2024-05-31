@@ -43,7 +43,7 @@ type NodeService interface {
 	ListByShardID(shardID ShardID) ([]*Node, error)
 	Randomize(nodes []*Node) []*Node
 	SendCrawlJob(ctx context.Context, node *Node, crawlJob *CrawlJob) (*dto.CrawlResponse, error)
-	SendIndexJob(node *Node, indexJob *IndexJob) error
+	SendIndexJob(ctx context.Context, node *Node, indexJob *IndexJob) error
 	Auth(key string) (*Node, error)
 }
 
