@@ -20,6 +20,10 @@ import (
 	shardRepo "crawlquery/api/shard/repository/mem"
 	shardService "crawlquery/api/shard/service"
 
+	indexJobRepo "crawlquery/api/index/job/repository/mem"
+	indexLogRepo "crawlquery/api/index/log/repository/mem"
+	indexService "crawlquery/api/index/service"
+
 	eventService "crawlquery/api/event/service"
 
 	"crawlquery/pkg/testutil"
@@ -39,6 +43,9 @@ type ServiceFactory struct {
 	CrawlLogRepo         *crawlLogRepo.Repository
 	CrawlThrottleService *crawlThrottleService.Service
 	CrawlService         *crawlService.Service
+	IndexLogRepo         *indexLogRepo.Repository
+	IndexJobRepo         *indexJobRepo.Repository
+	IndexService         *indexService.Service
 }
 
 type ServiceFactoryOption func(*ServiceFactory)
@@ -111,6 +118,15 @@ func NewServiceFactory(options ...ServiceFactoryOption) *ServiceFactory {
 		pageService.WithShardService(shardService),
 	)
 
+	indexJobRepo := indexJobRepo.NewRepository()
+	indexLogRepo := indexLogRepo.NewRepository()
+	indexService := indexService.NewService(
+		indexService.WithEventService(eventService),
+		indexService.WithIndexJobRepo(indexJobRepo),
+		indexService.WithIndexLogRepo(indexLogRepo),
+		indexService.WithLogger(testutil.NewTestLogger()),
+	)
+
 	factory := &ServiceFactory{
 		EventService:         eventService,
 		ShardRepo:            shardRepo,
@@ -125,6 +141,9 @@ func NewServiceFactory(options ...ServiceFactoryOption) *ServiceFactory {
 		CrawlLogRepo:         crawlLogRepo,
 		CrawlThrottleService: crawlThrottleService,
 		CrawlService:         crawlService,
+		IndexLogRepo:         indexLogRepo,
+		IndexJobRepo:         indexJobRepo,
+		IndexService:         indexService,
 	}
 	for _, option := range options {
 		option(factory)

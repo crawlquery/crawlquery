@@ -15,7 +15,9 @@ import (
 func TestUpdatePageRanksEvery(t *testing.T) {
 	// Create new repository and services
 	linksRepo := linksRepo.NewRepository()
-	linksService := linksService.NewService(linksRepo, nil, nil)
+	linksService := linksService.NewService(
+		linksService.WithLinkRepo(linksRepo),
+	)
 	pageRankRepo := pageRankRepo.NewRepository()
 	pageRankService := pageRankService.NewService(linksService, pageRankRepo, testutil.NewTestLogger())
 
@@ -42,7 +44,7 @@ func TestUpdatePageRanksEvery(t *testing.T) {
 	time.Sleep(50 * time.Millisecond)
 
 	// Define expected ranks with a tolerance for comparison
-	expectedRanks := map[string]float64{
+	expectedRanks := map[domain.PageID]float64{
 		"A": 0.26,
 		"B": 0.14,
 		"C": 0.27,
@@ -67,7 +69,9 @@ func TestUpdatePageRanksEvery(t *testing.T) {
 func TestUpdatePageRanks(t *testing.T) {
 	// Create new repository and services
 	linksRepo := linksRepo.NewRepository()
-	linksService := linksService.NewService(linksRepo, nil, nil)
+	linksService := linksService.NewService(
+		linksService.WithLinkRepo(linksRepo),
+	)
 	pageRankRepo := pageRankRepo.NewRepository()
 	pageRankService := pageRankService.NewService(linksService, pageRankRepo, testutil.NewTestLogger())
 
@@ -95,7 +99,7 @@ func TestUpdatePageRanks(t *testing.T) {
 	}
 
 	// Define expected ranks with a tolerance for comparison
-	expectedRanks := map[string]float64{
+	expectedRanks := map[domain.PageID]float64{
 		"A": 0.26,
 		"B": 0.14,
 		"C": 0.27,
@@ -120,11 +124,13 @@ func TestUpdatePageRanks(t *testing.T) {
 func TestGetPageRank(t *testing.T) {
 	// Create new repository and services
 	linksRepo := linksRepo.NewRepository()
-	linksService := linksService.NewService(linksRepo, nil, nil)
+	linksService := linksService.NewService(
+		linksService.WithLinkRepo(linksRepo),
+	)
 	pageRankRepo := pageRankRepo.NewRepository()
 	pageRankService := pageRankService.NewService(linksService, pageRankRepo, testutil.NewTestLogger())
 
-	expectedRanks := map[string]float64{
+	expectedRanks := map[domain.PageID]float64{
 		"A": 0.26,
 		"B": 0.14,
 		"C": 0.27,

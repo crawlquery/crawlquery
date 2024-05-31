@@ -22,9 +22,15 @@ import (
 
 func setupServices() (*nodeRepo.Repository, *nodeService.Service, *linkService.Service, *linkRepo.Repository, *pageRankRepo.Repository, *pageRankService.Service, *searchService.Service) {
 	nodeRepo := nodeRepo.NewRepository()
-	nodeService := nodeService.NewService(nodeRepo, nil, nil, testutil.NewTestLogger())
+	nodeService := nodeService.NewService(
+		nodeService.WithNodeRepo(nodeRepo),
+		nodeService.WithLogger(testutil.NewTestLogger()),
+	)
 	linkRepo := linkRepo.NewRepository()
-	linkService := linkService.NewService(linkRepo, nil, testutil.NewTestLogger())
+	linkService := linkService.NewService(
+		linkService.WithLinkRepo(linkRepo),
+		linkService.WithLogger(testutil.NewTestLogger()),
+	)
 	pageRankRepo := pageRankRepo.NewRepository()
 	pageRankService := pageRankService.NewService(linkService, pageRankRepo, testutil.NewTestLogger())
 	searchService := searchService.NewService(nodeService, pageRankService, testutil.NewTestLogger())

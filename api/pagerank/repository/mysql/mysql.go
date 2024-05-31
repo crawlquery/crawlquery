@@ -1,6 +1,7 @@
 package mysql
 
 import (
+	"crawlquery/api/domain"
 	"database/sql"
 	"time"
 )
@@ -15,7 +16,7 @@ func NewRepository(db *sql.DB) *Repository {
 	}
 }
 
-func (r *Repository) Get(pageID string) (float64, error) {
+func (r *Repository) Get(pageID domain.PageID) (float64, error) {
 	var rank float64
 	err := r.db.QueryRow("SELECT `rank` FROM page_ranks WHERE page_id = ?", pageID).Scan(&rank)
 	if err != nil {
@@ -24,7 +25,7 @@ func (r *Repository) Get(pageID string) (float64, error) {
 	return rank, nil
 }
 
-func (r *Repository) Update(pageID string, rank float64, createdAt time.Time) error {
+func (r *Repository) Update(pageID domain.PageID, rank float64, createdAt time.Time) error {
 	_, err := r.db.Exec("INSERT INTO page_ranks (page_id, `rank`, created_at) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE `rank` = ?", pageID, rank, createdAt, pageID)
 	if err != nil {
 		return err

@@ -41,7 +41,7 @@ func (s *Service) Search(term string) ([]nodeDomain.Result, error) {
 	// remove duplicate spaces
 	term = strings.Join(strings.Fields(term), " ")
 
-	shardNodes, err := s.nodeService.ListGroupByShard()
+	shardNodes, err := s.nodeService.RandomizedListGroupByShard()
 	if err != nil {
 		return nil, err
 	}
@@ -108,7 +108,7 @@ func (s *Service) Search(term string) ([]nodeDomain.Result, error) {
 
 	for _, res := range results {
 		if _, ok := uniqueResults[res.PageID]; !ok {
-			rank, err := s.pageRankService.GetPageRank(res.PageID)
+			rank, err := s.pageRankService.GetPageRank(domain.PageID(res.PageID))
 
 			if err != nil {
 				s.logger.Errorf("No pagerank found for %s: %v", res.PageID, err)

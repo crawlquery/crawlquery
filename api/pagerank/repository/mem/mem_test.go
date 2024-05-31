@@ -1,6 +1,7 @@
 package mem
 
 import (
+	"crawlquery/api/domain"
 	"testing"
 	"time"
 )
@@ -9,8 +10,8 @@ func TestRepo(t *testing.T) {
 	// test cases
 	tests := []struct {
 		// input
-		keyword string
-		rank    float64
+		pageID domain.PageID
+		rank   float64
 		// expected output
 		expectedRank float64
 	}{
@@ -22,12 +23,12 @@ func TestRepo(t *testing.T) {
 	// setup
 	repo := NewRepository()
 	for _, test := range tests {
-		repo.Update(test.keyword, test.rank, time.Now())
+		repo.Update(test.pageID, test.rank, time.Now())
 	}
 
 	// test
 	for _, test := range tests {
-		rank, _ := repo.Get(test.keyword)
+		rank, _ := repo.Get(test.pageID)
 		if rank != test.expectedRank {
 			t.Errorf("Expected %f, got %f", test.expectedRank, rank)
 		}

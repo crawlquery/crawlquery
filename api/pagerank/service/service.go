@@ -65,7 +65,7 @@ func (s *Service) UpdatePageRanks() error {
 	return nil
 }
 
-func (s *Service) GetPageRank(pageID string) (float64, error) {
+func (s *Service) GetPageRank(pageID domain.PageID) (float64, error) {
 
 	rank, err := s.pageRankRepo.Get(pageID)
 	if err != nil {
@@ -76,9 +76,9 @@ func (s *Service) GetPageRank(pageID string) (float64, error) {
 	return rank, nil
 }
 
-func (s *Service) fetchPagesAndLinks() (map[string]*domain.PageRank, map[string][]string, error) {
-	pages := make(map[string]*domain.PageRank)
-	links := make(map[string][]string)
+func (s *Service) fetchPagesAndLinks() (map[domain.PageID]*domain.PageRank, map[domain.PageID][]domain.PageID, error) {
+	pages := make(map[domain.PageID]*domain.PageRank)
+	links := make(map[domain.PageID][]domain.PageID)
 
 	allLinks, err := s.linkService.GetAll()
 	if err != nil {
@@ -107,10 +107,10 @@ func (s *Service) fetchPagesAndLinks() (map[string]*domain.PageRank, map[string]
 	return pages, links, nil
 }
 
-func calculatePageRank(pages map[string]*domain.PageRank, links map[string][]string) map[string]float64 {
+func calculatePageRank(pages map[domain.PageID]*domain.PageRank, links map[domain.PageID][]domain.PageID) map[domain.PageID]float64 {
 	numPages := len(pages)
-	pageRanks := make(map[string]float64)
-	newPageRanks := make(map[string]float64)
+	pageRanks := make(map[domain.PageID]float64)
+	newPageRanks := make(map[domain.PageID]float64)
 
 	for id := range pages {
 		pageRanks[id] = 1.0 / float64(numPages)

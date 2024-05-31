@@ -45,7 +45,8 @@ import (
 	pageService "crawlquery/api/page/service"
 
 	indexJobMySQLRepo "crawlquery/api/index/job/repository/mysql"
-	indexJobService "crawlquery/api/index/job/service"
+	indexLogMysqlRepo "crawlquery/api/index/log/repository/mysql"
+	indexService "crawlquery/api/index/service"
 
 	_ "github.com/go-sql-driver/mysql"
 	"go.uber.org/zap"
@@ -108,7 +109,17 @@ func main() {
 	pageHandler := pageHandler.NewHandler(pageService)
 
 	indexJobRepo := indexJobMySQLRepo.NewRepository(db)
-	indexJobService := indexJobService.NewService(indexJobRepo, pageService, nodeService, sugar)
+	indexLogRepo := indexLogMysqlRepo.NewRepository(db)
+	indexService := indexService.NewService(
+		indexService.WithEventService(eventService),
+		indexService.WithEventListeners(),
+		indexService.WithIndexJobRepo(indexJobRepo),
+		indexService.WithIndexLogRepo(indexLogRepo),
+		indexService.WithNodeService(nodeService),
+		indexService.WithLogger(sugar),
+		indexService.WithWorkers(4),
+		indexService.WithMaxQueueSize(100),
+	)
 
 	crawlThrottleService := crawlThrottleService.NewService(
 		crawlThrottleService.WithRateLimit(time.Second * 20),
@@ -121,6 +132,8 @@ func main() {
 		crawlService.WithCrawlJobRepo(crawlJobRepo),
 		crawlService.WithCrawlLogRepo(crawlLogMysqlRepo.NewRepository(db)),
 		crawlService.WithLogger(sugar),
+		crawlService.WithWorkers(10),
+		crawlService.WithMaxQueueSize(10000),
 	)
 
 	linkRepo := linkMySQLRepo.NewRepository(db)
@@ -142,10 +155,7 @@ func main() {
 
 	go pageRankService.UpdatePageRanksEvery(time.Minute)
 
-	// start 4 workers to process index jobs
-	for i := 0; i < 4; i++ {
-		go indexJobService.ProcessIndexJobs()
-	}
+	go indexService.RunIndexProcess(context.Background())
 
 	r := router.NewRouter(
 		accountService,
@@ -154,7 +164,6 @@ func main() {
 		pageHandler,
 		nodeHandler,
 		searchHandler,
-		linkHandler,
 	)
 
 	r.Run(":8080")

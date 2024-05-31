@@ -1,6 +1,7 @@
 package mysql_test
 
 import (
+	"crawlquery/api/domain"
 	"crawlquery/api/migration"
 	"crawlquery/pkg/testutil"
 	"testing"
@@ -20,7 +21,7 @@ func TestGet(t *testing.T) {
 	// test cases
 	tests := []struct {
 		// input
-		pageID string
+		pageID domain.PageID
 		rank   float64
 	}{
 
@@ -61,7 +62,7 @@ func TestUpdate(t *testing.T) {
 	// test cases
 	tests := []struct {
 		// input
-		pageID string
+		pageID domain.PageID
 		rank   float64
 	}{
 
