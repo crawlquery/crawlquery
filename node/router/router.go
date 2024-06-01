@@ -49,7 +49,7 @@ func NewRouter(
 	router.GET("/hash/index", indexHandler.Hash)
 
 	router.GET("/pages/:pageID/index", indexHandler.GetIndex)
-	router.POST("/pages/:pageID/index", indexHandler.Index)
+	router.POST("/index", indexHandler.Index)
 
 	router.POST("/query", queryHandler.Query)
 

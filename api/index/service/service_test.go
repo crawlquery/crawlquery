@@ -124,6 +124,94 @@ func TestCreateJob(t *testing.T) {
 	})
 }
 
+func TestHandlesCrawlCompletedEvent(t *testing.T) {
+	t.Run("can handle crawl completed event", func(t *testing.T) {
+
+		sf := testfactory.NewServiceFactory()
+
+		indexJobRepo := indexJobRepo.NewRepository()
+		indexLogRepo := indexLogRepo.NewRepository()
+		indexService.NewService(
+			indexService.WithEventService(sf.EventService),
+			indexService.WithEventListeners(),
+			indexService.WithIndexLogRepo(indexLogRepo),
+			indexService.WithIndexJobRepo(indexJobRepo),
+			indexService.WithLogger(testutil.NewTestLogger()),
+		)
+
+		sf.EventService.Publish(&domain.CrawlCompleted{
+			PageID:      "page1",
+			URL:         "http://google.com",
+			ShardID:     1,
+			ContentHash: "hash1",
+		})
+
+		jobs, err := indexJobRepo.ListByStatus(10, domain.IndexStatusPending)
+
+		if err != nil {
+			t.Errorf("Error listing index jobs: %v", err)
+		}
+
+		if len(jobs) != 1 {
+			t.Errorf("Expected 1 job, got %v", len(jobs))
+		}
+
+		if jobs[0].PageID != "page1" {
+			t.Errorf("Expected job ID to be page1, got %s", jobs[0].PageID)
+		}
+
+		if jobs[0].ShardID != 1 {
+			t.Errorf("Expected shard ID to be 0, got %d", jobs[0].ShardID)
+		}
+
+		if jobs[0].ContentHash != "hash1" {
+			t.Errorf("Expected content hash to be hash1, got %s", jobs[0].ContentHash)
+		}
+
+		if jobs[0].Status != domain.IndexStatusPending {
+			t.Errorf("Expected status to be pending, got %s", jobs[0].Status)
+		}
+
+		if jobs[0].URL != "http://google.com" {
+			t.Errorf("Expected URL to be http://google.com, got %s", jobs[0].URL)
+		}
+
+		if jobs[0].CreatedAt.IsZero() {
+			t.Errorf("Expected CreatedAt to be set")
+		}
+
+		if jobs[0].UpdatedAt.IsZero() {
+			t.Errorf("Expected UpdatedAt to be set")
+		}
+
+		logs, err := indexLogRepo.ListByPageID("page1")
+
+		if err != nil {
+			t.Errorf("Error listing index logs: %v", err)
+		}
+
+		if len(logs) != 1 {
+			t.Errorf("Expected 1 log, got %v", len(logs))
+		}
+
+		if err := uuid.Validate(string(logs[0].ID)); err != nil {
+			t.Errorf("expected log ID to be a valid UUID, got %v", logs[0].ID)
+		}
+
+		if logs[0].PageID != "page1" {
+			t.Errorf("Expected log PageID to be page1, got %s", logs[0].PageID)
+		}
+
+		if logs[0].Status != domain.IndexStatusPending {
+			t.Errorf("Expected log status to be pending, got %s", logs[0].Status)
+		}
+
+		if logs[0].CreatedAt.IsZero() {
+			t.Errorf("Expected log CreatedAt to be set")
+		}
+	})
+}
+
 func TestRunIndexProcess(t *testing.T) {
 
 	defer gock.Off()

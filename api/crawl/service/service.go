@@ -117,6 +117,7 @@ func (s *Service) CreateJob(page *domain.Page) error {
 	cj := &domain.CrawlJob{
 		PageID:    page.ID,
 		URL:       page.URL,
+		ShardID:   page.ShardID,
 		Status:    domain.CrawlStatusPending,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
@@ -200,7 +201,6 @@ func (s *Service) processJobsWithWorkers(ctx context.Context) error {
 		}
 
 		if !canCrawl {
-			s.logger.Infow("Throttling", "url", job.URL)
 			err = s.updateJob(job, domain.CrawlStatusPending, err)
 			if err != nil {
 				s.logger.Errorw("Error updating job", "error", err)

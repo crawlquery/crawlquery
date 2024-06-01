@@ -127,6 +127,7 @@ func (s *Service) CreateJob(pageID domain.PageID, url domain.URL, shardID domain
 
 	job := &domain.IndexJob{
 		PageID:      pageID,
+		ShardID:     shardID,
 		URL:         url,
 		Status:      domain.IndexStatusPending,
 		ContentHash: contentHash,

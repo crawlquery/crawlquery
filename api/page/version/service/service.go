@@ -61,15 +61,13 @@ func (s *Service) registerEventListeners() {
 func (s *Service) onCrawlCompleted(event domain.Event) {
 	crawlCompleted := event.(*domain.CrawlCompleted)
 
-	pageVersion, err := s.Create(crawlCompleted.PageID, crawlCompleted.ContentHash)
+	_, err := s.Create(crawlCompleted.PageID, crawlCompleted.ContentHash)
 
 	if err != nil {
 		s.logger.Errorw("Failed to create page version", "error", err)
 		return
 
 	}
-
-	s.logger.Infow("Page version created", "pageVersionID", pageVersion.ID)
 }
 
 func (s *Service) Create(pageID domain.PageID, contentHash domain.ContentHash) (*domain.PageVersion, error) {

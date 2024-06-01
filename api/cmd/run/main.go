@@ -44,6 +44,9 @@ import (
 	pageMysqlRepo "crawlquery/api/page/repository/mysql"
 	pageService "crawlquery/api/page/service"
 
+	pageVersionMysqlRepo "crawlquery/api/page/version/repository/mysql"
+	pageVersionService "crawlquery/api/page/version/service"
+
 	indexJobMySQLRepo "crawlquery/api/index/job/repository/mysql"
 	indexLogMysqlRepo "crawlquery/api/index/log/repository/mysql"
 	indexService "crawlquery/api/index/service"
@@ -102,10 +105,11 @@ func main() {
 
 	pageRepo := pageMysqlRepo.NewRepository(db)
 	pageService := pageService.NewService(
+		pageService.WithEventService(eventService),
+		pageService.WithEventListeners(),
 		pageService.WithPageRepo(pageRepo),
 		pageService.WithShardService(shardService),
 		pageService.WithLogger(sugar),
-		pageService.WithEventService(eventService),
 	)
 	pageHandler := pageHandler.NewHandler(pageService)
 
@@ -118,7 +122,7 @@ func main() {
 		indexService.WithIndexLogRepo(indexLogRepo),
 		indexService.WithNodeService(nodeService),
 		indexService.WithLogger(sugar),
-		indexService.WithWorkers(4),
+		indexService.WithWorkers(10),
 		indexService.WithMaxQueueSize(100),
 	)
 
@@ -134,7 +138,7 @@ func main() {
 		crawlService.WithCrawlLogRepo(crawlLogMysqlRepo.NewRepository(db)),
 		crawlService.WithNodeService(nodeService),
 		crawlService.WithLogger(sugar),
-		crawlService.WithWorkers(10),
+		crawlService.WithWorkers(60),
 		crawlService.WithMaxQueueSize(10000),
 	)
 
@@ -144,6 +148,14 @@ func main() {
 		linkService.WithLogger(sugar),
 		linkService.WithEventService(eventService),
 		linkService.WithEventListeners(),
+	)
+
+	pageVersionRepo := pageVersionMysqlRepo.NewRepository(db)
+	pageVersionService.NewService(
+		pageVersionService.WithEventService(eventService),
+		pageVersionService.WithEventListeners(),
+		pageVersionService.WithVersionRepo(pageVersionRepo),
+		pageVersionService.WithLogger(sugar),
 	)
 
 	// pageRankRepo := pageRankMysqlRepo.NewRepository(db)

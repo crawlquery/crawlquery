@@ -735,8 +735,9 @@ func TestHandlesPageCreatedEvent(t *testing.T) {
 
 		pageCreated := &domain.PageCreated{
 			Page: &domain.Page{
-				ID:  util.PageID("http://example.com"),
-				URL: "http://example.com",
+				ID:      util.PageID("http://example.com"),
+				URL:     "http://example.com",
+				ShardID: 1,
 			},
 		}
 
@@ -758,6 +759,10 @@ func TestHandlesPageCreatedEvent(t *testing.T) {
 
 		if job.URL != pageCreated.Page.URL {
 			t.Errorf("expected URL to be %v, got %v", pageCreated.Page.URL, job.URL)
+		}
+
+		if job.ShardID != pageCreated.Page.ShardID {
+			t.Errorf("expected shardID to be %v, got %v", pageCreated.Page.ShardID, job.ShardID)
 		}
 
 		if job.Status != domain.CrawlStatusPending {
