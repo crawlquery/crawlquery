@@ -86,7 +86,9 @@ func (s *Service) handleCrawlCompleted(e domain.Event) {
 	for _, link := range crawlCompletedEvent.Links {
 		_, err := s.Create(crawlCompletedEvent.PageID, link)
 		if err != nil {
-			s.logger.Errorw("Error creating link", "error", err)
+			if strings.Contains(err.Error(), "Duplicate entry") {
+				s.logger.Errorw("Error creating link", "error", err)
+			}
 		}
 	}
 }

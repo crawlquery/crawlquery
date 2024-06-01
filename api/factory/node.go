@@ -40,6 +40,7 @@ func NodeServiceWithNode(
 		service.WithNodeRepo(repo),
 		service.WithAccountService(as),
 		service.WithLogger(testutil.NewTestLogger()),
+		service.WithRandSeed(time.Now().Unix()),
 	), repo
 }
 

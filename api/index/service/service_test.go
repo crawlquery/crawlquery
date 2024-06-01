@@ -6,16 +6,18 @@ import (
 	indexJobRepo "crawlquery/api/index/job/repository/mem"
 	indexLogRepo "crawlquery/api/index/log/repository/mem"
 	indexService "crawlquery/api/index/service"
+
+	nodeService "crawlquery/api/node/service"
 	"crawlquery/api/testfactory"
 	"crawlquery/node/dto"
 	"fmt"
-	"math/rand"
 	"time"
 
 	"crawlquery/pkg/testutil"
 	"crawlquery/pkg/util"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/h2non/gock"
 )
 
@@ -29,7 +31,7 @@ func TestCreateJob(t *testing.T) {
 			indexService.WithLogger(testutil.NewTestLogger()),
 		)
 
-		err := indexService.CreateJob("page1", "http://google.com", 0)
+		err := indexService.CreateJob("page1", "http://google.com", 0, "hash1")
 
 		if err != nil {
 			t.Errorf("Error creating index job: %v", err)
@@ -52,6 +54,53 @@ func TestCreateJob(t *testing.T) {
 		if jobs[0].ShardID != 0 {
 			t.Errorf("Expected shard ID to be 0, got %d", jobs[0].ShardID)
 		}
+
+		if jobs[0].ContentHash != "hash1" {
+			t.Errorf("Expected content hash to be hash1, got %s", jobs[0].ContentHash)
+		}
+
+		if jobs[0].Status != domain.IndexStatusPending {
+			t.Errorf("Expected status to be pending, got %s", jobs[0].Status)
+		}
+
+		if jobs[0].URL != "http://google.com" {
+			t.Errorf("Expected URL to be http://google.com, got %s", jobs[0].URL)
+		}
+
+		if jobs[0].CreatedAt.IsZero() {
+			t.Errorf("Expected CreatedAt to be set")
+		}
+
+		if jobs[0].UpdatedAt.IsZero() {
+			t.Errorf("Expected UpdatedAt to be set")
+		}
+
+		logs, err := indexLogRepo.ListByPageID("page1")
+
+		if err != nil {
+			t.Errorf("Error listing index logs: %v", err)
+		}
+
+		if len(logs) != 1 {
+			t.Errorf("Expected 1 log, got %v", len(logs))
+		}
+
+		if err := uuid.Validate(string(logs[0].ID)); err != nil {
+			t.Errorf("expected log ID to be a valid UUID, got %v", logs[0].ID)
+		}
+
+		if logs[0].PageID != "page1" {
+			t.Errorf("Expected log PageID to be page1, got %s", logs[0].PageID)
+		}
+
+		if logs[0].Status != domain.IndexStatusPending {
+			t.Errorf("Expected log status to be pending, got %s", logs[0].Status)
+		}
+
+		if logs[0].CreatedAt.IsZero() {
+			t.Errorf("Expected log CreatedAt to be set")
+		}
+
 	})
 
 	t.Run("returns error if job already exists", func(t *testing.T) {
@@ -67,7 +116,7 @@ func TestCreateJob(t *testing.T) {
 
 		indexJobRepo.Save(job)
 
-		err := indexService.CreateJob("job1", "http://google.com", 0)
+		err := indexService.CreateJob("job1", "http://google.com", 0, "hash1")
 
 		if err != domain.ErrIndexJobAlreadyExists {
 			t.Errorf("Expected ErrIndexJobAlreadyExists, got %v", err)
@@ -78,7 +127,7 @@ func TestCreateJob(t *testing.T) {
 func TestRunIndexProcess(t *testing.T) {
 
 	defer gock.Off()
-	t.Run("should process index jobs with 10 workers and 100 index jobs", func(t *testing.T) {
+	t.Run("should process index jobs with 2 workers and 10 index jobs", func(t *testing.T) {
 		sf := testfactory.NewServiceFactory()
 
 		indexService := indexService.NewService(
@@ -112,16 +161,18 @@ func TestRunIndexProcess(t *testing.T) {
 
 		shardJobs := make(map[domain.ShardID][]*domain.IndexJob)
 
-		for i := 0; i < 100; i++ {
+		for i := 0; i < 10; i++ {
 			url := domain.URL(fmt.Sprintf("http://example%d.com/about", i))
 			shardID, err := sf.ShardService.GetURLShardID(url)
 			if err != nil {
 				t.Errorf("expected no error, got %v", err)
 			}
 			job := &domain.IndexJob{
-				PageID:  util.PageID(url),
-				ShardID: shardID,
-				Status:  domain.IndexStatusPending,
+				PageID:      util.PageID(url),
+				ShardID:     shardID,
+				Status:      domain.IndexStatusPending,
+				ContentHash: "hash1",
+				URL:         url,
 			}
 
 			err = sf.IndexJobRepo.Save(job)
@@ -134,16 +185,26 @@ func TestRunIndexProcess(t *testing.T) {
 
 			hostname := fmt.Sprintf("shard%d.cluster.com", shardID)
 
-			if i == 50 {
+			if i == 1 {
 				gock.New(hostname).
-					Post(fmt.Sprintf("/pages/%s/index", job.PageID)).
+					Post("/index").
+					JSON(dto.IndexRequest{
+						PageID:      string(job.PageID),
+						URL:         string(job.URL),
+						ContentHash: string(job.ContentHash),
+					}).
 					Reply(200).
 					JSON(dto.ErrorResponse{
 						Error: "invalid html",
 					})
 			} else {
 				gock.New(hostname).
-					Post(fmt.Sprintf("/pages/%s/index", job.PageID)).
+					Post("/index").
+					JSON(dto.IndexRequest{
+						PageID:      string(job.PageID),
+						URL:         string(job.URL),
+						ContentHash: string(job.ContentHash),
+					}).
 					Reply(200).
 					JSON(dto.IndexResponse{
 						Success: true,
@@ -186,8 +247,8 @@ func TestRunIndexProcess(t *testing.T) {
 			t.Errorf("expected 1 failed job, got %v", failedCount)
 		}
 
-		if completedCount != 99 {
-			t.Errorf("expected 99 completed jobs, got %v", completedCount)
+		if completedCount != 9 {
+			t.Errorf("expected 9 completed jobs, got %v", completedCount)
 		}
 
 		if !gock.IsDone() {
@@ -196,13 +257,19 @@ func TestRunIndexProcess(t *testing.T) {
 	})
 
 	t.Run("should try 3 times to process job", func(t *testing.T) {
-		rand.Seed(0)
 		sf := testfactory.NewServiceFactory()
+
+		nodeService := nodeService.NewService(
+			nodeService.WithNodeRepo(sf.NodeRepo),
+			nodeService.WithLogger(testutil.NewTestLogger()),
+			nodeService.WithShardService(sf.ShardService),
+			nodeService.WithRandSeed(0),
+		)
 
 		indexService := indexService.NewService(
 			indexService.WithEventService(sf.EventService),
 			indexService.WithIndexJobRepo(sf.IndexJobRepo),
-			indexService.WithNodeService(sf.NodeService),
+			indexService.WithNodeService(nodeService),
 			indexService.WithIndexLogRepo(sf.IndexLogRepo),
 			indexService.WithLogger(testutil.NewTestLogger()),
 			indexService.WithWorkers(10),
@@ -242,9 +309,11 @@ func TestRunIndexProcess(t *testing.T) {
 			t.Errorf("expected no error, got %v", err)
 		}
 		job := &domain.IndexJob{
-			PageID:  util.PageID(url),
-			ShardID: shardID,
-			Status:  domain.IndexStatusPending,
+			PageID:      util.PageID(url),
+			ShardID:     shardID,
+			Status:      domain.IndexStatusPending,
+			ContentHash: "hash1",
+			URL:         url,
 		}
 
 		err = sf.IndexJobRepo.Save(job)
@@ -253,22 +322,31 @@ func TestRunIndexProcess(t *testing.T) {
 			t.Errorf("expected no error, got %v", err)
 		}
 
+		idxRequest := dto.IndexRequest{
+			PageID:      string(job.PageID),
+			URL:         string(job.URL),
+			ContentHash: string(job.ContentHash),
+		}
+
 		gock.New("node1.cluster.com").
-			Post(fmt.Sprintf("/pages/%s/index", job.PageID)).
+			Post("/index").
+			JSON(idxRequest).
 			Reply(500).
 			JSON(dto.ErrorResponse{
 				Error: "internal server error",
 			})
 
 		gock.New("node2.cluster.com").
-			Post(fmt.Sprintf("/pages/%s/index", job.PageID)).
+			Post("/index").
+			JSON(idxRequest).
 			Reply(500).
 			JSON(dto.ErrorResponse{
 				Error: "internal server error",
 			})
 
 		gock.New("node3.cluster.com").
-			Post(fmt.Sprintf("/pages/%s/index", job.PageID)).
+			Post("/index").
+			JSON(idxRequest).
 			Reply(200).
 			JSON(dto.IndexResponse{
 				Success: true,

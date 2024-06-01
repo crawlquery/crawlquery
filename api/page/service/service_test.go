@@ -76,6 +76,14 @@ func TestHandleLinkCreatedEvent(t *testing.T) {
 			testfactory.WithShard(&domain.Shard{ID: 0}),
 		)
 
+		pageService.NewService(
+			pageService.WithPageRepo(sf.PageRepo),
+			pageService.WithShardService(sf.ShardService),
+			pageService.WithEventService(sf.EventService),
+			pageService.WithLogger(testutil.NewTestLogger()),
+			pageService.WithEventListeners(),
+		)
+
 		linkCreated := &domain.LinkCreated{
 			DstURL: "http://example.com",
 		}

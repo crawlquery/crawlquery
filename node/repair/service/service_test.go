@@ -142,7 +142,7 @@ func TestGetIndexMetas(t *testing.T) {
 		}
 
 		for i, meta := range expectedMetas {
-			if !reflect.DeepEqual(meta, metas[i]) {
+			if !reflect.DeepEqual(expectedMetas[i], metas[i]) {
 				t.Errorf("Expected meta %v, got %v", expectedMetas[i], meta)
 			}
 		}
@@ -779,9 +779,9 @@ func TestProcessRepairJobs(t *testing.T) {
 	})
 }
 
-func TestAuditAndRepair(t *testing.T) {
+func TestAuditAndRepairOutOfDate(t *testing.T) {
+	defer gock.Off()
 	t.Run("can audit and repair pages (all out of date)", func(t *testing.T) {
-		defer gock.Off()
 
 		now := time.Now().Round(time.Second)
 		oneHourAgo := now.Add(-time.Hour).Round(time.Second)
@@ -1005,9 +1005,11 @@ func TestAuditAndRepair(t *testing.T) {
 			t.Errorf("Expected all mocks to be called")
 		}
 	})
+}
 
+func TestAuditAndRepairNonExist(t *testing.T) {
+	defer gock.Off()
 	t.Run("can audit and repair pages (non exist)", func(t *testing.T) {
-		defer gock.Off()
 
 		now := time.Now().Round(time.Second)
 		oneHourAgo := now.Add(-time.Hour).Round(time.Second)

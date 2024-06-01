@@ -583,6 +583,7 @@ func TestListGroupByShard(t *testing.T) {
 		nodeService := service.NewService(
 			service.WithNodeRepo(nodeRepo),
 			service.WithLogger(testutil.NewTestLogger()),
+			service.WithRandSeed(time.Now().Unix()),
 		)
 
 		nodes := []*domain.Node{
@@ -921,6 +922,7 @@ func TestRandomize(t *testing.T) {
 		nodeService := service.NewService(
 			service.WithNodeRepo(nodeRepo),
 			service.WithLogger(testutil.NewTestLogger()),
+			service.WithRandSeed(time.Now().Unix()),
 		)
 		nodes := []*domain.Node{
 			{ID: "1"},

@@ -21,12 +21,15 @@ import (
 
 	crawlService "crawlquery/api/crawl/service"
 
+	eventService "crawlquery/api/event/service"
+
 	pageHandler "crawlquery/api/page/handler"
 
 	"github.com/gin-gonic/gin"
 )
 
 func setup() (*pageRepo.Repository, *pageService.Service) {
+	eventService := eventService.NewService()
 	pageRepo := pageRepo.NewRepository()
 	shardRepo := shardRepo.NewRepository()
 
@@ -49,6 +52,7 @@ func setup() (*pageRepo.Repository, *pageService.Service) {
 		pageService.WithShardService(shardService),
 		pageService.WithCrawlService(crawlService),
 		pageService.WithLogger(testutil.NewTestLogger()),
+		pageService.WithEventService(eventService),
 	)
 
 	return pageRepo, pageService

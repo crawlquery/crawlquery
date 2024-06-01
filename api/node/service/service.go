@@ -17,6 +17,8 @@ type Service struct {
 	accountService domain.AccountService
 	shardService   domain.ShardService
 	logger         *zap.SugaredLogger
+
+	rand *rand.Rand
 }
 
 type Option func(*Service)
@@ -42,6 +44,12 @@ func WithShardService(shardService domain.ShardService) Option {
 func WithLogger(logger *zap.SugaredLogger) Option {
 	return func(s *Service) {
 		s.logger = logger
+	}
+}
+
+func WithRandSeed(seed int64) Option {
+	return func(s *Service) {
+		s.rand = rand.New(rand.NewSource(seed))
 	}
 }
 
@@ -117,7 +125,7 @@ func (cs *Service) RandomizedList() ([]*domain.Node, error) {
 		return nil, err
 	}
 
-	rand.Shuffle(len(nodes), func(i, j int) {
+	cs.rand.Shuffle(len(nodes), func(i, j int) {
 		nodes[i], nodes[j] = nodes[j], nodes[i]
 	})
 
@@ -205,7 +213,7 @@ func (s *Service) ListByAccountID(accountID string) ([]*domain.Node, error) {
 }
 
 func (s *Service) Randomize(nodes []*domain.Node) []*domain.Node {
-	rand.Shuffle(len(nodes), func(i, j int) {
+	s.rand.Shuffle(len(nodes), func(i, j int) {
 		nodes[i], nodes[j] = nodes[j], nodes[i]
 	})
 

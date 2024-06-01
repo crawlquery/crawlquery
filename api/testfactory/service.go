@@ -83,6 +83,7 @@ func NewServiceFactory(options ...ServiceFactoryOption) *ServiceFactory {
 		nodeService.WithNodeRepo(nodeRepo),
 		nodeService.WithLogger(testutil.NewTestLogger()),
 		nodeService.WithShardService(shardService),
+		nodeService.WithRandSeed(time.Now().UnixNano()),
 	)
 
 	linkRepo := linkRepo.NewRepository()

@@ -45,7 +45,7 @@ func setupServices() (*crawlService.CrawlService, *htmlRepo.Repository, *pageRep
 func TestCrawl(t *testing.T) {
 	t.Run("can crawl a page", func(t *testing.T) {
 		defer gock.Off()
-		crawlSvc, htmlRepo, pageRepo := setupServices()
+		crawlSvc, htmlRepo, _ := setupServices()
 
 		expectedData := `<html><head><title>Example</title></head><body><h1>Hello, World!</h1><p>Website description</p><a href="http://google.com"></body></html>`
 		expectedPageHash := util.Sha256Hex32([]byte(expectedData))
@@ -102,30 +102,13 @@ func TestCrawl(t *testing.T) {
 			t.Fatalf("Expected link to be 'http://google.com', got '%s'", resp.Links[0])
 		}
 
-		data, err := htmlRepo.Get("test1")
+		data, err := htmlRepo.Get(expectedPageHash)
 		if err != nil {
 			t.Fatalf("Error reading data: %v", err)
 		}
 
 		if string(data) != expectedData {
 			t.Fatalf("Expected data to be '%s', got '%s'", expectedData, data)
-		}
-
-		page, err := pageRepo.Get("test1")
-		if err != nil {
-			t.Fatalf("Error getting page: %v", err)
-		}
-
-		if page == nil {
-			t.Fatalf("Expected page to be found")
-		}
-
-		if page.ID != "test1" {
-			t.Fatalf("Expected page ID to be 'test1', got '%s'", page.ID)
-		}
-
-		if page.URL != "http://example.com" {
-			t.Fatalf("Expected page URL to be 'http://example.com', got '%s'", page.URL)
 		}
 
 		if !gock.IsDone() {

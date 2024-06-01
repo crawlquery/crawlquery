@@ -14,6 +14,7 @@ import (
 	"crawlquery/pkg/util"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/h2non/gock"
 
 	crawlService "crawlquery/api/crawl/service"
@@ -73,6 +74,18 @@ func TestCreateJob(t *testing.T) {
 			t.Errorf("expected PageID to be %v, got %v", page.ID, createdJob.PageID)
 		}
 
+		if createdJob.URL != page.URL {
+			t.Errorf("expected URL to be %v, got %v", page.URL, createdJob.URL)
+		}
+
+		if createdJob.CreatedAt.IsZero() {
+			t.Errorf("expected created at to be set, got zero")
+		}
+
+		if createdJob.UpdatedAt.IsZero() {
+			t.Errorf("expected updated at to be set, got zero")
+		}
+
 		logs, err := sf.CrawlLogRepo.ListByPageID(page.ID)
 
 		if err != nil {
@@ -81,6 +94,10 @@ func TestCreateJob(t *testing.T) {
 
 		if len(logs) != 1 {
 			t.Errorf("expected 1 log, got %v", len(logs))
+		}
+
+		if err := uuid.Validate(string(logs[0].ID)); err != nil {
+			t.Errorf("expected log ID to be a valid UUID, got %v", logs[0].ID)
 		}
 
 		if logs[0].PageID != page.ID {
@@ -118,6 +135,54 @@ func TestProcessQueueItem(t *testing.T) {
 
 		if !gock.IsDone() {
 			t.Errorf("expected all mocks to be called")
+		}
+	})
+
+	t.Run("should create log entry for in progress job", func(t *testing.T) {
+		sf, job, node := setupCrawlTests()
+
+		defer gock.Off()
+		gock.New("http://node1.cluster.com:8080").
+			Post("/crawl").
+			Reply(200).
+			JSON(dto.CrawlResponse{
+				Links: []string{
+					"http://example.com/1",
+					"http://example.com/2",
+				},
+			})
+
+		ctx := context.Background()
+		err := sf.CrawlService.ProcessQueueItem(ctx, job, node)
+
+		if err != nil {
+			t.Errorf("expected no error, got %v", err)
+		}
+
+		logs, err := sf.CrawlLogRepo.ListByPageID(job.PageID)
+
+		if err != nil {
+			t.Errorf("expected no error, got %v", err)
+		}
+
+		if len(logs) != 2 {
+			t.Errorf("expected 2 log, got %v", len(logs))
+		}
+
+		if err := uuid.Validate(string(logs[0].ID)); err != nil {
+			t.Errorf("expected log ID to be a valid UUID, got %v", logs[0].ID)
+		}
+
+		if logs[0].PageID != job.PageID {
+			t.Errorf("expected log pageID to be %v, got %v", job.PageID, logs[0].PageID)
+		}
+
+		if logs[0].Status != domain.CrawlStatusInProgress {
+			t.Errorf("expected log status to be in progress, got %v", logs[0].Status)
+		}
+
+		if logs[0].CreatedAt.IsZero() {
+			t.Errorf("expected log created at to be set, got zero")
 		}
 	})
 
@@ -197,19 +262,19 @@ func TestProcessQueueItem(t *testing.T) {
 			t.Errorf("expected no error, got %v", err)
 		}
 
-		if len(logs) != 1 {
-			t.Errorf("expected 1 logs, got %v", len(logs))
+		if len(logs) != 2 {
+			t.Errorf("expected 2 logs, got %v", len(logs))
 		}
 
-		if logs[0].PageID != job.PageID {
+		if logs[1].PageID != job.PageID {
 			t.Errorf("expected log pageID to be %v, got %v", job.PageID, logs[0].PageID)
 		}
 
-		if logs[0].Status != domain.CrawlStatusFailed {
+		if logs[1].Status != domain.CrawlStatusFailed {
 			t.Errorf("expected log status to be failed, got %v", logs[0].Status)
 		}
 
-		if logs[0].Info != "unexpected status code: 400 (request timeout error)" {
+		if logs[1].Info != "unexpected status code: 400 (request timeout error)" {
 			t.Errorf("expected log info to be 'request timeout error', got %v", logs[0].Info)
 		}
 
@@ -343,8 +408,8 @@ func TestProcessQueueItem(t *testing.T) {
 }
 
 func TestRunCrawlProcess(t *testing.T) {
-	defer gock.Off()
 	t.Run("should process crawl jobs with 10 workers and 100 crawl jobs", func(t *testing.T) {
+		defer gock.Off()
 		sf := testfactory.NewServiceFactory()
 
 		crawlThrottleService := crawlThrottleService.NewService(
@@ -461,12 +526,15 @@ func TestRunCrawlProcess(t *testing.T) {
 			t.Errorf("expected all mocks to be called")
 		}
 	})
+}
+
+func TestRunCrawlProcessThrottling(t *testing.T) {
 
 	t.Run("should throttle urls of the same domain", func(t *testing.T) {
+		defer gock.Off()
 
 		gock.New("http://shard0.cluster.com:8080").
 			Post("/crawl").
-			Times(1).
 			Reply(200).
 			JSON(dto.CrawlResponse{
 				Links: []string{
@@ -477,7 +545,6 @@ func TestRunCrawlProcess(t *testing.T) {
 
 		gock.New("http://shard1.cluster.com:8080").
 			Post("/crawl").
-			Times(1).
 			Reply(200).
 			JSON(dto.CrawlResponse{
 				Links: []string{
@@ -565,7 +632,7 @@ func TestRunCrawlProcess(t *testing.T) {
 			}
 		}
 
-		ctx, _ := context.WithTimeout(context.Background(), time.Second*2)
+		ctx, _ := context.WithTimeout(context.Background(), time.Second)
 
 		err := crawlService.RunCrawlProcess(ctx)
 
@@ -575,6 +642,8 @@ func TestRunCrawlProcess(t *testing.T) {
 
 		var pendingCount int
 		var completedCount int
+		var failedCount int
+		var inProgressCount int
 
 		for i := 0; i < 5; i++ {
 			url := domain.URL(fmt.Sprintf("http://example.com/about%d", i))
@@ -591,6 +660,14 @@ func TestRunCrawlProcess(t *testing.T) {
 			if job.Status == domain.CrawlStatusCompleted {
 				completedCount++
 			}
+
+			if job.Status == domain.CrawlStatusInProgress {
+				inProgressCount++
+			}
+
+			if job.Status == domain.CrawlStatusFailed {
+				failedCount++
+			}
 		}
 
 		if pendingCount != 4 {
@@ -599,6 +676,14 @@ func TestRunCrawlProcess(t *testing.T) {
 
 		if completedCount != 1 {
 			t.Errorf("expected 1 completed job, got %v", completedCount)
+		}
+
+		if failedCount != 0 {
+			t.Errorf("expected 0 failed jobs, got %v", failedCount)
+		}
+
+		if inProgressCount != 0 {
+			t.Errorf("expected 0 in progress jobs, got %v", inProgressCount)
 		}
 
 		pendingCount = 0

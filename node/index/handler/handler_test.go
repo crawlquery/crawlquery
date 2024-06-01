@@ -3,6 +3,7 @@ package handler_test
 import (
 	"bytes"
 	"crawlquery/node/domain"
+	"crawlquery/node/dto"
 	indexHandler "crawlquery/node/index/handler"
 	"crawlquery/pkg/factory"
 	"crawlquery/pkg/testutil"
@@ -20,11 +21,15 @@ import (
 	keywordOccurrenceRepo "crawlquery/node/keyword/occurrence/repository/mem"
 	keywordService "crawlquery/node/keyword/service"
 
+	backupService "crawlquery/node/html/backup/service"
+	htmlClient "crawlquery/pkg/client/html"
+
 	indexService "crawlquery/node/index/service"
 
 	peerService "crawlquery/node/peer/service"
 
 	"github.com/gin-gonic/gin"
+	"github.com/h2non/gock"
 )
 
 func setupTestRepos() (
@@ -38,8 +43,10 @@ func setupTestRepos() (
 	pageRepo := pageRepo.NewRepository()
 	pageService := pageService.NewService(pageRepo, nil)
 
+	backupService := backupService.NewService(htmlClient.NewClient("http://storage:8080"))
+
 	htmlRepo := htmlRepo.NewRepository()
-	htmlService := htmlService.NewService(htmlRepo, nil)
+	htmlService := htmlService.NewService(htmlRepo, backupService)
 
 	peerService := peerService.NewService(nil, nil, testutil.NewTestLogger())
 
@@ -52,6 +59,12 @@ func setupTestRepos() (
 func TestIndex(t *testing.T) {
 	t.Run("indexes page", func(t *testing.T) {
 
+		defer gock.Off()
+
+		gock.New("http://storage:8080").
+			Post("/pages/hash1").
+			Reply(201)
+
 		pageRepo, pageService, htmlRepo, htmlService, peerService, keywordService := setupTestRepos()
 
 		pageRepo.Save("home1", &domain.Page{
@@ -59,7 +72,7 @@ func TestIndex(t *testing.T) {
 			URL: "http://example.com",
 		})
 
-		htmlRepo.Save("home1", []byte(`<html><head><title>Home</title></head><body><p>Hello this is my home page</p></html>`))
+		htmlRepo.Save("hash1", []byte(`<html><head><title>Home</title></head><body><p>Hello this is my home page</p></html>`))
 
 		indexService := indexService.NewService(
 			pageService,
@@ -74,10 +87,18 @@ func TestIndex(t *testing.T) {
 		w := httptest.NewRecorder()
 		ctx, _ := gin.CreateTestContext(w)
 
-		ctx.Request, _ = http.NewRequest(http.MethodGet, "/reindex/home1", nil)
-		ctx.Params = gin.Params{
-			{Key: "pageID", Value: "home1"},
+		req := dto.IndexRequest{
+			PageID:      "home1",
+			URL:         "http://example.com",
+			ContentHash: "hash1",
 		}
+
+		encoded, err := json.Marshal(req)
+		if err != nil {
+			t.Fatalf("error encoding index request: %v", err)
+		}
+
+		ctx.Request, _ = http.NewRequest(http.MethodGet, "/index", bytes.NewBuffer(encoded))
 
 		indexHandler.Index(ctx)
 

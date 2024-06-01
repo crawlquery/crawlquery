@@ -25,6 +25,7 @@ func setupServices() (*nodeRepo.Repository, *nodeService.Service, *linkService.S
 	nodeService := nodeService.NewService(
 		nodeService.WithNodeRepo(nodeRepo),
 		nodeService.WithLogger(testutil.NewTestLogger()),
+		nodeService.WithRandSeed(time.Now().Unix()),
 	)
 	linkRepo := linkRepo.NewRepository()
 	linkService := linkService.NewService(

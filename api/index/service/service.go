@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"crawlquery/api/domain"
+	"crawlquery/pkg/util"
 	"fmt"
 	"sync"
 	"time"
@@ -91,7 +92,12 @@ func (s *Service) registerEventListeners() {
 func (s *Service) handleCrawlCompleted(event domain.Event) {
 	crawlCompleted := event.(*domain.CrawlCompleted)
 
-	err := s.CreateJob(crawlCompleted.PageID, crawlCompleted.URL, crawlCompleted.ShardID)
+	err := s.CreateJob(
+		crawlCompleted.PageID,
+		crawlCompleted.URL,
+		crawlCompleted.ShardID,
+		crawlCompleted.ContentHash,
+	)
 
 	if err != nil {
 		s.logger.Errorf("Error creating index job: %v", err)
@@ -100,6 +106,7 @@ func (s *Service) handleCrawlCompleted(event domain.Event) {
 
 func (s *Service) createlogEntry(pageID domain.PageID, status domain.IndexStatus) error {
 	log := &domain.IndexLog{
+		ID:        domain.IndexLogID(util.UUIDString()),
 		PageID:    pageID,
 		Status:    status,
 		CreatedAt: time.Now(),
@@ -113,16 +120,18 @@ func (s *Service) createlogEntry(pageID domain.PageID, status domain.IndexStatus
 	return nil
 }
 
-func (s *Service) CreateJob(pageID domain.PageID, url domain.URL, shardID domain.ShardID) error {
+func (s *Service) CreateJob(pageID domain.PageID, url domain.URL, shardID domain.ShardID, contentHash domain.ContentHash) error {
 	if _, err := s.indexJobRepo.Get(pageID); err == nil {
 		return domain.ErrIndexJobAlreadyExists
 	}
 
 	job := &domain.IndexJob{
-		PageID:    pageID,
-		URL:       url,
-		Status:    domain.IndexStatusPending,
-		CreatedAt: time.Now(),
+		PageID:      pageID,
+		URL:         url,
+		Status:      domain.IndexStatusPending,
+		ContentHash: contentHash,
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
 	}
 
 	err := s.indexJobRepo.Save(job)
@@ -143,6 +152,8 @@ func (s *Service) RunIndexProcess(ctx context.Context) error {
 			if err != nil {
 				return err
 			}
+
+			time.Sleep(3 * time.Second)
 		}
 	}
 }
@@ -193,33 +204,28 @@ func (s *Service) processJob(ctx context.Context, jobs <-chan *domain.IndexJob, 
 
 func (s *Service) attemptIndex(maxAttempts int, ctx context.Context, job *domain.IndexJob, nodes map[domain.ShardID][]*domain.Node) {
 	var attempts = 0
+	var err error
 	for _, node := range nodes[job.ShardID] {
 		attempts++
 		fmt.Printf("Processing job %s on node %s\n", job.PageID, node.ID)
-		err := s.indexPage(ctx, job, node)
+		err = s.indexPage(ctx, job, node)
 
 		if err == nil {
 			job.Status = domain.IndexStatusCompleted
 			s.indexJobRepo.Save(job)
 			s.createlogEntry(job.PageID, domain.IndexStatusCompleted)
-			break
+			return
 		}
 
 		if attempts >= maxAttempts {
-			s.logger.Errorw("Failed to process job after max attempts", "job", job, "error", err)
-			job.Status = domain.IndexStatusFailed
-			s.indexJobRepo.Save(job)
-			s.createlogEntry(job.PageID, domain.IndexStatusFailed)
 			break
 		}
 	}
 
-	if job.Status != domain.IndexStatusCompleted {
-		s.logger.Errorf("Failed to process job %s after max attempts", job.PageID)
-		job.Status = domain.IndexStatusFailed
-		s.indexJobRepo.Save(job)
-		s.createlogEntry(job.PageID, domain.IndexStatusFailed)
-	}
+	s.logger.Errorw("Failed to process job after max attempts", "job", job, "error", err)
+	job.Status = domain.IndexStatusFailed
+	s.indexJobRepo.Save(job)
+	s.createlogEntry(job.PageID, domain.IndexStatusFailed)
 }
 
 func (s *Service) indexPage(ctx context.Context, job *domain.IndexJob, node *domain.Node) error {

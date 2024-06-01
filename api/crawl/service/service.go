@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"crawlquery/api/domain"
+	"crawlquery/pkg/util"
 	"sync"
 	"time"
 
@@ -114,9 +115,11 @@ func (s *Service) CreateJob(page *domain.Page) error {
 	}
 
 	cj := &domain.CrawlJob{
-		PageID: page.ID,
-		URL:    page.URL,
-		Status: domain.CrawlStatusPending,
+		PageID:    page.ID,
+		URL:       page.URL,
+		Status:    domain.CrawlStatusPending,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
 	}
 
 	err := s.crawlJobRepo.Save(cj)
@@ -125,6 +128,7 @@ func (s *Service) CreateJob(page *domain.Page) error {
 	}
 
 	cl := &domain.CrawlLog{
+		ID:        domain.CrawlLogID(util.UUIDString()),
 		PageID:    cj.PageID,
 		Status:    domain.CrawlStatusPending,
 		CreatedAt: time.Now(),
@@ -158,6 +162,8 @@ func (s *Service) RunCrawlProcess(ctx context.Context) error {
 			if err != nil {
 				return err
 			}
+
+			time.Sleep(3 * time.Second)
 		}
 	}
 }
@@ -187,6 +193,7 @@ func (s *Service) processJobsWithWorkers(ctx context.Context) error {
 			s.logger.Errorw("Throttle returned an error", "error", err)
 			err = s.updateJob(job, domain.CrawlStatusFailed, err)
 			if err != nil {
+				s.logger.Errorw("Error updating job", "error", err)
 				return err
 			}
 			continue
@@ -196,6 +203,7 @@ func (s *Service) processJobsWithWorkers(ctx context.Context) error {
 			s.logger.Infow("Throttling", "url", job.URL)
 			err = s.updateJob(job, domain.CrawlStatusPending, err)
 			if err != nil {
+				s.logger.Errorw("Error updating job", "error", err)
 				return err
 			}
 			continue
@@ -261,6 +269,7 @@ func (s *Service) updateJob(job *domain.CrawlJob, status domain.CrawlStatus, wit
 
 func (s *Service) updateLog(job *domain.CrawlJob, status domain.CrawlStatus, info string) error {
 	cl := &domain.CrawlLog{
+		ID:        domain.CrawlLogID(util.UUIDString()),
 		PageID:    job.PageID,
 		Status:    status,
 		Info:      info,
@@ -270,15 +279,9 @@ func (s *Service) updateLog(job *domain.CrawlJob, status domain.CrawlStatus, inf
 }
 
 func (s *Service) ProcessQueueItem(ctx context.Context, job *domain.CrawlJob, assignedNode *domain.Node) error {
-	cl := &domain.CrawlLog{
-		PageID:    job.PageID,
-		Status:    domain.CrawlStatusInProgress,
-		CreatedAt: time.Now(),
-	}
+	err := s.updateLog(job, domain.CrawlStatusInProgress, "")
 
-	err := s.crawlLogRepo.Save(cl)
 	if err != nil {
-		s.logger.Errorw("Error saving crawl log", "error", err)
 		return err
 	}
 
@@ -289,6 +292,7 @@ func (s *Service) ProcessQueueItem(ctx context.Context, job *domain.CrawlJob, as
 	)
 
 	if err != nil {
+		s.logger.Errorw("Error sending crawl job", "error", err)
 		if err := s.updateJob(job, domain.CrawlStatusFailed, err); err != nil {
 			return err
 		}
@@ -296,7 +300,12 @@ func (s *Service) ProcessQueueItem(ctx context.Context, job *domain.CrawlJob, as
 		return err
 	}
 
-	s.updateJob(job, domain.CrawlStatusCompleted, nil)
+	err = s.updateJob(job, domain.CrawlStatusCompleted, nil)
+
+	if err != nil {
+		s.logger.Errorw("Error updating job", "error", err)
+		return err
+	}
 
 	var links []domain.URL
 	for _, link := range res.Links {

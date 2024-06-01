@@ -96,6 +96,7 @@ func main() {
 		nodeService.WithNodeRepo(nodeRepo),
 		nodeService.WithShardService(shardService),
 		nodeService.WithLogger(sugar),
+		nodeService.WithRandSeed(time.Now().Unix()),
 	)
 	nodeHandler := nodeHandler.NewHandler(nodeService)
 
@@ -131,6 +132,7 @@ func main() {
 		crawlService.WithCrawlThrottleService(crawlThrottleService),
 		crawlService.WithCrawlJobRepo(crawlJobRepo),
 		crawlService.WithCrawlLogRepo(crawlLogMysqlRepo.NewRepository(db)),
+		crawlService.WithNodeService(nodeService),
 		crawlService.WithLogger(sugar),
 		crawlService.WithWorkers(10),
 		crawlService.WithMaxQueueSize(10000),
@@ -153,9 +155,9 @@ func main() {
 
 	go crawlJobService.RunCrawlProcess(context.Background())
 
-	go pageRankService.UpdatePageRanksEvery(time.Minute)
-
 	go indexService.RunIndexProcess(context.Background())
+
+	go pageRankService.UpdatePageRanksEvery(time.Minute)
 
 	r := router.NewRouter(
 		accountService,

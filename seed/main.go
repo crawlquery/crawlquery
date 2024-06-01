@@ -27,7 +27,7 @@ func main() {
 
 	for _, domain := range splitByLine {
 		res, err := http.Post(
-			"http://localhost:8080/crawl-jobs",
+			"http://localhost:8080/pages",
 			"application/json",
 			bytes.NewBuffer([]byte(fmt.Sprintf(`{"url": "%s"}`, domain))))
 
